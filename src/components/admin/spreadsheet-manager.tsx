@@ -34,23 +34,30 @@ const AssigneeDropdown = ({
 
   useEffect(() => {
     if (open && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      // Calculate space below
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const isUp = spaceBelow < 250; // if less than 250px below, open upwards
+      const updatePosition = () => {
+        if (!buttonRef.current) return;
+        const rect = buttonRef.current.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const isUp = spaceBelow < 250; // if less than 250px below, open upwards
 
-      setDropdownStyle({
-        position: "fixed",
-        top: isUp ? "auto" : rect.bottom + 4,
-        bottom: isUp ? window.innerHeight - rect.top + 4 : "auto",
-        left: rect.left,
-        width: Math.max(rect.width, 256), // at least 256px
-        zIndex: 99999,
-      });
+        setDropdownStyle({
+          position: "fixed",
+          top: isUp ? "auto" : rect.bottom + 4,
+          bottom: isUp ? window.innerHeight - rect.top + 4 : "auto",
+          left: rect.left,
+          width: Math.max(rect.width, 256), // at least 256px
+          zIndex: 99999,
+        });
+      };
 
-      const handleScroll = () => setOpen(false);
-      window.addEventListener("scroll", handleScroll, true);
-      return () => window.removeEventListener("scroll", handleScroll, true);
+      updatePosition();
+
+      window.addEventListener("scroll", updatePosition, true);
+      window.addEventListener("resize", updatePosition);
+      return () => {
+        window.removeEventListener("scroll", updatePosition, true);
+        window.removeEventListener("resize", updatePosition);
+      };
     }
   }, [open]);
 
