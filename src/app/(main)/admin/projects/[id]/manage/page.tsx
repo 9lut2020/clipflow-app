@@ -27,10 +27,9 @@ export default async function ProjectManagePage(props: {
   );
   const project: any = projectData;
 
-  // Fetch all users for the assignee dropdown, but we only want to show Editors (role === USER)
+  // Fetch all users for the assignee dropdown (Editors, Reviewers, Admins)
   const { data: usersData } = await apiServer.get(`/users`);
   const allUsers: any[] = (usersData as any) || [];
-  const editorUsers = allUsers.filter((u) => u.role === "USER");
 
   if (!project) {
     return (
@@ -80,7 +79,7 @@ export default async function ProjectManagePage(props: {
         <SpreadsheetManager
           projectId={project.id}
           initialClips={initialClips}
-          users={editorUsers || []}
+          users={allUsers || []}
         />
       </div>
     </div>
