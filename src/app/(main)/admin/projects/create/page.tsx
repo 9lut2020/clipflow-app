@@ -1,0 +1,116 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCreateProject } from "@/hooks/use-api";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Plus } from "lucide-react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
+
+export default function CreateProjectPage() {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const { createProject, isCreating: isLoading } = useCreateProject();
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+  });
+
+  // Verify Admin role (in real app, this should also be protected via middleware/server)
+  if (session?.user?.role === "USER") {
+    return <div className="p-8 text-center text-red-500">Access Denied</div>;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name) return;
+    
+    try {
+      const result = await createProject({
+        name: formData.name,
+        description: formData.description,
+        lineGroupId: "" // mock since the original didn't use it
+      });
+      
+      if (result.data?.id) {
+        toast.success("สร้างโปรเจกต์ใหม่เรียบร้อยแล้ว");
+        router.push(`/admin/projects/${result.data.id}/manage`);
+      } else {
+        toast.error("Failed to create project");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred");
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-w-2xl mx-auto pb-20 lg:pb-0">
+      <div className="flex items-center gap-4">
+        <Link href="/projects">
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+            <ArrowLeft size={18} />
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">สร้างโปรเจกต์ใหม่</h1>
+          <p className="text-slate-500 text-sm mt-0.5">กำหนดชื่อและรายละเอียดของรายการ</p>
+        </div>
+      </div>
+
+      <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+        <form onSubmit={handleSubmit}>
+          <CardContent className="p-6 space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-slate-700 font-bold">ชื่อโปรเจกต์ (รายการ) <span className="text-rose-500">*</span></Label>
+              <Input 
+                id="name" 
+                placeholder="เช่น ซีรีส์บทเรียนจากอัลกุรอาน" 
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                required
+                className="rounded-xl border-slate-200 focus-visible:ring-blue-500"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-slate-700 font-bold">รายละเอียด (ตัวเลือก)</Label>
+              <Textarea 
+                id="description" 
+                placeholder="คำอธิบายสั้นๆ เกี่ยวกับโปรเจกต์นี้..." 
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                rows={4}
+                className="rounded-xl border-slate-200 focus-visible:ring-blue-500 resize-none"
+              />
+            </div>
+          </CardContent>
+          <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+            <Link href="/projects">
+              <Button type="button" variant="outline" className="rounded-xl border-slate-200 text-slate-600 font-bold hover:bg-slate-100">
+                ยกเลิก
+              </Button>
+            </Link>
+            <Button 
+              type="submit" 
+              disabled={isLoading || !formData.name}
+              className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-sm px-6"
+            >
+              {isLoading ? "กำลังบันทึก..." : (
+                <>
+                  <Plus size={16} className="mr-2" /> สร้างโปรเจกต์
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </Card>
+    </div>
+  );
+}

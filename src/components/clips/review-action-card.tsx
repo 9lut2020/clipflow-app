@@ -1,0 +1,354 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { useRouter } from "next/navigation";
+import { useSubmitRevision, useSubmitReview } from "@/hooks/use-api";
+import { toast } from "sonner";
+import ReviewConfirmModal, {
+  type ReviewConfirmAction,
+} from "@/components/clips/review-confirm-modal";
+import { validateVideoUrl } from "@/lib/url-validator";
+
+interface ReviewActionCardProps {
+  clip: any;
+  isUser: boolean;
+  reviewerId: string;
+  currentTimeFormatted?: string;
+  currentTimeSeconds?: number;
+}
+
+export default function ReviewActionCard({
+  clip,
+  isUser,
+  reviewerId,
+  currentTimeFormatted,
+  currentTimeSeconds,
+}: ReviewActionCardProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { submitRevision, isSubmitting: isSubmittingRevision } =
+    useSubmitRevision();
+  const { submitReview, isSubmitting: isSubmittingReview } = useSubmitReview();
+  const isLoading = isSubmittingRevision || isSubmittingReview;
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Reviewer shortcuts
+      if (
+        !isUser &&
+        (clip.status === "PENDING_REVIEW" ||
+          clip.status === "IN_REVIEW" ||
+          clip.status === "NEEDS_REVISION")
+      ) {
+        // Ctrl + Enter (Approve)
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          handleApprove();
+        }
+        // Alt + Enter (Reject)
+        if (e.altKey && e.key === "Enter") {
+          e.preventDefault();
+          handleReject();
+        }
+      }
+
+      // User shortcuts (Resubmit)
+      if (isUser && clip.status === "NEEDS_REVISION") {
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+          e.preventDefault();
+          handleResubmit();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [clip.status, isUser, clip.currentRevisionId, clip.id, reviewerId]);
+
+  const router = useRouter();
+  const [confirmAction, setConfirmAction] =
+    useState<ReviewConfirmAction | null>(null);
+
+  const handleApprove = async () => {
+    if (!reviewerId) return;
+    const targetRevId = clip.currentRevisionId || clip.id;
+    try {
+      await submitReview(targetRevId, {
+        status: "APPROVED",
+        comment: textareaRef.current?.value || "ผ่านอนุมัติเรียบร้อย",
+        reviewerId,
+      });
+      toast.success("บันทึกผลตรวจผ่านอนุมัติเรียบร้อยแล้ว");
+      setConfirmAction(null);
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err?.message || "ไม่สามารถบันทึกผลตรวจได้");
+    }
+  };
+
+  const handleReject = async () => {
+    if (!reviewerId) return;
+    const targetRevId = clip.currentRevisionId || clip.id;
+    try {
+      await submitReview(targetRevId, {
+        status: "NEEDS_REVISION",
+        comment: textareaRef.current?.value || "ส่งกลับให้ปรับปรุงแก้ไข",
+        reviewerId,
+      });
+      toast.success("ส่งกลับให้แก้ไขเรียบร้อยแล้ว");
+      setConfirmAction(null);
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err?.message || "ไม่สามารถส่งกลับให้แก้ไขได้");
+    }
+  };
+
+  const handleResubmit = async () => {
+    if (!reviewerId) return;
+    const driveUrlInput = document.getElementById("resubmitUrl") as HTMLInputElement;
+    const submitNoteInput = document.getElementById("resubmitNote") as HTMLTextAreaElement;
+
+    const driveUrl = driveUrlInput?.value || clip.driveUrl || "";
+    const submitNote = submitNoteInput?.value || "";
+
+    // Validate video link before submitting
+    const validation = validateVideoUrl(driveUrl);
+    if (!validation.valid) {
+      toast.error(validation.message);
+      setConfirmAction(null);
+      return;
+    }
+
+    try {
+      await submitRevision(clip.id, {
+        driveUrl,
+        submitNote,
+        submittedBy: reviewerId,
+      });
+      toast.success("ส่งงานแก้ไขใหม่เรียบร้อยแล้ว!");
+      setConfirmAction(null);
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err?.message || "ไม่สามารถส่งงานแก้ไขได้");
+    }
+  };
+
+  const requestApprove = () => setConfirmAction("APPROVE");
+  const requestReject = () => {
+    if (!textareaRef.current?.value) {
+      toast.error("กรุณากรอกข้อเสนอแนะสิ่งที่ต้องแก้ไขก่อนตีกลับ");
+      textareaRef.current?.focus();
+      return;
+    }
+    setConfirmAction("REJECT");
+  };
+  const requestResubmit = () => {
+    const driveUrlInput = document.getElementById("resubmitUrl") as HTMLInputElement;
+    const driveUrl = driveUrlInput?.value;
+
+    const validation = validateVideoUrl(driveUrl || clip.driveUrl || "");
+    if (!validation.valid) {
+      toast.error(validation.message);
+      return;
+    }
+
+    setConfirmAction("RESUBMIT");
+  };
+
+  if (isUser && clip.status === "NEEDS_REVISION") {
+    return (
+      <>
+        {confirmAction && (
+          <ReviewConfirmModal
+            action={confirmAction}
+            isLoading={isLoading}
+            onCancel={() => setConfirmAction(null)}
+            onConfirm={
+              confirmAction === "APPROVE"
+                ? handleApprove
+                : confirmAction === "REJECT"
+                  ? handleReject
+                  : handleResubmit
+            }
+          />
+        )}
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 lg:p-0 lg:static lg:bg-white lg:border lg:border-l-4 lg:border-l-rose-500 lg:rounded-2xl lg:shadow-sm lg:overflow-hidden animate-in slide-in-from-bottom-4 lg:slide-in-from-bottom-0">
+          <div className="hidden lg:flex px-6 py-4 border-b border-slate-100 justify-between items-center bg-rose-50/30">
+            <div>
+              <h2 className="text-lg font-bold text-slate-800">
+                ส่งงานแก้ไข (Resubmit Revision)
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                วางลิงก์ Google Drive ใหม่ที่แก้ไขแล้ว เพื่อส่งให้ผู้ตรวจเช็คอีกครั้ง
+              </p>
+            </div>
+            <div className="hidden sm:flex items-center gap-1 text-[10px] text-slate-400 bg-white px-2 py-1 rounded-md border border-slate-200 shadow-sm">
+              <span>กด</span>
+              <kbd className="font-mono bg-slate-50 px-1 py-0.5 rounded border border-slate-200">
+                Ctrl
+              </kbd>
+              <span>+</span>
+              <kbd className="font-mono bg-slate-50 px-1 py-0.5 rounded border border-slate-200">
+                Enter
+              </kbd>
+              <span>เพื่อส่งงาน</span>
+            </div>
+          </div>
+
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold text-slate-800">ส่งงานแก้ไขใหม่</h2>
+          </div>
+
+          <div className="lg:p-6 space-y-4 lg:space-y-5 max-h-[40vh] lg:max-h-none overflow-y-auto custom-scrollbar">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 hidden lg:block">
+                Google Drive URL ที่แก้ไขแล้ว
+              </label>
+              <input
+                id="resubmitUrl"
+                type="text"
+                defaultValue={clip.driveUrl || ""}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all text-sm"
+                placeholder="https://drive.google.com/..."
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 hidden lg:block">
+                หมายเหตุการแก้ไข
+              </label>
+              <Textarea
+                id="resubmitNote"
+                className="rounded-xl border-slate-200 bg-slate-50 focus:bg-white focus:ring-rose-500/20 focus:border-rose-500 text-sm resize-none"
+                placeholder="เช่น แก้ไขช่วง 01:20 ตามคำแนะนำเรียบร้อยแล้วครับ"
+                rows={2}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={requestResubmit}
+              className="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-sm transition-all text-sm cursor-pointer"
+            >
+              ส่งงานตรวจอีกครั้ง 🚀
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (
+    !isUser &&
+    (clip.status === "PENDING_REVIEW" ||
+      clip.status === "IN_REVIEW" ||
+      clip.status === "NEEDS_REVISION")
+  ) {
+    return (
+      <>
+        {confirmAction && (
+          <ReviewConfirmModal
+            action={confirmAction}
+            isLoading={isLoading}
+            onCancel={() => setConfirmAction(null)}
+            onConfirm={
+              confirmAction === "APPROVE"
+                ? handleApprove
+                : confirmAction === "REJECT"
+                  ? handleReject
+                  : handleResubmit
+            }
+          />
+        )}
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 lg:p-0 lg:static lg:bg-white lg:border lg:border-l-4 lg:border-l-sky-500 lg:rounded-2xl lg:shadow-sm lg:overflow-hidden animate-in slide-in-from-bottom-4 lg:slide-in-from-bottom-0">
+          <div className="hidden lg:flex px-6 py-4 border-b border-slate-100 justify-between items-center bg-sky-50/30">
+            <div>
+              <h2 className="text-lg font-bold text-slate-800">
+                ผลการตรวจทานคลิป (Review Action)
+              </h2>
+            </div>
+            <div className="hidden sm:flex items-center gap-3">
+              <div className="flex items-center gap-1 text-[10px] text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200 shadow-sm">
+                <span className="text-rose-500 font-bold">❌ ตีกลับ:</span>
+                <kbd className="font-mono bg-slate-50 px-1 py-0.5 rounded border border-slate-200">
+                  Alt
+                </kbd>
+                <span>+</span>
+                <kbd className="font-mono bg-slate-50 px-1 py-0.5 rounded border border-slate-200">
+                  Enter
+                </kbd>
+              </div>
+              <div className="flex items-center gap-1 text-[10px] text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200 shadow-sm">
+                <span className="text-emerald-600 font-bold">✅ ผ่าน:</span>
+                <kbd className="font-mono bg-slate-50 px-1 py-0.5 rounded border border-slate-200">
+                  Ctrl
+                </kbd>
+                <span>+</span>
+                <kbd className="font-mono bg-slate-50 px-1 py-0.5 rounded border border-slate-200">
+                  Enter
+                </kbd>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold text-slate-800">ดำเนินการตรวจ</h2>
+          </div>
+
+          <div className="lg:p-6 space-y-4 lg:space-y-5 max-h-[40vh] lg:max-h-none overflow-y-auto custom-scrollbar">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-bold text-slate-700 hidden lg:block">
+                  ข้อเสนอแนะ / สิ่งที่ต้องแก้ไข
+                </label>
+                {currentTimeFormatted && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (textareaRef.current) {
+                        const cur = textareaRef.current.value;
+                        textareaRef.current.value = cur
+                          ? `[${currentTimeFormatted}] ${cur}`
+                          : `[${currentTimeFormatted}] `;
+                        textareaRef.current.focus();
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-all cursor-pointer shadow-2xs"
+                  >
+                    <span>📌 ปักหมุดเวลา</span>
+                    <span className="font-mono text-amber-900">({currentTimeFormatted})</span>
+                  </button>
+                )}
+              </div>
+              <Textarea
+                ref={textareaRef}
+                autoFocus
+                className="rounded-xl border-slate-200 bg-slate-50 focus:bg-white focus:ring-sky-500/20 focus:border-sky-500 text-sm resize-none"
+                placeholder="พิมพ์สิ่งที่ต้องแก้ไขให้ทีมตัดต่อ หรือกดปุ่มปักหมุดเวลาเพื่อระบุวินาที..."
+                rows={2}
+              />
+            </div>
+            <div className="flex gap-3 lg:gap-4">
+              <button
+                type="button"
+                onClick={requestReject}
+                className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-xl font-bold shadow-sm transition-all text-sm cursor-pointer"
+              >
+                ✕ ส่งกลับแก้ไข
+              </button>
+              <button
+                type="button"
+                onClick={requestApprove}
+                className="flex-1 flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-sm transition-all text-sm cursor-pointer"
+              >
+                ✓ ผ่านอนุมัติ
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return null;
+}
