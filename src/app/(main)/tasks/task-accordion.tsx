@@ -8,11 +8,13 @@ import {
   PlayCircle,
   CheckCircle2,
   ChevronRight,
+  Film,
 } from "lucide-react";
 import { Clip } from "@/types/api";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import PlatformBadge from "@/components/ui/platform-badge";
+import { extractThumbnailUrl } from "@/lib/thumbnail-helper";
 
 interface TaskAccordionSectionProps {
   title: string;
@@ -135,6 +137,31 @@ export function TaskAccordionSection({
               className="block group"
             >
               <Card className="h-full hover:border-blue-400 hover:shadow-md transition-all duration-200 bg-white border-slate-200/80 overflow-hidden">
+                {/* Auto-Thumbnail */}
+                {(() => {
+                  const thumb = extractThumbnailUrl(clip.driveUrl);
+                  return thumb.url ? (
+                    <div className="relative w-full h-28 sm:h-32 overflow-hidden bg-slate-100">
+                      <img
+                        src={thumb.url}
+                        alt={clip.name}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    </div>
+                  ) : (
+                    <div className={`w-full h-20 flex items-center justify-center ${
+                      clip.platform === "YOUTUBE" ? "bg-red-50" :
+                      clip.platform === "FB_REEL" ? "bg-blue-50" :
+                      "bg-slate-100"
+                    }`}>
+                      <Film size={28} className="text-slate-300" />
+                    </div>
+                  );
+                })()}
                 <CardContent className="p-3.5 md:p-4">
                   <div className="flex justify-between items-center mb-2 gap-2">
                     <span className="text-[10px] md:text-xs font-bold text-slate-600 uppercase tracking-wider truncate">

@@ -54,6 +54,7 @@ export interface Clip {
   // Raw IDs (still available for filtering in list endpoints)
   episodeId?: string;
   ownerId?: string;
+  driveUrl?: string | null;
 }
 
 export type PlatformType = "TIKTOK" | "YOUTUBE" | "FB_REEL" | "IG_SQUARE" | "OTHER";

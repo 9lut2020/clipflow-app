@@ -33,7 +33,7 @@ export default function ReviewActionCard({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Reviewer shortcuts
+      // Reviewer shortcuts (Trigger Confirmation Modal first)
       if (
         !isUser &&
         (clip.status === "PENDING_REVIEW" ||
@@ -43,12 +43,12 @@ export default function ReviewActionCard({
         // Ctrl + Enter (Approve)
         if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
-          handleApprove();
+          requestApprove();
         }
         // Alt + Enter (Reject)
         if (e.altKey && e.key === "Enter") {
           e.preventDefault();
-          handleReject();
+          requestReject();
         }
       }
 
@@ -56,7 +56,7 @@ export default function ReviewActionCard({
       if (isUser && clip.status === "NEEDS_REVISION") {
         if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
           e.preventDefault();
-          handleResubmit();
+          requestResubmit();
         }
       }
     };
