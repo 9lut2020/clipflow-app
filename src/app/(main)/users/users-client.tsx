@@ -15,6 +15,7 @@ import {
   Power,
   AlertCircle,
   Clock,
+  Loader2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { format } from "date-fns";
@@ -707,7 +708,14 @@ export function UsersClient({ initialUsers, currentUserId }: UsersClientProps) {
                 disabled={isUpdating}
                 className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
-                {isUpdating ? "กำลังบันทึก..." : "บันทึกข้อมูล"}
+                {isUpdating ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    กำลังบันทึก...
+                  </>
+                ) : (
+                  "บันทึกข้อมูล"
+                )}
               </button>
             </div>
           </div>

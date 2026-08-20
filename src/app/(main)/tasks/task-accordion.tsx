@@ -14,7 +14,7 @@ import { Clip } from "@/types/api";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import PlatformBadge from "@/components/ui/platform-badge";
-import { extractThumbnailUrl } from "@/lib/thumbnail-helper";
+import { extractThumbnailUrl } from "@/utils/thumbnail-helper";
 
 interface TaskAccordionSectionProps {
   title: string;

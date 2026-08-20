@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { MessageSquare, CheckCircle, History, Clock, ExternalLink, Play, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 
 interface Review {
   id?: string;

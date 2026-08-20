@@ -16,9 +16,12 @@ import {
   BarChart3,
   ChevronRight,
   Search,
+  SearchX,
   Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface MainDashboardProps {
   clips: Clip[];
@@ -179,65 +182,7 @@ export function MainDashboard({
     (a, b) => b.approved - a.approved,
   );
 
-  const UserAvatar = ({
-    name,
-    pictureUrl,
-    size = "w-7 h-7",
-  }: {
-    name: string;
-    pictureUrl?: string | null;
-    size?: string;
-  }) => {
-    if (pictureUrl) {
-      return (
-        <img
-          src={pictureUrl}
-          alt={name}
-          className={`${size} rounded-full object-cover border border-slate-200 shrink-0 shadow-xs`}
-        />
-      );
-    }
-    return (
-      <div
-        className={`${size} rounded-full bg-gradient-to-tr from-slate-700 to-slate-500 text-white font-bold flex items-center justify-center shrink-0 border border-slate-200 shadow-xs text-[10px]`}
-      >
-        {name[0] || "?"}
-      </div>
-    );
-  };
 
-  const StatusBadge = ({ status }: { status: string }) => {
-    if (status === "APPROVED") {
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          ผ่านอนุมัติ
-        </span>
-      );
-    }
-    if (status === "NEEDS_REVISION") {
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
-          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-          สั่งแก้ไข
-        </span>
-      );
-    }
-    if (status === "IN_REVIEW") {
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 border border-sky-200">
-          <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
-          กำลังตรวจ
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-        รอตรวจทาน
-      </span>
-    );
-  };
 
   return (
     <div className="space-y-4 md:space-y-6 max-w-full mx-auto pb-20 md:pb-16">
@@ -615,8 +560,16 @@ export function MainDashboard({
 
         <CardContent className="p-0">
           {filteredClips.length === 0 ? (
-            <div className="py-10 text-center text-slate-400 font-medium text-xs md:text-sm">
-              ไม่พบรายการคลิปที่ตรงตามเงื่อนไข
+            <div className="py-12 flex flex-col items-center justify-center text-center">
+              <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                <SearchX size={24} className="text-slate-400" />
+              </div>
+              <p className="text-slate-500 font-bold text-sm">
+                ไม่พบรายการคลิปที่ตรงตามเงื่อนไข
+              </p>
+              <p className="text-slate-400 text-xs mt-1 max-w-[200px]">
+                ลองเปลี่ยนคำค้นหาหรือตัวกรองสถานะด้านบน
+              </p>
             </div>
           ) : (
             <>

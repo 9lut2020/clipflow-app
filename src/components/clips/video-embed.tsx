@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Maximize2, X, ExternalLink, Play, Film, AlertCircle, Video } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 
 interface VideoEmbedProps {
   url: string;

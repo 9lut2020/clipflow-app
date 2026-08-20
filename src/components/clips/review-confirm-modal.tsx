@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 
 export type ReviewConfirmAction = "APPROVE" | "REJECT" | "RESUBMIT";
 
@@ -88,9 +88,16 @@ export default function ReviewConfirmModal({
           <button
             onClick={onConfirm}
             disabled={isLoading}
-            className={`flex-1 py-2.5 rounded-xl font-bold transition-all shadow-sm ${meta.confirmClass} ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`}
+            className={`flex-1 py-2.5 rounded-xl font-bold transition-all shadow-sm flex items-center justify-center gap-2 ${meta.confirmClass} ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`}
           >
-            {isLoading ? "กำลังดำเนินการ..." : meta.confirmText}
+            {isLoading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                กำลังดำเนินการ...
+              </>
+            ) : (
+              meta.confirmText
+            )}
           </button>
         </div>
       </div>

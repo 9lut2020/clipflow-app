@@ -3,12 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
-import { useSubmitRevision, useSubmitReview } from "@/hooks/use-api";
+import { useSubmitRevision, useSubmitReview } from "@/features/reviews/hooks/use-reviews";
 import { toast } from "sonner";
 import ReviewConfirmModal, {
   type ReviewConfirmAction,
 } from "@/components/clips/review-confirm-modal";
-import { validateVideoUrl } from "@/lib/url-validator";
+import { validateVideoUrl } from "@/utils/url-validator";
 
 interface ReviewActionCardProps {
   clip: any;

@@ -19,22 +19,28 @@ import {
   ShieldCheck,
   Calendar,
   Sparkles,
+  UserX,
+  FolderX,
+  ServerCrash,
 } from "lucide-react";
 
 interface AnalyticsClientProps {
   clips: Clip[];
   projects: Project[];
   users: User[];
+  dailyMetrics?: any[];
 }
 
 export function AnalyticsClient({
   clips,
   projects,
   users,
+  dailyMetrics = [],
 }: AnalyticsClientProps) {
   const [timeRange, setTimeRange] = useState<
     "7d" | "30d" | "this_month" | "all"
   >("all");
+  const [activeTab, setActiveTab] = useState<"overview" | "system">("overview");
 
   // Filter clips based on selected time range
   const now = new Date();
@@ -256,8 +262,34 @@ export function AnalyticsClient({
           ))}
         </div>
       </div>
+      
+      {/* ─── TABS ──────────────────────────────────────────────────────────── */}
+      <div className="flex gap-4 border-b border-slate-200">
+        <button
+          onClick={() => setActiveTab("overview")}
+          className={`pb-2 text-sm font-bold transition-all ${
+            activeTab === "overview"
+              ? "text-blue-600 border-b-2 border-blue-600"
+              : "text-slate-500 hover:text-slate-700"
+          }`}
+        >
+          Executive Overview
+        </button>
+        <button
+          onClick={() => setActiveTab("system")}
+          className={`pb-2 text-sm font-bold transition-all ${
+            activeTab === "system"
+              ? "text-blue-600 border-b-2 border-blue-600"
+              : "text-slate-500 hover:text-slate-700"
+          }`}
+        >
+          Funnel & System Health
+        </button>
+      </div>
 
-      {/* ─── 2. 4 EXECUTIVE KPI GAUGE CARDS ──────────────────────────────────── */}
+      {activeTab === "overview" ? (
+        <>
+          {/* ─── 2. 4 EXECUTIVE KPI GAUGE CARDS ──────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {/* KPI 1: First-Pass Approval Rate */}
         <Card className="bg-white border-slate-200/80 shadow-xs">
@@ -488,8 +520,12 @@ export function AnalyticsClient({
 
           <CardContent className="p-0 overflow-x-auto">
             {creatorLeaderboard.length === 0 ? (
-              <div className="py-10 text-center text-slate-400 font-medium text-xs">
-                ไม่พบข้อมูลนักตัดต่อ
+              <div className="py-12 flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                  <UserX size={24} className="text-slate-400" />
+                </div>
+                <p className="text-slate-500 font-bold text-sm">ไม่พบข้อมูลนักตัดต่อ</p>
+                <p className="text-slate-400 text-xs mt-1">ยังไม่มีผู้ใช้ใดที่เคยส่งคลิปในระบบ</p>
               </div>
             ) : (
               <table className="w-full text-left border-collapse">
@@ -576,8 +612,12 @@ export function AnalyticsClient({
 
           <CardContent className="p-4 md:p-5 space-y-4">
             {projects.length === 0 ? (
-              <div className="py-8 text-center text-slate-400 font-medium text-xs">
-                ไม่พบโปรเจกต์ในระบบ
+              <div className="py-12 flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                  <FolderX size={24} className="text-slate-400" />
+                </div>
+                <p className="text-slate-500 font-bold text-sm">ไม่พบซีรีส์ในระบบ</p>
+                <p className="text-slate-400 text-xs mt-1">รอการสร้างโปรเจกต์ใหม่จากผู้ดูแล</p>
               </div>
             ) : (
               projects.slice(0, 5).map((proj) => {
@@ -619,6 +659,78 @@ export function AnalyticsClient({
           </CardContent>
         </Card>
       </div>
+        </>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          {/* FUNNEL CHART */}
+          <Card className="bg-white border-slate-200/80 shadow-xs overflow-hidden">
+            <CardHeader className="p-4 border-b border-slate-100 flex flex-row items-center justify-between">
+              <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <Target size={18} className="text-blue-600" />
+                <span>Production Funnel (คลิปในระบบ)</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                {[
+                  { label: "ร่าง (DRAFT)", count: filteredClips.filter(c => c.status === "DRAFT").length, color: "bg-slate-300" },
+                  { label: "รอตรวจ (PENDING_REVIEW)", count: pendingClips.length, color: "bg-blue-400" },
+                  { label: "ตรวจแล้วแก้ไข (NEEDS_REVISION)", count: revisionClips.length, color: "bg-rose-400" },
+                  { label: "ผ่านอนุมัติ (APPROVED)", count: approvedClips.length, color: "bg-emerald-500" },
+                ].map((step, idx, arr) => {
+                  const max = arr[0].count || 1;
+                  const pct = Math.round((step.count / max) * 100) || 0;
+                  return (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex justify-between text-xs font-bold text-slate-700">
+                        <span>{step.label}</span>
+                        <span>{step.count} ({pct}%)</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                        <div className={`h-full ${step.color} transition-all duration-500`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* SYSTEM HEALTH */}
+          <Card className="bg-white border-slate-200/80 shadow-xs overflow-hidden">
+            <CardHeader className="p-4 border-b border-slate-100 flex flex-row items-center justify-between">
+              <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <ShieldCheck size={18} className="text-emerald-600" />
+                <span>System Health & Events</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 text-sm">
+              <p className="text-slate-500 mb-4">ข้อมูลเหตุการณ์จาก Analytics Backend</p>
+              {dailyMetrics.length === 0 ? (
+                <div className="py-12 flex flex-col items-center justify-center text-center">
+                  <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                    <ServerCrash size={24} className="text-slate-400" />
+                  </div>
+                  <p className="text-slate-500 font-bold text-sm">ยังไม่มีข้อมูล Metrics</p>
+                  <p className="text-slate-400 text-xs mt-1">สถิติระบบจะถูกคำนวณและสรุปในเวลาเที่ยงคืน</p>
+                </div>
+              ) : (
+                <ul className="space-y-3">
+                  {dailyMetrics.map((m, idx) => (
+                    <li key={idx} className="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                      <div>
+                        <span className="font-bold text-slate-700">{m.metricName}</span>
+                        <span className="text-xs text-slate-500 ml-2">({m.dimension})</span>
+                      </div>
+                      <span className="font-black text-blue-600">{m.value}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

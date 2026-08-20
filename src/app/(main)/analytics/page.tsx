@@ -13,15 +13,17 @@ export default async function AnalyticsPage() {
   }
 
   // Fetch clips, projects, users
-  const [clipsRes, projectsRes, usersRes] = await Promise.all([
+  const [clipsRes, projectsRes, usersRes, metricsRes] = await Promise.all([
     apiServer.get<Clip[]>("/clips"),
     apiServer.get<Project[]>("/projects"),
     apiServer.get<User[]>("/users").catch(() => ({ data: [] })),
+    apiServer.get<any[]>("/analytics/metrics").catch(() => ({ data: [] })),
   ]);
 
   const clips = clipsRes.data || [];
   const projects = projectsRes.data || [];
   const users = usersRes.data || [];
+  const dailyMetrics = metricsRes.data || [];
 
-  return <AnalyticsClient clips={clips} projects={projects} users={users} />;
+  return <AnalyticsClient clips={clips} projects={projects} users={users} dailyMetrics={dailyMetrics} />;
 }

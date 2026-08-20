@@ -6,7 +6,8 @@ import {
   Settings,
   ClipboardList,
   BarChart3,
-  Bell
+  Bell,
+  ShieldCheck
 } from 'lucide-react';
 
 export interface SidebarMenuItem {
@@ -73,6 +74,7 @@ export function getSidebarMenu(role: string): { section: string; items: SidebarM
         section: "System",
         items: [
           { title: "ศูนย์แจ้งเตือน", href: "/notifications", icon: Bell },
+          { title: "ประวัติระบบ", href: "/admin/audit-logs", icon: ShieldCheck },
           { title: "จัดการผู้ใช้งาน", href: "/users", icon: Users },
           { title: "ตั้งค่าระบบ", href: "/settings", icon: Settings },
         ],

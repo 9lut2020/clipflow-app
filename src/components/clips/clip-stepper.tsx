@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Clock, UploadCloud, Eye, AlertCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 
 type ClipStatus = "DRAFT" | "PENDING_REVIEW" | "IN_REVIEW" | "NEEDS_REVISION" | "APPROVED";
 

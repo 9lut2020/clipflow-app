@@ -138,7 +138,10 @@ export default function ClipViewClient({
             </div>
           </div>
         </div>
+      </div>
 
+      {/* Right Column (1/3 width): Review Action Card -> Revision Timeline */}
+      <div className="lg:col-span-1 flex flex-col gap-4 sm:gap-6">
         {/* Review Action Card */}
         <ReviewActionCard
           clip={clip}
@@ -147,10 +150,6 @@ export default function ClipViewClient({
           currentTimeFormatted={currentTimeFormatted}
           currentTimeSeconds={currentTimeSeconds}
         />
-      </div>
-
-      {/* Right Column (1/3 width): Revision Timeline */}
-      <div className="lg:col-span-1">
         <RevisionTimeline
           revisions={allRevisions}
           className="sticky top-24"

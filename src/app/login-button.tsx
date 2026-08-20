@@ -3,11 +3,19 @@
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { useAnalytics } from "@/hooks/use-analytics";
 
 export default function LoginButton() {
+  const { trackEvent } = useAnalytics();
+
+  const handleLogin = () => {
+    trackEvent({ eventName: "login_initiated" });
+    signIn("line", { callbackUrl: "/dashboard" });
+  };
+
   return (
     <Button
-      onClick={() => signIn("line", { callbackUrl: "/dashboard" })}
+      onClick={handleLogin}
       className="w-full gap-2 bg-white hover:bg-gray-50 cursor-pointer text-[#00B900] text-lg h-14 rounded-2xl shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
     >
       <Image

@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Sidebar from "@/components/app-layout/layout/sidebar";
 import Topbar from "@/components/app-layout/layout/topbar";
 import BottomNav from "@/components/liff/bottom-nav";
+import { useAnalytics } from "@/hooks/use-analytics";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function MainLayoutClient({
   children,
@@ -12,10 +15,18 @@ export default function MainLayoutClient({
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const pathname = usePathname();
+  const { trackEvent } = useAnalytics();
+
+  useEffect(() => {
+    if (pathname) {
+      trackEvent({ eventName: "page_view", properties: { path: pathname } });
+    }
+  }, [pathname, trackEvent]);
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50 text-gray-900">
-      <Suspense fallback={<div className="w-[72px] bg-white border-r"></div>}>
+      <Suspense fallback={<Skeleton className="w-[72px] h-full rounded-none" />}>
         <Sidebar
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}

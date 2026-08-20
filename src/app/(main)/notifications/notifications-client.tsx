@@ -14,6 +14,7 @@ import {
   Info,
   QrCode,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
 
 interface NotificationsClientProps {
@@ -299,10 +300,17 @@ export function NotificationsClient({ clips }: NotificationsClientProps) {
                 onClick={handleTestLineNotify}
                 className="w-full py-2.5 text-xs font-bold text-emerald-700 bg-emerald-100/70 hover:bg-emerald-200/80 border border-emerald-300 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-2xs"
               >
-                <Send size={14} />
-                {isTestingLine
-                  ? "กำลังส่งเข้า LINE..."
-                  : "ทดสอบส่งแจ้งเตือนเข้า LINE บัญชีของคุณ"}
+                {isTestingLine ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    กำลังส่งเข้า LINE...
+                  </>
+                ) : (
+                  <>
+                    <Send size={14} />
+                    ทดสอบส่งแจ้งเตือนเข้า LINE บัญชีของคุณ
+                  </>
+                )}
               </button>
             </CardContent>
           </Card>

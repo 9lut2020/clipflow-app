@@ -2,12 +2,9 @@
 
 import { useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
-import {
-  useProjects,
-  useEpisodes,
-  useClips,
-  useSubmitRevision,
-} from "@/hooks/use-api";
+import { useProjects, useEpisodes } from "@/features/projects/hooks/use-projects";
+import { useClips } from "@/features/clips/hooks/use-clips";
+import { useSubmitRevision } from "@/features/reviews/hooks/use-reviews";
 import {
   UploadCloud,
   Folder,
@@ -17,7 +14,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { validateVideoUrl } from "@/lib/url-validator";
+import { validateVideoUrl } from "@/utils/url-validator";
 import { Button } from "@/components/ui/button";
 
 function SubmitForm() {
@@ -245,9 +242,20 @@ function SubmitForm() {
   );
 }
 
+import { Skeleton } from "@/components/ui/skeleton";
+
 export default function SubmitPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-slate-400 font-bold">กำลังโหลด...</div>}>
+    <Suspense 
+      fallback={
+        <div className="mx-auto max-w-full pb-24 space-y-6">
+          <Skeleton className="h-16 w-full rounded-2xl" />
+          <Skeleton className="h-64 w-full rounded-2xl" />
+          <Skeleton className="h-48 w-full rounded-2xl" />
+          <Skeleton className="h-12 w-full rounded-xl" />
+        </div>
+      }
+    >
       <SubmitForm />
     </Suspense>
   );

@@ -130,3 +130,26 @@ export interface ApiResponse<T = any> {
     page: number;
   };
 }
+
+export interface AuditLog {
+  id: string;
+  action: string;
+  oldStatus?: string | null;
+  newStatus?: string | null;
+  metadata?: any;
+  createdAt: string;
+  user?: {
+    id: string;
+    displayName: string;
+    pictureUrl?: string | null;
+    role: string;
+  } | null;
+  clip?: {
+    id: string;
+    name: string;
+  } | null;
+  revision?: {
+    id: string;
+    revisionNo: number;
+  } | null;
+}

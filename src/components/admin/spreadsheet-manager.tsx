@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { useBatchCreateClips } from "@/hooks/use-api";
-import { Save, Plus, Trash2, FileText, X, ChevronDown } from "lucide-react";
+import { useBatchCreateClips } from "@/features/clips/hooks/use-clips";
+import { Save, Plus, Trash2, FileText, X, ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -400,10 +400,17 @@ export default function SpreadsheetManager({
             disabled={isSaving}
             className="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm h-8 px-2 sm:px-4 ml-auto"
           >
-            <Save size={14} className="mr-1 sm:mr-1.5 shrink-0" />
-            <span className="text-xs sm:text-sm whitespace-nowrap">
-              {isSaving ? "กำลังบันทึก..." : "บันทึกทั้งหมด"}
-            </span>
+            {isSaving ? (
+              <>
+                <Loader2 size={14} className="mr-1 sm:mr-1.5 shrink-0 animate-spin" />
+                <span className="text-xs sm:text-sm whitespace-nowrap">กำลังบันทึก...</span>
+              </>
+            ) : (
+              <>
+                <Save size={14} className="mr-1 sm:mr-1.5 shrink-0" />
+                <span className="text-xs sm:text-sm whitespace-nowrap">บันทึกทั้งหมด</span>
+              </>
+            )}
           </Button>
         </div>
       </div>

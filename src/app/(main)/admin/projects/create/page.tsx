@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCreateProject } from "@/hooks/use-api";
+import { useCreateProject } from "@/features/projects/hooks/use-projects";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
@@ -102,7 +102,11 @@ export default function CreateProjectPage() {
               disabled={isLoading || !formData.name}
               className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-sm px-6"
             >
-              {isLoading ? "กำลังบันทึก..." : (
+              {isLoading ? (
+                <>
+                  <Loader2 size={16} className="mr-2 animate-spin" /> กำลังบันทึก...
+                </>
+              ) : (
                 <>
                   <Plus size={16} className="mr-2" /> สร้างโปรเจกต์
                 </>

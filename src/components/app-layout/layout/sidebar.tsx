@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getSidebarMenu } from "@/lib/constants";
@@ -9,8 +9,12 @@ import {
   ChevronRight,
   ChevronsUpDown,
   FileText,
+  User,
+  LogOut,
+  Loader2,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
+import { useAnalytics } from "@/hooks/use-analytics";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -37,6 +41,31 @@ export default function Sidebar({
   const [menuExpanded, setMenuExpanded] = useState<Record<string, boolean>>({
     Main: true,
   });
+  const [bottomMenuOpen, setBottomMenuOpen] = useState(false);
+  const [isLiffClient, setIsLiffClient] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { trackEvent } = useAnalytics();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const ua =
+        navigator.userAgent || navigator.vendor || (window as any).opera;
+      setIsLiffClient(ua.indexOf("Line") > -1);
+    }
+  }, []);
+
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    trackEvent({ eventName: "user_logout" });
+    try {
+      await signOut({ callbackUrl: "/login" });
+    } catch (error) {
+      console.error(error);
+      setIsLoggingOut(false);
+    }
+  };
 
   const isCollapsedState = isCollapsed && !isOpen;
   const sidebarMenu = getSidebarMenu(currentUser.role as any);
@@ -213,6 +242,114 @@ export default function Sidebar({
                 </div>
               </div>
             ))}
+
+            {/* Bottom Fixed User Profile */}
+            {!isLiffClient && (
+              <div className="p-2 border-t border-slate-100 relative bg-white">
+                {bottomMenuOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => !isLoggingOut && setBottomMenuOpen(false)}
+                    ></div>
+                    <div
+                      className={`bg-white border border-slate-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200 ${
+                        isCollapsedState
+                          ? "absolute bottom-2 left-[calc(100%+12px)] w-[260px]"
+                          : "absolute bottom-[calc(100%+8px)] left-2 right-2"
+                      }`}
+                    >
+                      {isCollapsedState && (
+                        <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-50">
+                          <div className="w-8 h-8 bg-slate-200 rounded-xl overflow-hidden shrink-0 border border-slate-200">
+                            {currentUser.image ? (
+                              <img
+                                src={currentUser.image}
+                                alt="Avatar"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-slate-500 font-bold text-xs">
+                                {currentUser.name?.[0] || "?"}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[13px] font-bold text-slate-800 truncate">
+                              {currentUser.name}
+                            </span>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded-md w-fit mt-0.5 tracking-wide">
+                              {currentUser.role}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      <div className="py-2">
+                        <Link
+                          href="/settings/profile"
+                          onClick={() => setBottomMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-[13.5px] text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
+                          <User size={16} /> โปรไฟล์
+                        </Link>
+                        <div className="h-px bg-slate-50 my-1 mx-4"></div>
+                        <button
+                          onClick={handleLogout}
+                          disabled={isLoggingOut}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-[13.5px] text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isLoggingOut ? (
+                            <>
+                              <Loader2 size={16} className="animate-spin" />{" "}
+                              กำลังออกจากระบบ...
+                            </>
+                          ) : (
+                            <>
+                              <LogOut size={16} /> ออกจากระบบ
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <button
+                  onClick={() => setBottomMenuOpen(!bottomMenuOpen)}
+                  className="w-full flex items-center p-1 hover:bg-slate-50 rounded-xl transition-colors bg-slate-50/50 overflow-hidden"
+                >
+                  <div className="w-10 h-10 bg-slate-200 rounded-xl overflow-hidden shrink-0 border border-slate-200">
+                    {currentUser.image ? (
+                      <img
+                        src={currentUser.image}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-500 font-bold">
+                        {currentUser.name?.[0] || "?"}
+                      </div>
+                    )}
+                  </div>
+                  <div
+                    className={`flex items-center justify-between flex-1 overflow-hidden transition-all duration-300 ${isCollapsedState ? "max-w-0 opacity-0 ml-0" : "max-w-[400px] opacity-100 ml-3"}`}
+                  >
+                    <div className="flex flex-col items-start min-w-0">
+                      <span className="text-[14px] font-bold text-slate-800 truncate w-full text-left">
+                        {currentUser.name}
+                      </span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded-md mt-0.5 tracking-wide">
+                        {currentUser.role}
+                      </span>
+                    </div>
+                    <ChevronsUpDown
+                      size={16}
+                      className="text-slate-500 shrink-0 ml-2"
+                    />
+                  </div>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </aside>
