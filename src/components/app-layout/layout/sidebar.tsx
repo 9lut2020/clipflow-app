@@ -242,10 +242,12 @@ export default function Sidebar({
                 </div>
               </div>
             ))}
+          </div>
 
+          <div>
             {/* Bottom Fixed User Profile */}
             {!isLiffClient && (
-              <div className="p-2 border-t border-slate-100 relative bg-white">
+              <div className="p-2 border-t border-slate-100 relative bg-white mt-auto">
                 {bottomMenuOpen && (
                   <>
                     <div
@@ -313,7 +315,6 @@ export default function Sidebar({
                     </div>
                   </>
                 )}
-
                 <button
                   onClick={() => setBottomMenuOpen(!bottomMenuOpen)}
                   className="w-full flex items-center p-1 hover:bg-slate-50 rounded-xl transition-colors bg-slate-50/50 overflow-hidden"

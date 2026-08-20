@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { apiServer } from "@/lib/api-server";
 import {
   History,
@@ -9,15 +10,7 @@ import {
   Users,
 } from "lucide-react";
 
-interface ActivityLog {
-  id: string;
-  action: string;
-  entityType: string;
-  entityId: string;
-  meta: Record<string, any>;
-  createdAt: string;
-  actor: { name: string; pictureUrl?: string } | null;
-}
+import { ActivityLog } from "@/types/activity-log";
 
 const ACTION_CONFIG: Record<
   string,
@@ -121,7 +114,8 @@ export default async function AuditLogsPage() {
                         ยังไม่มีประวัติการทำงานในระบบ
                       </p>
                       <p className="text-xs text-slate-400">
-                        เมื่อมีการอัปเดตสถานะคลิปหรือส่งตรวจ ข้อมูลจะปรากฏที่นี่โดยอัตโนมัติ
+                        เมื่อมีการอัปเดตสถานะคลิปหรือส่งตรวจ
+                        ข้อมูลจะปรากฏที่นี่โดยอัตโนมัติ
                       </p>
                     </div>
                   </td>
@@ -139,7 +133,8 @@ export default async function AuditLogsPage() {
                   let detail = "";
                   if (log.meta?.clipName) {
                     detail = `คลิป: ${log.meta.clipName}`;
-                    if (log.meta.projectName) detail += ` (${log.meta.projectName})`;
+                    if (log.meta.projectName)
+                      detail += ` (${log.meta.projectName})`;
                   } else if (log.meta?.targetName) {
                     detail = `ผู้ใช้: ${log.meta.targetName}`;
                     if (log.meta.newRole) detail += ` → ${log.meta.newRole}`;
@@ -179,7 +174,9 @@ export default async function AuditLogsPage() {
                       </td>
                       <td className="px-6 py-4 text-slate-600 text-xs">
                         {detail || (
-                          <span className="text-slate-400 italic">ไม่มีรายละเอียดเพิ่มเติม</span>
+                          <span className="text-slate-400 italic">
+                            ไม่มีรายละเอียดเพิ่มเติม
+                          </span>
                         )}
                       </td>
                     </tr>

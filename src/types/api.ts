@@ -57,7 +57,12 @@ export interface Clip {
   driveUrl?: string | null;
 }
 
-export type PlatformType = "TIKTOK" | "YOUTUBE" | "FB_REEL" | "IG_SQUARE" | "OTHER";
+export type PlatformType =
+  | "TIKTOK"
+  | "YOUTUBE"
+  | "FB_REEL"
+  | "IG_SQUARE"
+  | "OTHER";
 
 export type ClipStatus =
   | "DRAFT"
@@ -121,7 +126,7 @@ export interface ClipRevisionsResponse {
 
 // ─── API Response Wrapper ─────────────────────────────────────────────────
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   status: "success" | "error";
   message: string;
   data: T | null;
@@ -136,7 +141,10 @@ export interface AuditLog {
   action: string;
   oldStatus?: string | null;
   newStatus?: string | null;
-  metadata?: any;
+
+  // เปลี่ยนจาก any เป็น Record<string, unknown> หรือ unknown
+  metadata?: Record<string, unknown>;
+
   createdAt: string;
   user?: {
     id: string;
