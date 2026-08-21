@@ -5,6 +5,7 @@ import NextAuthProvider from "@/components/nextauth-provider";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { Toaster } from "sonner";
+import NextTopLoader from "nextjs-toploader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,6 +34,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <NextTopLoader color="#3b82f6" height={3} showSpinner={false} />
         <NextAuthProvider session={session}>{children}</NextAuthProvider>
         <Toaster position="top-right" richColors closeButton />
       </body>

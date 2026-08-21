@@ -12,6 +12,10 @@ export interface User {
   lastActiveAt?: string;
 }
 
+export interface UserProfileUpdateRequest {
+  displayName: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -57,12 +61,7 @@ export interface Clip {
   driveUrl?: string | null;
 }
 
-export type PlatformType =
-  | "TIKTOK"
-  | "YOUTUBE"
-  | "FB_REEL"
-  | "IG_SQUARE"
-  | "OTHER";
+export type PlatformType = "TIKTOK" | "YOUTUBE" | "FB_REEL" | "IG_SQUARE" | "OTHER";
 
 export type ClipStatus =
   | "DRAFT"
@@ -141,23 +140,20 @@ export interface AuditLog {
   action: string;
   oldStatus?: string | null;
   newStatus?: string | null;
-
-  // เปลี่ยนจาก any เป็น Record<string, unknown> หรือ unknown
-  metadata?: Record<string, unknown>;
-
+  metadata?: any;
   createdAt: string;
-  user?: {
-    id: string;
-    displayName: string;
-    pictureUrl?: string | null;
-    role: string;
-  } | null;
-  clip?: {
-    id: string;
-    name: string;
-  } | null;
-  revision?: {
-    id: string;
-    revisionNo: number;
-  } | null;
+  user?: Pick<User, "id" | "displayName" | "pictureUrl" | "role"> | null;
+  clip?: Pick<Clip, "id" | "name"> | null;
+  revision?: Pick<Revision, "id" | "revisionNo"> | null;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+  linkUrl: string | null;
+  isRead: boolean;
+  createdAt: string;
 }

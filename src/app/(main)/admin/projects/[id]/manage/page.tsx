@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Edit } from "lucide-react";
 import SpreadsheetManager from "@/components/admin/spreadsheet-manager";
+import MembersClient from "./members-client";
 
 export default async function ProjectManagePage(props: {
   params: Promise<{ id: string }>;
@@ -62,7 +63,7 @@ export default async function ProjectManagePage(props: {
     <div className="space-y-6 pb-20 lg:pb-0">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">แผนตรวจคลิปสั้น</h1>
+          <h1 className="text-2xl font-bold tracking-tight">จัดการโปรเจกต์</h1>
           <div className="flex items-center gap-2 mt-0.5">
             <p className="text-slate-500 text-sm">{project.name}</p>
             <Link
@@ -75,12 +76,16 @@ export default async function ProjectManagePage(props: {
         </div>
       </div>
 
-      <div className="bg-white rounded-base shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-base shadow-sm border border-slate-200 overflow-hidden mb-6">
         <SpreadsheetManager
           projectId={project.id}
           initialClips={initialClips}
           users={allUsers || []}
         />
+      </div>
+
+      <div className="bg-white rounded-base shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
+        <MembersClient projectId={project.id} allUsers={allUsers} />
       </div>
     </div>
   );
