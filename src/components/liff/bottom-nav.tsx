@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, PlusCircle, FileVideo, Menu } from "lucide-react";
+import { LayoutDashboard, PlusCircle, FileVideo, Menu } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 interface NavItem {
@@ -18,7 +18,7 @@ export default function BottomNav() {
   const isUser = role === "USER";
 
   const leftNavItems: NavItem[] = [
-    { href: "/dashboard", label: "หน้าหลัก", icon: Home },
+    { href: "/menu", label: "หน้าหลัก", icon: LayoutDashboard },
   ];
 
   const centerFloatingItem: NavItem | null = isUser

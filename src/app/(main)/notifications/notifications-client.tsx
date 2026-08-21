@@ -15,7 +15,9 @@ import {
   QrCode,
   ExternalLink,
   Loader2,
+  ArrowLeft,
 } from "lucide-react";
+import Link from "next/link";
 
 interface NotificationsClientProps {
   clips: Clip[];
@@ -119,16 +121,26 @@ export function NotificationsClient({ clips }: NotificationsClientProps) {
     <div className="space-y-6 md:space-y-8 pb-24 lg:pb-8 max-w-full mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 md:p-6 rounded-xl border border-slate-200/80 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">
-              ศูนย์การแจ้งเตือน LINE Notification Center
-            </h1>
+        <div className="flex items-center gap-3">
+          <Link href="/">
+            <button
+              type="button"
+              className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 flex items-center justify-center shrink-0 cursor-pointer shadow-xs transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+            </button>
+          </Link>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">
+                ศูนย์การแจ้งเตือน LINE Notification Center
+              </h1>
+            </div>
+            <p className="text-slate-600 text-xs md:text-sm mt-1">
+              รายการความเคลื่อนไหวของคลิปจริงในระบบ และระบบส่งการแจ้งเตือนเข้า
+              LINE รายบุคคล
+            </p>
           </div>
-          <p className="text-slate-600 text-xs md:text-sm mt-1">
-            รายการความเคลื่อนไหวของคลิปจริงในระบบ และระบบส่งการแจ้งเตือนเข้า
-            LINE รายบุคคล
-          </p>
         </div>
 
         <button

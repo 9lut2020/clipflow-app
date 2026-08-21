@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { apiServer } from "@/lib/api-server";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProjectClipsList from "@/components/projects/project-clips-list";
@@ -18,18 +19,23 @@ export default async function ProjectDetailPage(props: {
   const currentUser = session.user;
   const isUser = currentUser.role === "USER";
 
-  // Context-hoisted: { project, episodes[], clips[] }
-  const { data } = await apiServer.get<any>(`/projects/${params.id}/clips`);
-
-  if (!data) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-rose-500 font-bold text-base">ไม่พบข้อมูลโปรเจกต์</p>
-      </div>
-    );
+  let data;
+  try {
+    const response = await apiServer.get<any>(`/projects/${params.id}/clips`);
+    data = response.data;
+  } catch (error: any) {
+    // If it's a 403 Forbidden error (user not assigned to project)
+    if (error.message.includes("Forbidden") || error.message.includes("403") || error.message.includes("404")) {
+      redirect("/projects");
+    }
   }
 
-  const { project, episodes, clips } = data;
+  if (!data) {
+    redirect("/projects");
+  }
+
+  const { project, clips } = data;
+  const episodes = project?.episodes || [];
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-12">

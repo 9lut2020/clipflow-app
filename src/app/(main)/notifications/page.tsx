@@ -14,7 +14,7 @@ export default async function NotificationsPage() {
 
   // Prevent regular users (USER) from accessing notifications page
   if (session.user.role === "USER") {
-    redirect("/dashboard");
+    redirect("/");
   }
 
   const { data } = await apiServer.get<Clip[]>("/clips");

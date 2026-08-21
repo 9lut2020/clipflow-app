@@ -1,16 +1,19 @@
 "use client";
 
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Loader2, MessageCircle } from "lucide-react";
+  Loader2,
+  MessageCircle,
+  ArrowLeft,
+  UserCircle,
+  Shield,
+  Briefcase,
+  Activity,
+  CalendarDays,
+} from "lucide-react";
 import { useProfile } from "@/features/profile/hooks/use-profile";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import Link from "next/link";
 
 export function ProfileClient({ userId }: { userId: string }) {
   const { profile, isLoading } = useProfile(userId);
@@ -36,107 +39,137 @@ export function ProfileClient({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-full mx-auto w-full pb-20">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">โปรไฟล์ส่วนตัว</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          ข้อมูลส่วนตัวและสถานะบัญชีของคุณ
-        </p>
+    <div className="max-w-5xl mx-auto w-full pb-20 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white/30 p-5 rounded-xl border border-slate-200/50 backdrop-blur-sm">
+        <div className="flex items-center gap-4">
+          <Link href="/">
+            <button
+              type="button"
+              className="h-10 w-10 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 flex items-center justify-center shrink-0 cursor-pointer shadow-sm transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+              <UserCircle className="text-blue-500" size={24} />
+              โปรไฟล์ส่วนตัว
+            </h1>
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-6">
-        {/* LINE Connection Card */}
-        <Card className="border-green-100 shadow-sm overflow-hidden bg-gradient-to-br from-green-50 to-white">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#06C755]/10 flex items-center justify-center shrink-0 text-[#06C755]">
-                <MessageCircle size={20} className="fill-current" />
-              </div>
-              <div>
-                <p className="text-[14px] font-bold text-slate-800">
-                  เชื่อมต่อ LINE แล้ว
-                </p>
-                <p className="text-[12px] text-slate-500 font-mono mt-0.5">
-                  ID: {profile.lineUserId || "ไม่ระบุ"}
-                </p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Account Info Sidebar */}
+        <div className="space-y-6 md:order-2">
+          <Card className="p-6 text-center shadow-sm">
+            <div className="flex justify-center mb-4">
+              <UserAvatar
+                name={profile.displayName}
+                pictureUrl={profile.pictureUrl}
+                size="w-20 h-20 text-2xl"
+              />
+            </div>
+            <h3 className="text-lg font-bold text-slate-800">
+              {profile.displayName}
+            </h3>
+
+            <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col items-center gap-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-bold text-sm border border-blue-100">
+                <Shield size={16} />
+                {profile.role}
               </div>
             </div>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              เชื่อมต่อแล้ว
-            </span>
-          </CardContent>
-        </Card>
+          </Card>
+        </div>
 
-        {/* Profile Info Card */}
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg">ข้อมูลทั่วไป</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-8">
-            <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-              <div className="shrink-0 relative">
-                <UserAvatar
-                  name={profile.displayName}
-                  pictureUrl={profile.pictureUrl}
-                  size="w-20 h-20 text-2xl"
-                />
-              </div>
-              <div className="flex flex-col space-y-3">
-                <div>
-                  <Label className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
-                    สิทธิ์การใช้งาน
-                  </Label>
-                  <div className="mt-1">
-                    {profile.role === "ADMIN" && (
-                      <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-0.5 rounded-full border border-amber-200">
-                        👑 Admin
-                      </span>
-                    )}
-                    {profile.role === "REVIEWER" && (
-                      <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-800 text-xs font-bold px-2.5 py-0.5 rounded-full border border-purple-200">
-                        🔍 Reviewer
-                      </span>
-                    )}
-                    {profile.role === "USER" && (
-                      <span className="inline-flex items-center gap-1 bg-sky-100 text-sky-800 text-xs font-bold px-2.5 py-0.5 rounded-full border border-sky-200">
-                        🎬 Editor
-                      </span>
-                    )}
+        {/* Profile Details */}
+        <div className="md:col-span-2 space-y-6 md:order-1">
+          <Card className="p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-6">
+              <UserCircle size={20} className="text-blue-500" /> ข้อมูลทั่วไป
+            </h2>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    ชื่อที่แสดงในระบบ
+                  </label>
+                  <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 font-medium">
+                    <UserCircle size={18} className="text-slate-400" />
+                    {profile.displayName}
                   </div>
                 </div>
+              </div>
 
-                <div>
-                  <Label className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    บทบาท
+                  </label>
+                  <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 font-medium">
+                    <Briefcase size={18} className="text-slate-400" />
+                    {profile.role}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                     สถานะบัญชี
-                  </Label>
-                  <div className="mt-1">
-                    {profile.isActive !== false ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 text-xs font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        ใช้งานปกติ
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-rose-700 bg-rose-50 text-xs font-bold px-2.5 py-0.5 rounded-full border border-rose-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                        ระงับการใช้งาน
-                      </span>
-                    )}
+                  </label>
+                  <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 font-medium">
+                    <Activity
+                      size={18}
+                      className={
+                        profile.isActive !== false
+                          ? "text-emerald-500"
+                          : "text-rose-500"
+                      }
+                    />
+                    {profile.isActive !== false
+                      ? "เปิดใช้งาน"
+                      : "ระงับการใช้งาน"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    วันที่เข้าร่วมระบบ
+                  </label>
+                  <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 font-medium">
+                    <CalendarDays size={18} className="text-slate-400" />
+                    {profile.createdAt
+                      ? new Date(profile.createdAt).toLocaleDateString(
+                          "th-TH",
+                          { year: "numeric", month: "long", day: "numeric" },
+                        )
+                      : "-"}
                   </div>
                 </div>
               </div>
             </div>
+          </Card>
 
-            <div className="space-y-2 border-t border-slate-100 pt-6">
-              <Label className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
-                ชื่อที่แสดง
-              </Label>
-              <p className="text-lg font-medium text-slate-900 bg-slate-50 px-4 py-2.5 rounded-md border border-slate-200">
-                {profile.displayName}
+          {/* LINE Connection Card */}
+          <Card className="border-green-100 shadow-sm overflow-hidden bg-gradient-to-br from-green-50 to-white p-6">
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
+              <MessageCircle size={20} className="text-[#06C755]" />{" "}
+              การเชื่อมต่อ LINE
+            </h2>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <p className="text-sm text-slate-600">
+                คุณได้เชื่อมต่อบัญชี LINE เรียบร้อยแล้ว
+                ระบบจะส่งการแจ้งเตือนต่างๆ ผ่าน LINE ของคุณ
               </p>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                เชื่อมต่อแล้ว
+              </span>
             </div>
-          </CardContent>
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   );

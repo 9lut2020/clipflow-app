@@ -33,7 +33,7 @@ export function getSidebarMenu(role: string): { section: string; items: SidebarM
     menus.push({
       section: "Main",
       items: [
-        { title: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard },
+        { title: "เมนูหลัก", href: "/menu", icon: LayoutDashboard },
         { title: "งานของฉัน", href: "/tasks", icon: ClipboardList },
         { title: "โปรเจกต์ทั้งหมด", href: "/projects", icon: FileVideo },
       ],
@@ -45,7 +45,7 @@ export function getSidebarMenu(role: string): { section: string; items: SidebarM
       {
         section: "Main",
         items: [
-          { title: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard },
+          { title: "เมนูหลัก", href: "/menu", icon: LayoutDashboard },
           { title: "งานของฉัน", href: "/tasks", icon: ClipboardList },
           { title: "โปรเจกต์ทั้งหมด", href: "/projects", icon: FileVideo },
         ],
@@ -64,7 +64,7 @@ export function getSidebarMenu(role: string): { section: string; items: SidebarM
       {
         section: "Main",
         items: [
-          { title: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard },
+          { title: "เมนูหลัก", href: "/menu", icon: LayoutDashboard },
           { title: "ภาพรวมระบบ", href: "/tasks", icon: ClipboardList },
           { title: "รายงานวิเคราะห์", href: "/analytics", icon: BarChart3 },
           { title: "โปรเจกต์ทั้งหมด", href: "/projects", icon: FileVideo },

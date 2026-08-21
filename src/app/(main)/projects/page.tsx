@@ -9,7 +9,8 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Video, ChevronRight, Plus, Settings, FolderKanban } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Video, ChevronRight, Plus, Settings, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default async function ProjectsPage() {
@@ -31,22 +32,33 @@ export default async function ProjectsPage() {
       <div className="w-full">
         <div className="flex items-center justify-between gap-3 bg-white px-4 py-3.5 sm:px-6 sm:py-4 rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
-            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs">
-              <FolderKanban className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
+            <Link href="/">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 shrink-0 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              </Button>
+            </Link>
             <div className="min-w-0">
               <h1 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight leading-snug line-clamp-1">
                 โปรเจกต์ทั้งหมด
               </h1>
               <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 truncate">
-                {isUser ? "โปรเจกต์ที่คุณได้รับมอบหมายในการตัดต่อ" : "รายชื่อโปรเจกต์ทั้งหมดในระบบ ClipFlow"}
+                {isUser
+                  ? "โปรเจกต์ที่คุณได้รับมอบหมายในการตัดต่อ"
+                  : "รายชื่อโปรเจกต์ทั้งหมดในระบบ ClipFlow"}
               </p>
             </div>
           </div>
 
           {!isUser && (
             <Link href="/admin/projects/create" className="shrink-0">
-              <button type="button" className="px-3 py-2 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5">
+              <button
+                type="button"
+                className="px-3 py-2 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5"
+              >
                 <Plus size={16} />
                 <span className="hidden sm:inline">สร้างโปรเจกต์ใหม่</span>
                 <span className="sm:hidden text-xs">สร้าง</span>

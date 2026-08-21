@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clip } from "@/types/api";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import {
   CheckCircle2,
   Clock,
@@ -15,6 +16,7 @@ import {
   Flame,
   FileVideo,
   ListTodo,
+  ArrowLeft,
 } from "lucide-react";
 import { TaskAccordionSection } from "./task-accordion";
 
@@ -121,9 +123,15 @@ export default async function TasksPage() {
       <div className="w-full">
         <div className="flex items-center justify-between gap-3 bg-white px-4 py-3.5 sm:px-6 sm:py-4 rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
-            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs">
-              <ListTodo className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
+            <Link href="/">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 shrink-0 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              </Button>
+            </Link>
             <div className="min-w-0">
               <h1 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight leading-snug line-clamp-1">
                 {isUser ? "งานของฉัน" : "แผงควบคุมและภาพรวมงาน"}

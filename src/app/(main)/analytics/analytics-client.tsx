@@ -22,7 +22,9 @@ import {
   UserX,
   FolderX,
   ServerCrash,
+  ArrowLeft,
 } from "lucide-react";
+import Link from "next/link";
 
 interface AnalyticsClientProps {
   clips: Clip[];
@@ -227,17 +229,25 @@ export function AnalyticsClient({
     <div className="space-y-6 max-w-full mx-auto pb-16">
       {/* ─── 1. EXECUTIVE HEADER & TIME SLICER ────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white px-4 py-3.5 sm:px-6 sm:py-4 rounded-2xl border border-slate-200/80 shadow-xs">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h1 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight leading-snug line-clamp-1 flex items-center gap-2">
-              <BarChart3 className="text-blue-600 shrink-0 w-4.5 h-4.5 sm:w-5 sm:h-5" />
-              <span>ศูนย์วิเคราะห์สถิติการผลิตสื่อ</span>
-            </h1>
+          <div className="flex items-center gap-3">
+            <Link href="/">
+              <button
+                type="button"
+                className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 flex items-center justify-center shrink-0 cursor-pointer shadow-xs transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              </button>
+            </Link>
+            <div>
+              <h1 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight leading-snug line-clamp-1 flex items-center gap-2">
+                <BarChart3 className="text-blue-600 shrink-0 w-4.5 h-4.5 sm:w-5 sm:h-5" />
+                <span>ศูนย์วิเคราะห์สถิติการผลิตสื่อ</span>
+              </h1>
+              <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 truncate">
+                วิเคราะห์ดัชนีชี้วัดหลัก (KPI) ประสิทธิภาพทีมตัดต่อและความคืบหน้ารายซีรีส์
+              </p>
+            </div>
           </div>
-          <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 truncate">
-            วิเคราะห์ดัชนีชี้วัดหลัก (KPI) ประสิทธิภาพทีมตัดต่อและความคืบหน้ารายซีรีส์
-          </p>
-        </div>
 
         {/* Time Slicers */}
         <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl shrink-0 self-start md:self-auto">
