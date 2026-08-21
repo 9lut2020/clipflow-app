@@ -2,12 +2,20 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ path?: string }> }) {
   const session = await getServerSession(authOptions);
+  
+  // Resolve search params for Next.js 15
+  const resolvedParams = await searchParams;
+  const path = resolvedParams?.path;
 
   if (session) {
-    redirect("/menu");
+    redirect(path || "/menu");
   } else {
-    redirect("/api/auth/signin");
+    if (path) {
+      redirect(`/api/auth/signin?callbackUrl=${encodeURIComponent(path)}`);
+    } else {
+      redirect("/api/auth/signin");
+    }
   }
 }
