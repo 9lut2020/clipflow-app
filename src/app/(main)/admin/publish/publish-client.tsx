@@ -38,7 +38,7 @@ export function PublishClient() {
 
   // Filter only APPROVED and PUBLISHED clips first
   const baseClips = useMemo(() => {
-    return clips?.filter((c) => c.status === "APPROVED" || c.status === "PUBLISHED") || [];
+    return clips?.filter((c) => c.status === "APPROVED") || [];
   }, [clips]);
 
   // Extract unique filters
@@ -71,8 +71,8 @@ export function PublishClient() {
 
   const filteredClips = useMemo(() => {
     return baseClips.filter(c => {
-      const matchProject = selectedProjects.length === 0 || selectedProjects.includes(c.project?.id);
-      const matchOwner = selectedOwners.length === 0 || selectedOwners.includes(c.owner?.id);
+      const matchProject = selectedProjects.length === 0 || (c.project?.id && selectedProjects.includes(c.project.id));
+      const matchOwner = selectedOwners.length === 0 || (c.owner?.id && selectedOwners.includes(c.owner.id));
       
       const isFullyPublished = c.publishedPosts && c.publishedPosts.length >= PLATFORMS.length;
       const matchTab = activeTab === "pending" ? !isFullyPublished : isFullyPublished;
@@ -149,7 +149,7 @@ export function PublishClient() {
                 </thead>
                 <tbody className="divide-y divide-slate-100/80">
                   {paginatedClips.map((clip) => {
-                    const isFullyPublished = clip.publishedPosts?.length >= PLATFORMS.length;
+                    const isFullyPublished = (clip.publishedPosts?.length || 0) >= PLATFORMS.length;
                     
                     return (
                       <tr 
@@ -206,7 +206,7 @@ export function PublishClient() {
           {/* Mobile View: Cards */}
           <div className="md:hidden flex flex-col gap-3">
             {paginatedClips.map((clip) => {
-              const isFullyPublished = clip.publishedPosts?.length >= PLATFORMS.length;
+              const isFullyPublished = (clip.publishedPosts?.length || 0) >= PLATFORMS.length;
               
               return (
                 <div

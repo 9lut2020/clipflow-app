@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Copy, CheckCircle2, ExternalLink, Globe, LayoutTemplate, History, Loader2 } from "lucide-react";
+import { Copy, CheckCircle2, ExternalLink, Globe, LayoutTemplate, History, Loader2, FileText } from "lucide-react";
 import { usePublishRecords, usePublishClip } from "@/features/clips/hooks/use-publish";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";

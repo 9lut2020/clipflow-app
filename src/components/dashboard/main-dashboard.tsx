@@ -59,7 +59,7 @@ export function MainDashboard({
         offset: offset.toString()
       });
       if (res.data) {
-        setLocalClips((prev) => [...prev, ...res.data]);
+        setLocalClips((prev) => [...prev, ...(res.data || [])]);
         setOffset((prev) => prev + 20);
         if (res.data.length < 20) {
           setHasMore(false);
