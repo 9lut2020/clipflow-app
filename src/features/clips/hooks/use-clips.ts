@@ -25,6 +25,21 @@ export function useClips(episodeId?: string, excludeApproved = true) {
   };
 }
 
+export function useAllClips(status?: string, excludeApproved = true) {
+  let url = `/clips?excludeApproved=${String(excludeApproved)}`;
+  if (status) {
+    url += `&status=${status}`;
+  }
+  
+  const { data, error, isLoading } = useSWR<ApiResponse<Clip[]>>(url, fetcher);
+
+  return { 
+    data: data?.data || [], 
+    isLoading, 
+    error 
+  };
+}
+
 export function useCreateClip() {
   const [isCreating, setIsCreating] = useState(false);
   const { trackEvent } = useAnalytics();

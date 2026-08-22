@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Loader2,
   MessageCircle,
@@ -39,27 +40,32 @@ export function ProfileClient({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto w-full pb-20 space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white/30 p-5 rounded-xl border border-slate-200/50 backdrop-blur-sm">
-        <div className="flex items-center gap-4">
-          <Link href="/">
-            <button
-              type="button"
-              className="h-10 w-10 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 flex items-center justify-center shrink-0 cursor-pointer shadow-sm transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-              <UserCircle className="text-blue-500" size={24} />
-              โปรไฟล์ส่วนตัว
-            </h1>
+    <div className="space-y-4 sm:space-y-6 pb-12">
+      <div className="w-full">
+        <div className="flex items-center justify-between gap-3 bg-white px-4 py-3.5 sm:px-6 sm:py-4 rounded-2xl border border-slate-200/80 shadow-xs">
+          <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+            <Link href="/">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 shrink-0 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              </Button>
+            </Link>
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight leading-snug line-clamp-1">
+                โปรไฟล์ส่วนตัว
+              </h1>
+              <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 truncate">
+                ข้อมูลบัญชีผู้ใช้งานและการตั้งค่า
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Account Info Sidebar */}
         <div className="space-y-6 md:order-2">
           <Card className="p-6 text-center shadow-sm">
@@ -70,7 +76,7 @@ export function ProfileClient({ userId }: { userId: string }) {
                 size="w-20 h-20 text-2xl"
               />
             </div>
-            <h3 className="text-lg font-bold text-slate-800">
+            <h3 className="text-sm sm:text-lg font-bold text-slate-800">
               {profile.displayName}
             </h3>
 
@@ -86,7 +92,7 @@ export function ProfileClient({ userId }: { userId: string }) {
         {/* Profile Details */}
         <div className="md:col-span-2 space-y-6 md:order-1">
           <Card className="p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-6">
+            <h2 className="text-sm sm:text-lg font-bold text-slate-800 flex items-center gap-2 mb-6">
               <UserCircle size={20} className="text-blue-500" /> ข้อมูลทั่วไป
             </h2>
 
@@ -154,12 +160,12 @@ export function ProfileClient({ userId }: { userId: string }) {
 
           {/* LINE Connection Card */}
           <Card className="border-green-100 shadow-sm overflow-hidden bg-gradient-to-br from-green-50 to-white p-6">
-            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
+            <h2 className="text-sm sm:text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
               <MessageCircle size={20} className="text-[#06C755]" />{" "}
               การเชื่อมต่อ LINE
             </h2>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <p className="text-sm text-slate-600">
+              <p className="text-sm sm:text-lg text-slate-600">
                 คุณได้เชื่อมต่อบัญชี LINE เรียบร้อยแล้ว
                 ระบบจะส่งการแจ้งเตือนต่างๆ ผ่าน LINE ของคุณ
               </p>

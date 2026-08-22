@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 interface UsersClientProps {
   initialUsers: User[];
@@ -83,7 +84,7 @@ export function UsersClient({ initialUsers, currentUserId }: UsersClientProps) {
 
     // Prevent disabling oneself
     if (isSelf && !selectedIsActive) {
-      alert("คุณไม่สามารถระงับการใช้งานบัญชีของคุณเองได้");
+      toast.error("คุณไม่สามารถระงับการใช้งานบัญชีของคุณเองได้");
       return;
     }
 
@@ -120,13 +121,14 @@ export function UsersClient({ initialUsers, currentUserId }: UsersClientProps) {
           ),
         );
         setIsModalOpen(false);
+        toast.success("อัปเดตข้อมูลผู้ใช้สำเร็จ");
 
         if (isSelf) {
           await updateSession();
           window.location.reload();
         }
       } else {
-        alert(
+        toast.error(
           roleRes.message ||
             statusRes.message ||
             "เกิดข้อผิดพลาดในการอัปเดตข้อมูลผู้ใช้",
@@ -134,7 +136,7 @@ export function UsersClient({ initialUsers, currentUserId }: UsersClientProps) {
       }
     } catch (err) {
       console.error(err);
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+      toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
     } finally {
       setIsUpdating(false);
     }
@@ -147,7 +149,7 @@ export function UsersClient({ initialUsers, currentUserId }: UsersClientProps) {
     );
 
     if (isSelf) {
-      alert("คุณไม่สามารถระงับการใช้งานบัญชีของคุณเองได้");
+      toast.error("คุณไม่สามารถระงับการใช้งานบัญชีของคุณเองได้");
       return;
     }
 
@@ -163,12 +165,13 @@ export function UsersClient({ initialUsers, currentUserId }: UsersClientProps) {
             u.id === user.id ? { ...u, isActive: newStatus } : u,
           ),
         );
+        toast.success("เปลี่ยนสถานะผู้ใช้สำเร็จ");
       } else {
-        alert(res.message || "ไม่สามารถเปลี่ยนสถานะผู้ใช้ได้");
+        toast.error(res.message || "ไม่สามารถเปลี่ยนสถานะผู้ใช้ได้");
       }
     } catch (err) {
       console.error(err);
-      alert("เกิดข้อผิดพลาดในการเปลี่ยนสถานะ");
+      toast.error("เกิดข้อผิดพลาดในการเปลี่ยนสถานะ");
     }
   };
 

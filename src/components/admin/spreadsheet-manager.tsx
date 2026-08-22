@@ -9,13 +9,24 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { PLATFORM_CONFIG } from "@/components/ui/platform-badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface SpreadsheetManagerProps {
   projectId: string;
   initialClips: any[];
+  initialEpisodes?: any[];
   users: any[];
 }
 
+// AssigneeDropdown code here (Unchanged)
 const AssigneeDropdown = ({
   users,
   value,
@@ -172,13 +183,26 @@ const AssigneeDropdown = ({
 export default function SpreadsheetManager({
   projectId,
   initialClips,
+  initialEpisodes = [],
   users,
 }: SpreadsheetManagerProps) {
   const router = useRouter();
   const { batchCreateClips, isSaving } = useBatchCreateClips();
   const [clips, setClips] = useState<any[]>(initialClips);
+  const [episodes, setEpisodes] = useState<any[]>(initialEpisodes);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState("");
+
+  // Add Episode Modal States
+  const [showAddEpisodeModal, setShowAddEpisodeModal] = useState(false);
+  const [newEpisodeNo, setNewEpisodeNo] = useState<number | "">("");
+  const [newEpisodeName, setNewEpisodeName] = useState("");
+  const [isCreatingEpisode, setIsCreatingEpisode] = useState(false);
+
+  // Dialog States
+  const [rowToDelete, setRowToDelete] = useState<number | null>(null);
+  const [isDeletingRow, setIsDeletingRow] = useState(false);
+  const [applyAllConfig, setApplyAllConfig] = useState<{ index: number; userId: string } | null>(null);
 
   // Search and Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -191,7 +215,7 @@ export default function SpreadsheetManager({
       !clip.name?.toLowerCase().includes(searchQuery.toLowerCase())
     )
       return false;
-    if (filterEpisode !== "ALL" && clip.episodeNo.toString() !== filterEpisode)
+    if (filterEpisode !== "ALL" && clip.episodeNo?.toString() !== filterEpisode)
       return false;
     if (
       filterAssignee !== "ALL" &&
@@ -202,17 +226,12 @@ export default function SpreadsheetManager({
     return true;
   });
 
-  // Get unique episodes for the filter dropdown
-  const uniqueEpisodes = Array.from(
-    new Set(clips.map((c) => c.episodeNo)),
-  ).sort((a, b) => a - b);
-
   const handleAddRow = () => {
     setClips([
       ...clips,
       {
         id: `new-${Date.now()}`,
-        episodeNo: clips.length > 0 ? clips[clips.length - 1].episodeNo : 1,
+        episodeNo: clips.length > 0 ? clips[clips.length - 1].episodeNo : (episodes.length > 0 ? episodes[episodes.length - 1].episodeNo : 1),
         name: "",
         description: "",
         ownerId: "",
@@ -222,33 +241,41 @@ export default function SpreadsheetManager({
     ]);
   };
 
-  const handleRemoveRow = async (index: number) => {
+  const handleRemoveRow = (index: number) => {
     const clip = clips[index];
     if (clip.id && !clip.id.toString().startsWith("new-")) {
-      if (
-        !confirm(
-          "คุณแน่ใจหรือไม่ว่าต้องการลบแถวนี้? ระบบจะลบข้อมูลคลิปนี้ทันที (ไม่สามารถกู้คืนได้)",
-        )
-      ) {
-        return;
-      }
-      try {
-        const result = await api.delete(`/clips/${clip.id}`);
-        if (result.status !== "success") {
-          toast.error(`ลบไม่สำเร็จ: ${result.message || "Unknown error"}`);
-          return;
-        }
-        toast.success("ลบแถวเรียบร้อยแล้ว");
-      } catch (err) {
-        console.error("Delete error:", err);
-        toast.error("เกิดข้อผิดพลาดในการลบข้อมูล");
-        return;
-      }
+      setRowToDelete(index);
+    } else {
+      const newClips = [...clips];
+      newClips.splice(index, 1);
+      setClips(newClips);
     }
+  };
 
-    const newClips = [...clips];
-    newClips.splice(index, 1);
-    setClips(newClips);
+  const confirmRemoveRow = async () => {
+    if (rowToDelete === null) return;
+    const index = rowToDelete;
+    const clip = clips[index];
+    
+    setIsDeletingRow(true);
+    try {
+      const result = await api.delete(`/clips/${clip.id}`);
+      if (result.status !== "success") {
+        toast.error(`ลบไม่สำเร็จ: ${result.message || "Unknown error"}`);
+        setIsDeletingRow(false);
+        return;
+      }
+      toast.success("ลบแถวเรียบร้อยแล้ว");
+      const newClips = [...clips];
+      newClips.splice(index, 1);
+      setClips(newClips);
+      setRowToDelete(null);
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast.error("เกิดข้อผิดพลาดในการลบข้อมูล");
+    } finally {
+      setIsDeletingRow(false);
+    }
   };
 
   const handleChange = (index: number, field: string, value: any) => {
@@ -259,20 +286,25 @@ export default function SpreadsheetManager({
   };
 
   const handleApplyToAllBelow = (index: number, userId: string) => {
-    if (!confirm("ยืนยันการเซ็ตคนตัดต่อคนนี้ให้กับคลิปที่อยู่ด้านล่างทั้งหมด?"))
-      return;
+    setApplyAllConfig({ index, userId });
+  };
+
+  const confirmApplyAll = () => {
+    if (!applyAllConfig) return;
+    const { index, userId } = applyAllConfig;
     const newClips = [...clips];
     const targetUserId = userId;
     for (let i = index; i < newClips.length; i++) {
       newClips[i].ownerId = targetUserId;
     }
     setClips(newClips);
+    setApplyAllConfig(null);
   };
 
   const handleSave = async () => {
     const invalidRows = clips.filter((c) => !c.name || !c.episodeNo);
     if (invalidRows.length > 0) {
-      toast.error("กรุณากรอกชื่อคลิปและ Episode ให้ครบถ้วน");
+      toast.error("กรุณากรอกชื่อคลิปและตอน (EP) ให้ครบถ้วน");
       return;
     }
 
@@ -290,6 +322,31 @@ export default function SpreadsheetManager({
     }
   };
 
+  const handleCreateEpisode = async () => {
+    if (!newEpisodeNo) return;
+    setIsCreatingEpisode(true);
+    try {
+      const res = await api.post(`/projects/${projectId}/episodes`, {
+        episodeNo: Number(newEpisodeNo),
+        name: newEpisodeName || undefined,
+      });
+      if (res.status === "success") {
+        toast.success("เพิ่มตอนเรียบร้อยแล้ว");
+        setEpisodes([...episodes, res.data].sort((a, b) => a.episodeNo - b.episodeNo));
+        setShowAddEpisodeModal(false);
+        setNewEpisodeNo("");
+        setNewEpisodeName("");
+        router.refresh();
+      } else {
+        toast.error(res.message || "เกิดข้อผิดพลาด");
+      }
+    } catch (err: any) {
+      toast.error("เกิดข้อผิดพลาดในการเพิ่มตอน");
+    } finally {
+      setIsCreatingEpisode(false);
+    }
+  };
+
   const handleImportParse = () => {
     if (!importText.trim()) return;
 
@@ -300,7 +357,7 @@ export default function SpreadsheetManager({
     const newClips: any[] = [];
 
     let currentEpisode =
-      clips.length > 0 ? clips[clips.length - 1].episodeNo : 1;
+      clips.length > 0 ? clips[clips.length - 1].episodeNo : (episodes.length > 0 ? episodes[episodes.length - 1].episodeNo : 1);
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -371,8 +428,20 @@ export default function SpreadsheetManager({
   return (
     <div className="flex flex-col h-full max-h-[70vh] w-full min-w-0 overflow-hidden">
       {/* Toolbar */}
-      <div className="p-2 sm:p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-center md:justify-end gap-1 sm:gap-3 hide-scrollbar">
+      <div className="p-2 sm:p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-1 sm:gap-3 hide-scrollbar flex-wrap">
         <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setShowAddEpisodeModal(true)}
+            variant="outline"
+            size="sm"
+            className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold border-blue-200"
+          >
+            <Plus size={14} className="mr-1 sm:mr-1.5 shrink-0" />{" "}
+            <span className="text-xs sm:text-sm whitespace-nowrap">
+              เพิ่มตอนใหม่
+            </span>
+          </Button>
+          <div className="w-px h-6 bg-slate-300 mx-1"></div>
           <Button
             onClick={handleAddRow}
             variant="outline"
@@ -388,31 +457,32 @@ export default function SpreadsheetManager({
             onClick={() => setShowImportModal(true)}
             variant="outline"
             size="sm"
-            className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border-indigo-200"
+            className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border-indigo-200 hidden sm:flex"
           >
             <FileText size={14} className="mr-1 sm:mr-1.5 shrink-0" />{" "}
             <span className="text-xs sm:text-sm whitespace-nowrap">
               วางข้อความอัตโนมัติ
             </span>
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm h-8 px-2 sm:px-4 ml-auto"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 size={14} className="mr-1 sm:mr-1.5 shrink-0 animate-spin" />
-                <span className="text-xs sm:text-sm whitespace-nowrap">กำลังบันทึก...</span>
-              </>
-            ) : (
-              <>
-                <Save size={14} className="mr-1 sm:mr-1.5 shrink-0" />
-                <span className="text-xs sm:text-sm whitespace-nowrap">บันทึกทั้งหมด</span>
-              </>
-            )}
-          </Button>
         </div>
+        
+        <Button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm h-8 px-2 sm:px-4 ml-auto"
+        >
+          {isSaving ? (
+            <>
+              <Loader2 size={14} className="mr-1 sm:mr-1.5 shrink-0 animate-spin" />
+              <span className="text-xs sm:text-sm whitespace-nowrap">กำลังบันทึก...</span>
+            </>
+          ) : (
+            <>
+              <Save size={14} className="mr-1 sm:mr-1.5 shrink-0" />
+              <span className="text-xs sm:text-sm whitespace-nowrap">บันทึกทั้งหมด</span>
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Filters */}
@@ -432,9 +502,9 @@ export default function SpreadsheetManager({
           className="shrink-0 px-2 sm:px-3 py-1 sm:py-1.5 border border-slate-200 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
         >
           <option value="ALL">ทุกตอน</option>
-          {uniqueEpisodes.map((ep) => (
-            <option key={ep} value={ep}>
-              EP. {ep}
+          {episodes.map((ep) => (
+            <option key={ep.episodeNo} value={ep.episodeNo}>
+              EP. {ep.episodeNo}
             </option>
           ))}
         </select>
@@ -467,8 +537,8 @@ export default function SpreadsheetManager({
               <th className="hidden md:table-cell px-3 py-2 border-r border-blue-200 font-bold text-left min-w-[250px]">
                 รายละเอียด
               </th>
-              <th className="px-3 py-2 border-r border-blue-200 font-bold w-[60px] sm:w-[80px] text-center">
-                EP
+              <th className="px-3 py-2 border-r border-blue-200 font-bold w-[120px] text-left">
+                ตอน (Episode)
               </th>
               <th className="px-3 py-2 border-r border-blue-200 font-bold text-left w-[220px]">
                 ผู้รับผิดชอบ
@@ -483,7 +553,7 @@ export default function SpreadsheetManager({
             {clips.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="p-8 text-center text-slate-400 bg-white"
                 >
                   ยังไม่มีข้อมูลคลิป กดปุ่ม "เพิ่มแถว" เพื่อเริ่มสร้าง
@@ -491,7 +561,6 @@ export default function SpreadsheetManager({
               </tr>
             ) : (
               filteredClips.map((clip, filteredIndex) => {
-                // Find the actual index in the main 'clips' array to mutate correctly
                 const index = clips.findIndex((c) => c.id === clip.id);
                 const isEven = index % 2 === 0;
                 return (
@@ -524,15 +593,22 @@ export default function SpreadsheetManager({
                         className="w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all text-slate-600 text-sm"
                       />
                     </td>
-                    <td className="border-r border-b border-slate-200 p-0">
-                      <input
-                        type="number"
+                    <td className="border-r border-b border-slate-200 p-0 relative">
+                      <select
                         value={clip.episodeNo || ""}
                         onChange={(e) =>
                           handleChange(index, "episodeNo", e.target.value)
                         }
-                        className="w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all text-center font-bold text-blue-600"
-                      />
+                        className="w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all font-bold text-blue-600 cursor-pointer appearance-none"
+                      >
+                        <option value="" disabled>เลือกตอน...</option>
+                        {episodes.map((ep) => (
+                          <option key={ep.episodeNo} value={ep.episodeNo}>
+                            EP. {ep.episodeNo}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                     </td>
                     <td className="border-r border-b border-slate-200 p-0">
                       <AssigneeDropdown
@@ -572,73 +648,191 @@ export default function SpreadsheetManager({
             )}
           </tbody>
         </table>
-        {/* Extra space at the bottom so the dropdown menu of the last row doesn't get cut off */}
-        <div className="h-48"></div>
       </div>
 
-      <div className="p-2 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center">
-        <span>จำนวนทั้งหมด {clips.length} คลิป</span>
-        <span className="italic text-slate-400">
-          การแก้ไขจะบันทึกเมื่อกดปุ่ม "บันทึกทั้งหมด"
-        </span>
-      </div>
-
-      {/* Import Modal */}
-      {showImportModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-              <div>
-                <h3 className="font-bold text-lg text-slate-800">
-                  วางข้อความนำเข้าอัตโนมัติ
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  ระบบจะดึงข้อมูลชื่อคลิปและ Episode จากข้อความโดยอัตโนมัติ
-                </p>
-              </div>
-              <button
-                onClick={() => setShowImportModal(false)}
-                className="text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-full p-2 transition-colors"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="p-6">
-              <div className="mb-4 p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-xs text-indigo-700 font-medium leading-relaxed">
-                <p className="font-bold mb-1">ตัวอย่างรูปแบบที่รองรับ:</p>
-                <p>คลิปไฮไลท์ อีพี 6</p>
-                <p>ไฮไลท์อีพี 6 คลิป 1</p>
-                <p>"ความขัดแย้ง…เรื่องธรรมดา? "</p>
-                <p>🕣เวลา 2.46 - 3.50</p>
-              </div>
-
-              <textarea
-                value={importText}
-                onChange={(e) => setImportText(e.target.value)}
-                placeholder="วางข้อความที่ Copy มาที่นี่..."
-                className="w-full h-64 p-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none text-sm font-medium text-slate-700"
+      {/* Add Episode Modal */}
+      <Dialog open={showAddEpisodeModal} onOpenChange={setShowAddEpisodeModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>เพิ่มตอนใหม่ (Episode)</DialogTitle>
+            <DialogDescription>
+              สร้างตอนใหม่เพื่อจัดหมวดหมู่ให้กับคลิปในโปรเจกต์นี้
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">หมายเลขตอน (EP) *</label>
+              <Input
+                type="number"
+                placeholder="เช่น 1, 2, 3"
+                value={newEpisodeNo}
+                onChange={(e) => setNewEpisodeNo(e.target.value ? Number(e.target.value) : "")}
               />
             </div>
-
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-              <Button
-                onClick={() => setShowImportModal(false)}
-                variant="ghost"
-                className="font-bold text-slate-600 hover:bg-slate-200"
-              >
-                ยกเลิก
-              </Button>
-              <Button
-                onClick={handleImportParse}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-sm px-6"
-              >
-                นำเข้าข้อมูล
-              </Button>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">ชื่อตอน (ไม่บังคับ)</label>
+              <Input
+                placeholder="เช่น จุดเริ่มต้นของความสำเร็จ..."
+                value={newEpisodeName}
+                onChange={(e) => setNewEpisodeName(e.target.value)}
+              />
+              <p className="text-xs text-slate-500">
+                หากระบุชื่อตอน จะถูกนำไปใช้สร้างเป็นแคปชั่นตอนเผยแพร่อัตโนมัติ
+              </p>
             </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowAddEpisodeModal(false)}
+            >
+              ยกเลิก
+            </Button>
+            <Button
+              type="button"
+              onClick={handleCreateEpisode}
+              disabled={!newEpisodeNo || isCreatingEpisode}
+            >
+              {isCreatingEpisode ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              บันทึก
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog
+        open={rowToDelete !== null}
+        onOpenChange={(open) => !open && setRowToDelete(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-rose-600">ยืนยันการลบแถว</DialogTitle>
+            <DialogDescription>
+              คุณแน่ใจหรือไม่ว่าต้องการลบแถวนี้?
+              หากคลิปนี้ถูกบันทึกไปแล้ว ข้อมูลจะถูกลบออกจากระบบทันที
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            {rowToDelete !== null && clips[rowToDelete]?.name && (
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-sm font-medium text-slate-700 truncate">
+                {clips[rowToDelete].name}
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setRowToDelete(null)}
+              disabled={isDeletingRow}
+            >
+              ยกเลิก
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={confirmRemoveRow}
+              disabled={isDeletingRow}
+            >
+              {isDeletingRow ? (
+                <>
+                  <Loader2 size={16} className="mr-2 animate-spin" />{" "}
+                  กำลังลบ...
+                </>
+              ) : (
+                "ลบข้อมูล"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Apply All Confirmation Modal */}
+      <Dialog
+        open={applyAllConfig !== null}
+        onOpenChange={(open) => !open && setApplyAllConfig(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>ยืนยันการนำไปใช้ทั้งหมด</DialogTitle>
+            <DialogDescription>
+              ระบบจะกำหนดผู้รับผิดชอบให้กับคลิปทั้งหมดในรายการที่อยู่ด้านล่างแถวนี้
+              คุณต้องการดำเนินการต่อหรือไม่?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setApplyAllConfig(null)}
+            >
+              ยกเลิก
+            </Button>
+            <Button
+              type="button"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={confirmApplyAll}
+            >
+              ยืนยันการทำรายการ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Auto Modal */}
+      <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>วางข้อความอัตโนมัติ (Import)</DialogTitle>
+            <DialogDescription>
+              คัดลอกข้อความสรุปคลิปมาวางที่นี่
+              ระบบจะพยายามแยกข้อมูลให้เป็นแถวอัตโนมัติ
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 space-y-4">
+            <textarea
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+              className="w-full h-64 p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none bg-slate-50"
+              placeholder="ตัวอย่าง:
+อีพี 6
+ไฮไลท์อีพี 6 คลิป 1
+&quot;จุดเริ่มต้นของความสำเร็จ&quot;
+🕣 เวลา: 10:05 - 11:30"
+            />
+            <div className="bg-indigo-50 text-indigo-700 p-3 rounded-xl text-xs flex gap-2 items-start">
+              <FileText size={16} className="shrink-0 mt-0.5" />
+              <div>
+                <strong>คำแนะนำ:</strong>
+                <ul className="list-disc pl-4 mt-1 space-y-1">
+                  <li>ระบบจะตรวจจับคำว่า "อีพี X" เพื่อหาหมายเลขตอน</li>
+                  <li>
+                    ตรวจจับ "ไฮไลท์..." "คลิป X" หรือข้อความในเครื่องหมาย
+                    "คำพูด" เพื่อดึงชื่อคลิป
+                  </li>
+                  <li>เวลา (มีไอคอน 🕣) จะถูกดึงไปใส่ในช่องรายละเอียด</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowImportModal(false)}
+            >
+              ยกเลิก
+            </Button>
+            <Button type="button" onClick={handleImportParse}>
+              นำเข้าข้อมูล
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

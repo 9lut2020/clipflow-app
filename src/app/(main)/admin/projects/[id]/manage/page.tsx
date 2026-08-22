@@ -3,9 +3,10 @@ import { authOptions } from "@/lib/auth";
 import { apiServer } from "@/lib/api-server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Edit } from "lucide-react";
+import { Edit, ArrowLeft } from "lucide-react";
 import SpreadsheetManager from "@/components/admin/spreadsheet-manager";
 import MembersClient from "./members-client";
+import { Button } from "@/components/ui/button";
 
 export default async function ProjectManagePage(props: {
   params: Promise<{ id: string }>;
@@ -60,18 +61,35 @@ export default async function ProjectManagePage(props: {
   }
 
   return (
-    <div className="space-y-6 pb-20 lg:pb-0">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">จัดการโปรเจกต์</h1>
-          <div className="flex items-center gap-2 mt-0.5">
-            <p className="text-slate-500 text-sm">{project.name}</p>
-            <Link
-              href={`/admin/projects/${project.id}/edit`}
-              className="text-blue-500 hover:text-blue-700 flex items-center gap-1 text-xs font-medium"
-            >
-              <Edit size={12} /> แก้ไขข้อมูลโปรเจกต์
+    <div className="space-y-4 sm:space-y-6 pb-12">
+      <div className="w-full">
+        <div className="flex items-center justify-between gap-3 bg-white px-4 py-3.5 sm:px-6 sm:py-4 rounded-2xl border border-slate-200/80 shadow-xs">
+          <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+            <Link href={`/projects/${project.id}`}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 shrink-0 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              </Button>
             </Link>
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight leading-snug line-clamp-1">
+                จัดการโปรเจกต์
+              </h1>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-slate-500 text-[11px] sm:text-xs truncate">
+                  {project.name}
+                </p>
+                <Link
+                  href={`/admin/projects/${project.id}/edit`}
+                  className="text-blue-500 hover:text-blue-700 flex items-center gap-1 text-[11px] sm:text-xs font-medium bg-blue-50 px-2 py-0.5 rounded-full"
+                >
+                  <Edit size={12} /> แก้ไขข้อมูลโปรเจกต์
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -80,11 +98,12 @@ export default async function ProjectManagePage(props: {
         <SpreadsheetManager
           projectId={project.id}
           initialClips={initialClips}
-          users={allUsers || []}
+          initialEpisodes={project.episodes || []}
+          users={allUsers}
         />
       </div>
 
-      <div className="bg-white rounded-base shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
+      <div className="bg-white rounded-base shadow-sm border border-slate-200 overflow-hidden mb-6">
         <MembersClient projectId={project.id} allUsers={allUsers} />
       </div>
     </div>

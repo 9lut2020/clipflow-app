@@ -7,8 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Loader2 } from "lucide-react";
 import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useSession } from "next-auth/react";
 import { api } from "@/lib/api-client";
 import { Project } from "@/types/api";
@@ -19,6 +27,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
   const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
@@ -95,10 +104,8 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  const handleDelete = async () => {
+  const confirmDelete = async () => {
     if (!projectId) return;
-    if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบโปรเจกต์นี้? ข้อมูลจะไม่สามารถกู้คืนได้")) return;
-    
     setIsDeleting(true);
     try {
       const res = await api.delete(`/projects/${projectId}`);
@@ -114,34 +121,47 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
       toast.error("An error occurred");
     } finally {
       setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
   if (!projectId) return <div className="p-8 text-center">Loading...</div>;
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto pb-20 lg:pb-0">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href={`/projects/${projectId}`}>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-              <ArrowLeft size={18} />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">แก้ไขโปรเจกต์</h1>
-            <p className="text-slate-500 text-sm mt-0.5">แก้ไขข้อมูลรายการ</p>
+    <div className="space-y-4 sm:space-y-6 max-w-2xl mx-auto pb-12">
+      <div className="w-full">
+        <div className="flex items-center justify-between gap-3 bg-white px-4 py-3.5 sm:px-6 sm:py-4 rounded-2xl border border-slate-200/80 shadow-xs">
+          <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+            <Link href={`/admin/projects/${projectId}/manage`}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 shrink-0 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              </Button>
+            </Link>
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight leading-snug line-clamp-1">
+                แก้ไขโปรเจกต์
+              </h1>
+              <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 truncate">
+                แก้ไขข้อมูลรายการ
+              </p>
+            </div>
           </div>
+          <Button 
+            type="button" 
+            variant="destructive" 
+            size="sm"
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={isDeleting}
+            className="rounded-xl font-bold shadow-xs px-3 sm:px-4 h-9 sm:h-10 shrink-0"
+          >
+            <Trash2 size={16} className="sm:mr-2" /> 
+            <span className="hidden sm:inline">ลบโปรเจกต์</span>
+          </Button>
         </div>
-        <Button 
-          type="button" 
-          variant="destructive" 
-          onClick={handleDelete}
-          disabled={isDeleting}
-          className="rounded-xl font-bold shadow-sm px-4"
-        >
-          <Trash2 size={16} className="mr-2" /> ลบโปรเจกต์
-        </Button>
       </div>
 
       <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
@@ -191,6 +211,42 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
           </div>
         </form>
       </Card>
+
+      <Dialog
+        open={showDeleteConfirm}
+        onOpenChange={(open) => !open && !isDeleting && setShowDeleteConfirm(false)}
+      >
+        <DialogContent className="max-w-[400px] sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>ยืนยันการลบโปรเจกต์</DialogTitle>
+            <DialogDescription>
+              คุณแน่ใจหรือไม่ว่าต้องการลบโปรเจกต์นี้? ข้อมูลจะไม่สามารถกู้คืนได้
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={isDeleting}
+            >
+              ยกเลิก
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+              className="bg-rose-600 hover:bg-rose-700 text-white"
+            >
+              {isDeleting ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4 mr-2" />
+              )}
+              ลบโปรเจกต์
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

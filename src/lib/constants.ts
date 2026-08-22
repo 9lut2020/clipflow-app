@@ -1,14 +1,16 @@
-import { 
-  LucideIcon, 
-  LayoutDashboard, 
-  FileVideo, 
-  Users, 
+import {
+  LucideIcon,
+  LayoutDashboard,
+  FileVideo,
+  Users,
   Settings,
   ClipboardList,
   BarChart3,
   Bell,
-  ShieldCheck
-} from 'lucide-react';
+  ShieldCheck,
+  Plus,
+  List,
+} from "lucide-react";
 
 export interface SidebarMenuItem {
   title: string;
@@ -22,7 +24,9 @@ export interface SidebarMenuItem {
   }[];
 }
 
-export function getSidebarMenu(role: string): { section: string; items: SidebarMenuItem[] }[] {
+export function getSidebarMenu(
+  role: string,
+): { section: string; items: SidebarMenuItem[] }[] {
   const isUser = role === "USER";
   const isReviewer = role === "REVIEWER";
   const isAdmin = role === "ADMIN";
@@ -33,7 +37,8 @@ export function getSidebarMenu(role: string): { section: string; items: SidebarM
     menus.push({
       section: "Main",
       items: [
-        { title: "เมนูหลัก", href: "/menu", icon: LayoutDashboard },
+        { title: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard },
+        { title: "ส่งคลิป", href: "/submit", icon: Plus },
         { title: "งานของฉัน", href: "/tasks", icon: ClipboardList },
         { title: "โปรเจกต์ทั้งหมด", href: "/projects", icon: FileVideo },
       ],
@@ -45,7 +50,7 @@ export function getSidebarMenu(role: string): { section: string; items: SidebarM
       {
         section: "Main",
         items: [
-          { title: "เมนูหลัก", href: "/menu", icon: LayoutDashboard },
+          { title: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard },
           { title: "งานของฉัน", href: "/tasks", icon: ClipboardList },
           { title: "โปรเจกต์ทั้งหมด", href: "/projects", icon: FileVideo },
         ],
@@ -55,7 +60,7 @@ export function getSidebarMenu(role: string): { section: string; items: SidebarM
         items: [
           { title: "ศูนย์แจ้งเตือน", href: "/notifications", icon: Bell },
         ],
-      }
+      },
     );
   }
 
@@ -64,21 +69,46 @@ export function getSidebarMenu(role: string): { section: string; items: SidebarM
       {
         section: "Main",
         items: [
-          { title: "เมนูหลัก", href: "/menu", icon: LayoutDashboard },
-          { title: "ภาพรวมระบบ", href: "/tasks", icon: ClipboardList },
+          { title: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard },
+          {
+            title: "พื้นที่ทำงาน",
+            href: "/tasks",
+            icon: ClipboardList,
+            children: [
+              { title: "ตารางงานทั้งหมด", href: "/tasks" },
+              { title: "จัดการการเผยแพร่", href: "/admin/publish" },
+              { title: "ส่งคลิปใหม่", href: "/submit" },
+              { title: "หน้าเมนู", href: "/menu" },
+            ],
+          },
+          {
+            title: "การจัดการโปรเจกต์",
+            href: "/projects",
+            icon: FileVideo,
+            children: [
+              { title: "รายการโปรเจกต์ทั้งหมด", href: "/projects" },
+              { title: "สร้างโปรเจกต์ใหม่", href: "/admin/projects/create" },
+            ],
+          },
           { title: "รายงานวิเคราะห์", href: "/analytics", icon: BarChart3 },
-          { title: "โปรเจกต์ทั้งหมด", href: "/projects", icon: FileVideo },
         ],
       },
       {
         section: "System",
         items: [
           { title: "ศูนย์แจ้งเตือน", href: "/notifications", icon: Bell },
-          { title: "ประวัติระบบ", href: "/admin/audit-logs", icon: ShieldCheck },
-          { title: "จัดการผู้ใช้งาน", href: "/users", icon: Users },
-          { title: "ตั้งค่าระบบ", href: "/settings", icon: Settings },
+          {
+            title: "ตั้งค่าและผู้ใช้งาน",
+            href: "/settings",
+            icon: Settings,
+            children: [
+              { title: "ตั้งค่าระบบทั่วไป", href: "/settings" },
+              { title: "จัดการผู้ใช้งาน (Users)", href: "/users" },
+              { title: "ประวัติการทำงานระบบ", href: "/admin/audit-logs" },
+            ],
+          },
         ],
-      }
+      },
     );
   }
 

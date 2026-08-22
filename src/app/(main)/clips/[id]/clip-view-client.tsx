@@ -5,6 +5,7 @@ import VideoEmbed from "@/components/clips/video-embed";
 import ReviewActionCard from "@/components/clips/review-action-card";
 import RevisionTimeline from "@/components/clips/revision-timeline";
 import PlatformBadge from "@/components/ui/platform-badge";
+import { toast } from "sonner";
 
 interface ClipViewClientProps {
   clip: any;
@@ -24,8 +25,9 @@ export default function ClipViewClient({
     clip.driveUrl || latestRevision?.driveUrl || ""
   );
   const [seekTime, setSeekTime] = useState<number | null>(null);
-  const [currentTimeFormatted, setCurrentTimeFormatted] = useState<string>("00:00");
-  const [currentTimeSeconds, setCurrentTimeSeconds] = useState<number>(0);
+  const [currentTimeFormatted, setCurrentTimeFormatted] = useState<string | null>(null);
+  const [currentTimeSeconds, setCurrentTimeSeconds] = useState<number | null>(null);
+  const [optimisticStatus, setOptimisticStatus] = useState<string>(clip.status);
 
   const handleTimeUpdate = (seconds: number, formatted: string) => {
     setCurrentTimeSeconds(seconds);
@@ -33,6 +35,10 @@ export default function ClipViewClient({
   };
 
   const handleSeek = (seconds: number) => {
+    if (activeVideoUrl.includes("drive.google.com") || activeVideoUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)) {
+      toast.error("วิดีโอจาก Google Drive ไม่รองรับการกระโดดข้ามเวลาอัตโนมัติ (กรุณาเลื่อนวิดีโอด้วยตนเอง)");
+      return;
+    }
     setSeekTime(seconds);
   };
 
@@ -62,22 +68,22 @@ export default function ClipViewClient({
 
             <div className="flex items-center gap-2">
               <PlatformBadge platform={clip.platform} />
-              {clip.status === "APPROVED" && (
+              {optimisticStatus === "APPROVED" && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                   ✓ ผ่านอนุมัติ
                 </span>
               )}
-              {clip.status === "NEEDS_REVISION" && (
+              {optimisticStatus === "NEEDS_REVISION" && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
                   ✕ ต้องแก้ไข
                 </span>
               )}
-              {clip.status === "PENDING_REVIEW" && (
+              {optimisticStatus === "PENDING_REVIEW" && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
                   ⏳ รอตรวจ
                 </span>
               )}
-              {clip.status === "IN_REVIEW" && (
+              {optimisticStatus === "IN_REVIEW" && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-bold bg-sky-100 text-sky-800 border border-sky-200">
                   🔵 กำลังตรวจ
                 </span>
@@ -149,6 +155,7 @@ export default function ClipViewClient({
           reviewerId={currentUser?.id || ""}
           currentTimeFormatted={currentTimeFormatted}
           currentTimeSeconds={currentTimeSeconds}
+          onOptimisticUpdate={setOptimisticStatus}
         />
         <RevisionTimeline
           revisions={allRevisions}

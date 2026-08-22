@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { validateVideoUrl } from "@/utils/url-validator";
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
 
 function SubmitForm() {
   const router = useRouter();
@@ -36,19 +37,19 @@ function SubmitForm() {
     useEpisodes(selectedProject);
   const { data: clips, isLoading: isClipsLoading } = useClips(selectedEpisode);
 
-  const handleProjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedProject(e.target.value);
+  const handleProjectChange = (val: string) => {
+    setSelectedProject(val);
     setSelectedEpisode("");
     setSelectedClip("");
   };
 
-  const handleEpisodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedEpisode(e.target.value);
+  const handleEpisodeChange = (val: string) => {
+    setSelectedEpisode(val);
     setSelectedClip("");
   };
 
-  const handleClipChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedClip(e.target.value);
+  const handleClipChange = (val: string) => {
+    setSelectedClip(val);
   };
 
   const { submitRevision } = useSubmitRevision();
@@ -125,40 +126,28 @@ function SubmitForm() {
                 <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                   เลือกซีรีส์ (Project) *
                 </label>
-                <select
+                <Combobox
+                  options={projects?.map(p => ({ value: p.id, label: p.name })) || []}
                   value={selectedProject}
                   onChange={handleProjectChange}
-                  required
+                  placeholder={isProjectsLoading ? "กำลังโหลดซีรีส์..." : "-- เลือกซีรีส์ --"}
+                  searchPlaceholder="ค้นหาซีรีส์..."
                   disabled={isProjectsLoading}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
-                >
-                  <option value="">-- เลือกซีรีส์ --</option>
-                  {projects?.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                   เลือกตอน (Episode) *
                 </label>
-                <select
+                <Combobox
+                  options={episodes?.map(ep => ({ value: ep.id, label: `EP.${ep.episodeNo}: ${ep.name || 'ไม่มีชื่อตอน'}` })) || []}
                   value={selectedEpisode}
                   onChange={handleEpisodeChange}
-                  required
+                  placeholder={isEpisodesLoading ? "กำลังโหลดตอน..." : "-- เลือกตอน --"}
+                  searchPlaceholder="ค้นหาตอน..."
                   disabled={!selectedProject || isEpisodesLoading}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium disabled:opacity-50"
-                >
-                  <option value="">-- เลือกตอน --</option>
-                  {episodes?.map((ep) => (
-                    <option key={ep.id} value={ep.id}>
-                      EP.{ep.episodeNo}: {ep.name}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
             </div>
 
@@ -166,20 +155,14 @@ function SubmitForm() {
               <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                 เลือกคลิปที่ต้องการส่งงาน *
               </label>
-              <select
+              <Combobox
+                options={clips?.map(c => ({ value: c.id, label: c.name })) || []}
                 value={selectedClip}
                 onChange={handleClipChange}
-                required
+                placeholder={isClipsLoading ? "กำลังโหลดคลิป..." : "-- เลือกคลิปวิดีโอ --"}
+                searchPlaceholder="ค้นหาคลิป..."
                 disabled={!selectedEpisode || isClipsLoading}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium disabled:opacity-50"
-              >
-                <option value="">-- เลือกคลิปวิดีโอ --</option>
-                {clips?.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
           </div>
 

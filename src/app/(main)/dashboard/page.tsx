@@ -16,7 +16,7 @@ export default async function DashboardPage() {
 
   // Fetch clips, projects & users from API
   const [clipsRes, projectsRes, usersRes] = await Promise.all([
-    apiServer.get<Clip[]>("/clips"),
+    apiServer.get<Clip[]>("/clips?limit=20"),
     apiServer.get<Project[]>("/projects").catch(() => ({ data: [] })),
     apiServer.get<User[]>("/users").catch(() => ({ data: [] })),
   ]);

@@ -18,7 +18,8 @@ export default function BottomNav() {
   const isUser = role === "USER";
 
   const leftNavItems: NavItem[] = [
-    { href: "/menu", label: "หน้าหลัก", icon: LayoutDashboard },
+    { href: "/dashboard", label: "แดชบอร์ด", icon: LayoutDashboard },
+    { href: "/menu", label: "เมนู", icon: Menu },
   ];
 
   const centerFloatingItem: NavItem | null = isUser

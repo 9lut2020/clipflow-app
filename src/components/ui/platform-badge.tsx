@@ -4,6 +4,7 @@ import { PlatformType } from "@/types/api";
 interface PlatformBadgeProps {
   platform?: PlatformType | string | null;
   className?: string;
+  compact?: boolean;
 }
 
 export const PLATFORM_CONFIG: Record<
@@ -52,17 +53,20 @@ export const PLATFORM_CONFIG: Record<
   },
 };
 
-export default function PlatformBadge({ platform = "TIKTOK", className = "" }: PlatformBadgeProps) {
+export default function PlatformBadge({ platform = "TIKTOK", className = "", compact = false }: PlatformBadgeProps) {
   const key = (platform || "TIKTOK").toUpperCase();
   const config = PLATFORM_CONFIG[key] || PLATFORM_CONFIG.TIKTOK;
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border shadow-2xs ${config.bgClass} ${config.textClass} ${config.borderClass} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full font-bold border shadow-2xs ${config.bgClass} ${config.textClass} ${config.borderClass} ${
+        compact ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-0.5 text-[11px]"
+      } ${className}`}
     >
       <span>{config.icon}</span>
-      <span>{config.label}</span>
-      <span className="opacity-75 font-mono text-[10px]">({config.ratio})</span>
+      {!compact && <span>{config.label}</span>}
+      {compact && <span className="max-sm:hidden">{config.label}</span>}
+      {!compact && <span className="opacity-75 font-mono text-[10px]">({config.ratio})</span>}
     </span>
   );
 }

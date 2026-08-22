@@ -54,7 +54,7 @@ export default function VideoEmbed({ url, onTimeUpdate, seekTime }: VideoEmbedPr
   } else if (isGoogleDrive) {
     embedUrl = url.replace(/\/view.*$/, "/preview").replace(/\/edit.*$/, "/preview");
   } else if (url.includes("youtube.com") || url.includes("youtu.be")) {
-    const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+    const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
     if (ytMatch && ytMatch[1]) {
       embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1`;
     }
@@ -72,10 +72,12 @@ export default function VideoEmbed({ url, onTimeUpdate, seekTime }: VideoEmbedPr
       {/* Main Player Container */}
       <div
         className={cn(
-          "bg-slate-950 border border-slate-200/80 shadow-md overflow-hidden relative group transition-all duration-300",
+          "bg-slate-950 border border-slate-200/80 shadow-md relative group transition-all duration-300 min-h-[350px]",
           isFullscreen
             ? "fixed inset-0 z-[100] w-full h-full rounded-none flex flex-col justify-center bg-black"
-            : "aspect-video rounded-2xl"
+            : isGoogleDrive
+              ? "aspect-[4/3] sm:aspect-[16/10] rounded-lg"
+              : "aspect-video rounded-lg"
         )}
       >
         {isDirectVideo ? (
@@ -92,7 +94,9 @@ export default function VideoEmbed({ url, onTimeUpdate, seekTime }: VideoEmbedPr
           /* Embedded Iframe Player for Drive / YouTube */
           <iframe
             src={embedUrl}
-            className="w-full h-full border-0"
+            className={cn("w-full h-full border-0 block", !isFullscreen && "rounded-lg")}
+            width="100%"
+            height="100%"
             allow="autoplay; encrypted-media; picture-in-picture"
             allowFullScreen
           ></iframe>

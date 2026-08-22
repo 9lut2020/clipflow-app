@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { MessageSquare, CheckCircle, History, Clock, ExternalLink, Play, Sparkles } from "lucide-react";
+import {
+  MessageSquare,
+  CheckCircle,
+  History,
+  Clock,
+  ExternalLink,
+  Play,
+  Sparkles,
+} from "lucide-react";
 import { cn } from "@/utils/utils";
 
 interface Review {
@@ -66,9 +74,14 @@ export default function RevisionTimeline({
               <button
                 key={idx}
                 type="button"
-                onClick={() => onSeekTime && onSeekTime(totalSecs)}
+                onClick={() => {
+                  if (onSeekTime) {
+                    onSeekTime(totalSecs);
+                    // We can't easily check the URL here, so the parent should handle showing a toast if unsupported.
+                  }
+                }}
                 className="inline-flex items-center gap-1 mx-1 px-2 py-0.5 rounded-md font-mono text-[11px] font-bold bg-amber-100 text-amber-900 hover:bg-amber-200 border border-amber-300 shadow-2xs transition-all cursor-pointer"
-                title={`คลิกเพื่อกระโดดไปวินาทีที่ ${part}`}
+                title={`เวลา: ${part}`}
               >
                 <span>⏱️ {part}</span>
               </button>
@@ -83,7 +96,7 @@ export default function RevisionTimeline({
   return (
     <div
       className={cn(
-        "bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden",
+        "bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden mb-10 md:mb-0",
         className,
       )}
     >
@@ -184,7 +197,9 @@ export default function RevisionTimeline({
                                   {revReviewer.displayName?.[0] || "R"}
                                 </div>
                               )}
-                              <span className="text-[11px]">{revReviewer.displayName}</span>
+                              <span className="text-[11px]">
+                                {revReviewer.displayName}
+                              </span>
                             </div>
                           )}
                         </div>

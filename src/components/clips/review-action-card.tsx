@@ -14,8 +14,9 @@ interface ReviewActionCardProps {
   clip: any;
   isUser: boolean;
   reviewerId: string;
-  currentTimeFormatted?: string;
-  currentTimeSeconds?: number;
+  currentTimeFormatted?: string | null;
+  currentTimeSeconds?: number | null;
+  onOptimisticUpdate?: (status: string) => void;
 }
 
 export default function ReviewActionCard({
@@ -24,6 +25,7 @@ export default function ReviewActionCard({
   reviewerId,
   currentTimeFormatted,
   currentTimeSeconds,
+  onOptimisticUpdate,
 }: ReviewActionCardProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { submitRevision, isSubmitting: isSubmittingRevision } =
@@ -72,6 +74,7 @@ export default function ReviewActionCard({
   const handleApprove = async () => {
     if (!reviewerId) return;
     const targetRevId = clip.currentRevisionId || clip.id;
+    if (onOptimisticUpdate) onOptimisticUpdate("APPROVED");
     try {
       await submitReview(targetRevId, {
         status: "APPROVED",
@@ -89,6 +92,7 @@ export default function ReviewActionCard({
   const handleReject = async () => {
     if (!reviewerId) return;
     const targetRevId = clip.currentRevisionId || clip.id;
+    if (onOptimisticUpdate) onOptimisticUpdate("NEEDS_REVISION");
     try {
       await submitReview(targetRevId, {
         status: "NEEDS_REVISION",
@@ -324,7 +328,7 @@ export default function ReviewActionCard({
                 ref={textareaRef}
                 autoFocus
                 className="rounded-xl border-slate-200 bg-slate-50 focus:bg-white focus:ring-sky-500/20 focus:border-sky-500 text-sm resize-none"
-                placeholder="พิมพ์สิ่งที่ต้องแก้ไขให้ทีมตัดต่อ หรือกดปุ่มปักหมุดเวลาเพื่อระบุวินาที..."
+                placeholder={currentTimeFormatted ? "พิมพ์สิ่งที่ต้องแก้ไขให้ทีมตัดต่อ หรือกดปุ่มปักหมุดเวลาเพื่อระบุวินาที..." : "พิมพ์สิ่งที่ต้องแก้ไข (สามารถพิมพ์เวลาเช่น [01:15] เพื่อระบุวินาทีได้)"}
                 rows={2}
               />
             </div>

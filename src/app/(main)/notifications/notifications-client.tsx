@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Clip } from "@/types/api";
 import { apiClient } from "@/lib/api-client";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Bell,
@@ -87,10 +88,6 @@ export function NotificationsClient({ clips }: NotificationsClientProps) {
   const [notifyOnNewTask, setNotifyOnNewTask] = useState(true);
   const [isTestingLine, setIsTestingLine] = useState(false);
 
-  const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-  };
-
   const handleTestLineNotify = async () => {
     setIsTestingLine(true);
     try {
@@ -103,15 +100,15 @@ export function NotificationsClient({ clips }: NotificationsClientProps) {
       );
 
       if (res.status === "success") {
-        alert(
-          "✅ ยิงคำสั่งส่งข้อความเข้า LINE เรียบร้อยแล้ว!\n\n💡 หมายเหตุ: เพื่อให้ข้อความเด้งบนมือถือของคุณ โปรดตรวจสอบว่าคุณได้กด 'เพิ่มเพื่อน (Add Friend)' กับ LINE Official Account ของระบบไว้แล้วเรียบร้อย",
-        );
+        toast.success("ยิงคำสั่งส่งข้อความเข้า LINE เรียบร้อยแล้ว!", {
+          duration: 6000,
+        });
       } else {
-        alert(`❌ ไม่สามารถส่งข้อความได้: ${res.message}`);
+        toast.error(`❌ ไม่สามารถส่งข้อความได้: ${res.message}`);
       }
     } catch (err) {
       console.error(err);
-      alert("เกิดข้อผิดพลาดในการส่งข้อความ LINE");
+      toast.error("เกิดข้อผิดพลาดในการส่งข้อความ LINE");
     } finally {
       setIsTestingLine(false);
     }
@@ -133,23 +130,11 @@ export function NotificationsClient({ clips }: NotificationsClientProps) {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">
-                ศูนย์การแจ้งเตือน LINE Notification Center
+                ศูนย์การแจ้งเตือน Line
               </h1>
             </div>
-            <p className="text-slate-600 text-xs md:text-sm mt-1">
-              รายการความเคลื่อนไหวของคลิปจริงในระบบ และระบบส่งการแจ้งเตือนเข้า
-              LINE รายบุคคล
-            </p>
           </div>
         </div>
-
-        <button
-          type="button"
-          onClick={handleMarkAllRead}
-          className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer self-start md:self-auto"
-        >
-          ทำเป็นอ่านแล้วทั้งหมด
-        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

@@ -101,7 +101,7 @@ export default function Sidebar({
       >
         <div className="flex flex-col h-full bg-white">
           {/* Scrollable Content Area */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-4 space-y-6 custom-scrollbar">
+          <div className={`flex-1 overflow-y-auto overflow-x-hidden px-2 py-4 custom-scrollbar transition-all duration-300 ${isCollapsedState ? "space-y-1.5" : "space-y-6"}`}>
             {/* 1. Top Profile Header */}
             <div className="hidden md:block">
               <div

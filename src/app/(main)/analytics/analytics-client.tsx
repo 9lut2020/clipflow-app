@@ -229,25 +229,26 @@ export function AnalyticsClient({
     <div className="space-y-6 max-w-full mx-auto pb-16">
       {/* ─── 1. EXECUTIVE HEADER & TIME SLICER ────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white px-4 py-3.5 sm:px-6 sm:py-4 rounded-2xl border border-slate-200/80 shadow-xs">
-          <div className="flex items-center gap-3">
-            <Link href="/">
-              <button
-                type="button"
-                className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 flex items-center justify-center shrink-0 cursor-pointer shadow-xs transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-              </button>
-            </Link>
-            <div>
-              <h1 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight leading-snug line-clamp-1 flex items-center gap-2">
-                <BarChart3 className="text-blue-600 shrink-0 w-4.5 h-4.5 sm:w-5 sm:h-5" />
-                <span>ศูนย์วิเคราะห์สถิติการผลิตสื่อ</span>
-              </h1>
-              <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 truncate">
-                วิเคราะห์ดัชนีชี้วัดหลัก (KPI) ประสิทธิภาพทีมตัดต่อและความคืบหน้ารายซีรีส์
-              </p>
-            </div>
+        <div className="flex items-center gap-3">
+          <Link href="/">
+            <button
+              type="button"
+              className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 flex items-center justify-center shrink-0 cursor-pointer shadow-xs transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+            </button>
+          </Link>
+          <div>
+            <h1 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight leading-snug line-clamp-1 flex items-center gap-2">
+              <BarChart3 className="text-blue-600 shrink-0 w-4.5 h-4.5 sm:w-5 sm:h-5" />
+              <span>ศูนย์วิเคราะห์สถิติการผลิตสื่อ</span>
+            </h1>
+            <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 truncate">
+              วิเคราะห์ดัชนีชี้วัดหลัก (KPI)
+              ประสิทธิภาพทีมตัดต่อและความคืบหน้ารายซีรีส์
+            </p>
           </div>
+        </div>
 
         {/* Time Slicers */}
         <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl shrink-0 self-start md:self-auto">
@@ -272,7 +273,7 @@ export function AnalyticsClient({
           ))}
         </div>
       </div>
-      
+
       {/* ─── TABS ──────────────────────────────────────────────────────────── */}
       <div className="flex gap-4 border-b border-slate-200">
         <button
@@ -300,375 +301,392 @@ export function AnalyticsClient({
       {activeTab === "overview" ? (
         <>
           {/* ─── 2. 4 EXECUTIVE KPI GAUGE CARDS ──────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        {/* KPI 1: First-Pass Approval Rate */}
-        <Card className="bg-white border-slate-200/80 shadow-xs">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
-                First-Pass Approval Rate
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <Target size={18} />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-emerald-700 tracking-tight">
-                {firstPassRate}%
-              </span>
-              <span className="text-xs font-bold text-emerald-600">
-                ({approvedClips.length} คลิปผ่าน)
-              </span>
-            </div>
-            {/* Visual Gauge Bar */}
-            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-2">
-              <div
-                className="bg-emerald-500 h-full rounded-full transition-all duration-500"
-                style={{ width: `${firstPassRate}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* KPI 2: Avg. Turnaround Time */}
-        <Card className="bg-white border-slate-200/80 shadow-xs">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
-                Avg. Turnaround Time
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
-                <Clock size={18} />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-sky-700 tracking-tight">
-                {avgTurnaroundDays}
-              </span>
-              <span className="text-xs font-bold text-sky-600">วัน / คลิป</span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1">
-              เวลาเฉลี่ยตั้งแต่ส่งจนอนุมัติ
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* KPI 3: Total Production Output */}
-        <Card className="bg-white border-slate-200/80 shadow-xs">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
-                ปริมาณการผลิตสื่อรวม
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                <Layers size={18} />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-slate-900 tracking-tight">
-                {totalClips}
-              </span>
-              <span className="text-xs font-bold text-blue-600">คลิปในคิว</span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1">
-              คำนวณตามช่วงเวลาที่เลือก
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* KPI 4: Revision Bottleneck Alert */}
-        <Card className="bg-white border-slate-200/80 shadow-xs">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
-                อัตราการสั่งแก้ไข (Revision)
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-                <AlertTriangle size={18} />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-rose-700 tracking-tight">
-                {revisionClips.length}
-              </span>
-              <span className="text-xs font-bold text-rose-600">
-                ({revisionRate}% สั่งแก้)
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1">
-              รายการที่ต้องการปรับปรุงคุณภาพ
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ─── 3. PRODUCTION THROUGHPUT TREND GRAPH ────────────────────────────── */}
-      <Card className="bg-white border-slate-200/80 shadow-xs overflow-hidden">
-        <CardHeader className="p-4 md:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <TrendingUp size={18} className="text-blue-600" />
-              <span>
-                แนวโน้มปริมาณการผลิตและการอนุมัติวิดีโอ (Production Throughput
-                Trend)
-              </span>
-            </CardTitle>
-          </div>
-
-          <div className="flex items-center gap-4 text-xs font-bold">
-            <div className="flex items-center gap-1.5 text-blue-600">
-              <span className="w-3 h-1 bg-blue-500 rounded-full" />
-              <span>ยอดส่งคลิป</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-emerald-600">
-              <span className="w-3 h-1 bg-emerald-500 rounded-full" />
-              <span>ยอดผ่านอนุมัติ</span>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-4 md:p-6">
-          <div className="w-full overflow-x-auto">
-            <svg
-              viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-              className="w-full h-48 md:h-56 min-w-[320px] overflow-visible"
-            >
-              {/* Grid Lines */}
-              {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
-                const y = svgHeight - ratio * (svgHeight - 40) - 20;
-                return (
-                  <line
-                    key={idx}
-                    x1="20"
-                    y1={y}
-                    x2={svgWidth - 20}
-                    y2={y}
-                    stroke="#f1f5f9"
-                    strokeWidth="1"
-                  />
-                );
-              })}
-
-              {/* Submitted Polyline */}
-              <polyline
-                fill="none"
-                stroke="#3b82f6"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                points={subLinePoints}
-              />
-
-              {/* Approved Polyline */}
-              <polyline
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                points={appLinePoints}
-              />
-
-              {/* Data Nodes & Labels */}
-              {trendDataPoints.map((dp, idx) => {
-                const x =
-                  (idx / (trendDataPoints.length - 1)) * (svgWidth - 40) + 20;
-                const ySub =
-                  svgHeight - (dp.submitted / maxVal) * (svgHeight - 40) - 20;
-                const yApp =
-                  svgHeight - (dp.approved / maxVal) * (svgHeight - 40) - 20;
-
-                return (
-                  <g key={idx}>
-                    <circle
-                      cx={x}
-                      cy={ySub}
-                      r="4"
-                      fill="#3b82f6"
-                      stroke="#ffffff"
-                      strokeWidth="2"
-                    />
-                    <circle
-                      cx={x}
-                      cy={yApp}
-                      r="4"
-                      fill="#10b981"
-                      stroke="#ffffff"
-                      strokeWidth="2"
-                    />
-                    <text
-                      x={x}
-                      y={svgHeight - 4}
-                      textAnchor="middle"
-                      className="text-[9px] fill-slate-400 font-bold"
-                    >
-                      {dp.label}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ─── 4. DUAL SECTION: TEAM MATRIX & SERIES PROGRESS ──────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* TEAM LEADERBOARD & QUALITY MATRIX (lg:col-span-7) */}
-        <Card className="lg:col-span-7 bg-white border-slate-200/80 shadow-xs overflow-hidden">
-          <CardHeader className="p-4 md:p-5 border-b border-slate-100 flex flex-row items-center justify-between">
-            <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Award size={18} className="text-purple-600" />
-              <span>
-                อันดับและประสิทธิภาพทีมตัดต่อ (Team Productivity Matrix)
-              </span>
-            </CardTitle>
-            <span className="text-xs font-bold text-slate-500">
-              {creatorLeaderboard.length} คน
-            </span>
-          </CardHeader>
-
-          <CardContent className="p-0 overflow-x-auto">
-            {creatorLeaderboard.length === 0 ? (
-              <div className="py-12 flex flex-col items-center justify-center text-center">
-                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
-                  <UserX size={24} className="text-slate-400" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            {/* KPI 1: First-Pass Approval Rate */}
+            <Card className="bg-white border-slate-200/80 shadow-xs">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                    First-Pass Approval Rate
+                  </span>
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <Target size={18} />
+                  </div>
                 </div>
-                <p className="text-slate-500 font-bold text-sm">ไม่พบข้อมูลนักตัดต่อ</p>
-                <p className="text-slate-400 text-xs mt-1">ยังไม่มีผู้ใช้ใดที่เคยส่งคลิปในระบบ</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-emerald-700 tracking-tight">
+                    {firstPassRate}%
+                  </span>
+                  <span className="text-xs font-bold text-emerald-600">
+                    ({approvedClips.length} คลิปผ่าน)
+                  </span>
+                </div>
+                {/* Visual Gauge Bar */}
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-2">
+                  <div
+                    className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                    style={{ width: `${firstPassRate}%` }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* KPI 2: Avg. Turnaround Time */}
+            <Card className="bg-white border-slate-200/80 shadow-xs">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                    Avg. Turnaround Time
+                  </span>
+                  <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                    <Clock size={18} />
+                  </div>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-sky-700 tracking-tight">
+                    {avgTurnaroundDays}
+                  </span>
+                  <span className="text-xs font-bold text-sky-600">
+                    วัน / คลิป
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  เวลาเฉลี่ยตั้งแต่ส่งจนอนุมัติ
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* KPI 3: Total Production Output */}
+            <Card className="bg-white border-slate-200/80 shadow-xs">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                    ปริมาณการผลิตสื่อรวม
+                  </span>
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <Layers size={18} />
+                  </div>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-slate-900 tracking-tight">
+                    {totalClips}
+                  </span>
+                  <span className="text-xs font-bold text-blue-600">
+                    คลิปในคิว
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  คำนวณตามช่วงเวลาที่เลือก
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* KPI 4: Revision Bottleneck Alert */}
+            <Card className="bg-white border-slate-200/80 shadow-xs">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                    อัตราการสั่งแก้ไข (Revision)
+                  </span>
+                  <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                    <AlertTriangle size={18} />
+                  </div>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-rose-700 tracking-tight">
+                    {revisionClips.length}
+                  </span>
+                  <span className="text-xs font-bold text-rose-600">
+                    ({revisionRate}% สั่งแก้)
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  รายการที่ต้องการปรับปรุงคุณภาพ
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* ─── 3. PRODUCTION THROUGHPUT TREND GRAPH ────────────────────────────── */}
+          <Card className="bg-white border-slate-200/80 shadow-xs overflow-hidden">
+            <CardHeader className="p-4 md:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <TrendingUp size={18} className="text-blue-600" />
+                  <span>
+                    แนวโน้มปริมาณการผลิตและการอนุมัติวิดีโอ (Production
+                    Throughput Trend)
+                  </span>
+                </CardTitle>
               </div>
-            ) : (
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-600 font-bold">
-                  <tr>
-                    <th className="px-5 py-3.5">นักตัดต่อ</th>
-                    <th className="px-5 py-3.5 text-center">คลิปที่ส่ง</th>
-                    <th className="px-5 py-3.5 text-center">ผ่านอนุมัติ</th>
-                    <th className="px-5 py-3.5 text-center">อัตราสำเร็จ (%)</th>
-                    <th className="px-5 py-3.5 text-right pr-6">
-                      รางวัลเกียรติยศ
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="text-xs md:text-sm divide-y divide-slate-100">
-                  {creatorLeaderboard.map((cr, idx) => {
-                    const passRate =
-                      cr.total > 0
-                        ? Math.round((cr.approved / cr.total) * 100)
+
+              <div className="flex items-center gap-4 text-xs font-bold">
+                <div className="flex items-center gap-1.5 text-blue-600">
+                  <span className="w-3 h-1 bg-blue-500 rounded-full" />
+                  <span>ยอดส่งคลิป</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-emerald-600">
+                  <span className="w-3 h-1 bg-emerald-500 rounded-full" />
+                  <span>ยอดผ่านอนุมัติ</span>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-4 md:p-6">
+              <div className="w-full overflow-x-auto">
+                <svg
+                  viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+                  className="w-full h-48 md:h-56 min-w-[320px] overflow-visible"
+                >
+                  {/* Grid Lines */}
+                  {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+                    const y = svgHeight - ratio * (svgHeight - 40) - 20;
+                    return (
+                      <line
+                        key={idx}
+                        x1="20"
+                        y1={y}
+                        x2={svgWidth - 20}
+                        y2={y}
+                        stroke="#f1f5f9"
+                        strokeWidth="1"
+                      />
+                    );
+                  })}
+
+                  {/* Submitted Polyline */}
+                  <polyline
+                    fill="none"
+                    stroke="#3b82f6"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    points={subLinePoints}
+                  />
+
+                  {/* Approved Polyline */}
+                  <polyline
+                    fill="none"
+                    stroke="#10b981"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    points={appLinePoints}
+                  />
+
+                  {/* Data Nodes & Labels */}
+                  {trendDataPoints.map((dp, idx) => {
+                    const x =
+                      (idx / (trendDataPoints.length - 1)) * (svgWidth - 40) +
+                      20;
+                    const ySub =
+                      svgHeight -
+                      (dp.submitted / maxVal) * (svgHeight - 40) -
+                      20;
+                    const yApp =
+                      svgHeight -
+                      (dp.approved / maxVal) * (svgHeight - 40) -
+                      20;
+
+                    return (
+                      <g key={idx}>
+                        <circle
+                          cx={x}
+                          cy={ySub}
+                          r="4"
+                          fill="#3b82f6"
+                          stroke="#ffffff"
+                          strokeWidth="2"
+                        />
+                        <circle
+                          cx={x}
+                          cy={yApp}
+                          r="4"
+                          fill="#10b981"
+                          stroke="#ffffff"
+                          strokeWidth="2"
+                        />
+                        <text
+                          x={x}
+                          y={svgHeight - 4}
+                          textAnchor="middle"
+                          className="text-[9px] fill-slate-400 font-bold"
+                        >
+                          {dp.label}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ─── 4. DUAL SECTION: TEAM MATRIX & SERIES PROGRESS ──────────────────── */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* TEAM LEADERBOARD & QUALITY MATRIX (lg:col-span-7) */}
+            <Card className="lg:col-span-7 bg-white border-slate-200/80 shadow-xs overflow-hidden">
+              <CardHeader className="p-4 md:p-5 border-b border-slate-100 flex flex-row items-center justify-between">
+                <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Award size={18} className="text-purple-600" />
+                  <span>อันดับและประสิทธิภาพทีมตัดต่อ</span>
+                </CardTitle>
+                <span className="text-xs font-bold text-slate-500">
+                  {creatorLeaderboard.length} คน
+                </span>
+              </CardHeader>
+
+              <CardContent className="p-0 overflow-x-auto">
+                {creatorLeaderboard.length === 0 ? (
+                  <div className="py-12 flex flex-col items-center justify-center text-center">
+                    <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                      <UserX size={24} className="text-slate-400" />
+                    </div>
+                    <p className="text-slate-500 font-bold text-sm">
+                      ไม่พบข้อมูลนักตัดต่อ
+                    </p>
+                    <p className="text-slate-400 text-xs mt-1">
+                      ยังไม่มีผู้ใช้ใดที่เคยส่งคลิปในระบบ
+                    </p>
+                  </div>
+                ) : (
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-600 font-bold">
+                      <tr>
+                        <th className="px-5 py-3.5">นักตัดต่อ</th>
+                        <th className="px-5 py-3.5 text-center">คลิปที่ส่ง</th>
+                        <th className="px-5 py-3.5 text-center">ผ่านอนุมัติ</th>
+                        <th className="px-5 py-3.5 text-center">
+                          อัตราสำเร็จ (%)
+                        </th>
+                        <th className="px-5 py-3.5 text-right pr-6">
+                          รางวัลเกียรติยศ
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-xs md:text-sm divide-y divide-slate-100">
+                      {creatorLeaderboard.map((cr, idx) => {
+                        const passRate =
+                          cr.total > 0
+                            ? Math.round((cr.approved / cr.total) * 100)
+                            : 0;
+
+                        return (
+                          <tr
+                            key={cr.id}
+                            className="hover:bg-slate-50/80 transition-colors"
+                          >
+                            <td className="px-5 py-3.5">
+                              <div className="flex items-center gap-2.5">
+                                <UserAvatar
+                                  name={cr.name}
+                                  pictureUrl={cr.pictureUrl}
+                                />
+                                <span className="font-bold text-slate-800">
+                                  {cr.name}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-5 py-3.5 text-center font-bold text-slate-700">
+                              {cr.total}
+                            </td>
+                            <td className="px-5 py-3.5 text-center font-bold text-emerald-600">
+                              {cr.approved}
+                            </td>
+                            <td className="px-5 py-3.5 text-center font-black text-slate-900">
+                              {passRate}%
+                            </td>
+                            <td className="px-5 py-3.5 text-right pr-6">
+                              {idx === 0 && (
+                                <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-amber-200">
+                                  🏆 Top Performer
+                                </span>
+                              )}
+                              {idx === 1 && (
+                                <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-800 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-purple-200">
+                                  ⚡ Speed Master
+                                </span>
+                              )}
+                              {idx >= 2 && passRate >= 80 && (
+                                <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-emerald-200">
+                                  🎯 Quality Master
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* SERIES COMPLETION & PROGRESS PREDICTOR (lg:col-span-5) */}
+            <Card className="lg:col-span-5 bg-white border-slate-200/80 shadow-xs overflow-hidden">
+              <CardHeader className="p-4 md:p-5 border-b border-slate-100 flex flex-row items-center justify-between">
+                <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Users size={18} className="text-indigo-600" />
+                  <span>ความคืบหน้ารายซีรีส์</span>
+                </CardTitle>
+                <span className="text-xs font-bold text-slate-500">
+                  {projects.length} โปรเจกต์
+                </span>
+              </CardHeader>
+
+              <CardContent className="p-4 md:p-5 space-y-4">
+                {projects.length === 0 ? (
+                  <div className="py-12 flex flex-col items-center justify-center text-center">
+                    <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                      <FolderX size={24} className="text-slate-400" />
+                    </div>
+                    <p className="text-slate-500 font-bold text-sm">
+                      ไม่พบซีรีส์ในระบบ
+                    </p>
+                    <p className="text-slate-400 text-xs mt-1">
+                      รอการสร้างโปรเจกต์ใหม่จากผู้ดูแล
+                    </p>
+                  </div>
+                ) : (
+                  projects.slice(0, 5).map((proj) => {
+                    const projClips = filteredClips.filter(
+                      (c) => c.project?.id === proj.id,
+                    );
+                    const approvedCount = projClips.filter(
+                      (c) => c.status === "APPROVED",
+                    ).length;
+                    const pct =
+                      projClips.length > 0
+                        ? Math.round((approvedCount / projClips.length) * 100)
                         : 0;
 
                     return (
-                      <tr
-                        key={cr.id}
-                        className="hover:bg-slate-50/80 transition-colors"
-                      >
-                        <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-2.5">
-                            <UserAvatar
-                              name={cr.name}
-                              pictureUrl={cr.pictureUrl}
-                            />
-                            <span className="font-bold text-slate-800">
-                              {cr.name}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3.5 text-center font-bold text-slate-700">
-                          {cr.total}
-                        </td>
-                        <td className="px-5 py-3.5 text-center font-bold text-emerald-600">
-                          {cr.approved}
-                        </td>
-                        <td className="px-5 py-3.5 text-center font-black text-slate-900">
-                          {passRate}%
-                        </td>
-                        <td className="px-5 py-3.5 text-right pr-6">
-                          {idx === 0 && (
-                            <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-amber-200">
-                              🏆 Top Performer
-                            </span>
-                          )}
-                          {idx === 1 && (
-                            <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-800 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-purple-200">
-                              ⚡ Speed Master
-                            </span>
-                          )}
-                          {idx >= 2 && passRate >= 80 && (
-                            <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-emerald-200">
-                              🎯 Quality Master
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* SERIES COMPLETION & PROGRESS PREDICTOR (lg:col-span-5) */}
-        <Card className="lg:col-span-5 bg-white border-slate-200/80 shadow-xs overflow-hidden">
-          <CardHeader className="p-4 md:p-5 border-b border-slate-100 flex flex-row items-center justify-between">
-            <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Users size={18} className="text-indigo-600" />
-              <span>ความคืบหน้ารายซีรีส์ (Series Completion)</span>
-            </CardTitle>
-            <span className="text-xs font-bold text-slate-500">
-              {projects.length} โปรเจกต์
-            </span>
-          </CardHeader>
-
-          <CardContent className="p-4 md:p-5 space-y-4">
-            {projects.length === 0 ? (
-              <div className="py-12 flex flex-col items-center justify-center text-center">
-                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
-                  <FolderX size={24} className="text-slate-400" />
-                </div>
-                <p className="text-slate-500 font-bold text-sm">ไม่พบซีรีส์ในระบบ</p>
-                <p className="text-slate-400 text-xs mt-1">รอการสร้างโปรเจกต์ใหม่จากผู้ดูแล</p>
-              </div>
-            ) : (
-              projects.slice(0, 5).map((proj) => {
-                const projClips = filteredClips.filter(
-                  (c) => c.project?.id === proj.id,
-                );
-                const approvedCount = projClips.filter(
-                  (c) => c.status === "APPROVED",
-                ).length;
-                const pct =
-                  projClips.length > 0
-                    ? Math.round((approvedCount / projClips.length) * 100)
-                    : 0;
-
-                return (
-                  <div
-                    key={proj.id}
-                    className="space-y-1.5 p-3 rounded-xl bg-slate-50/70 border border-slate-200/60"
-                  >
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-slate-900 truncate max-w-[180px]">
-                        {proj.name}
-                      </span>
-                      <span className="font-black text-blue-600">
-                        {approvedCount}/{projClips.length} คลิป ({pct}%)
-                      </span>
-                    </div>
-
-                    <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden flex">
                       <div
-                        className="bg-gradient-to-r from-blue-500 to-emerald-500 h-full rounded-full transition-all duration-500"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                        key={proj.id}
+                        className="space-y-1.5 p-3 rounded-xl bg-slate-50/70 border border-slate-200/60"
+                      >
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-900 truncate max-w-[180px]">
+                            {proj.name}
+                          </span>
+                          <span className="font-black text-blue-600">
+                            {approvedCount}/{projClips.length} คลิป ({pct}%)
+                          </span>
+                        </div>
+
+                        <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden flex">
+                          <div
+                            className="bg-gradient-to-r from-blue-500 to-emerald-500 h-full rounded-full transition-all duration-500"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -683,10 +701,27 @@ export function AnalyticsClient({
             <CardContent className="p-6">
               <div className="space-y-4">
                 {[
-                  { label: "ร่าง (DRAFT)", count: filteredClips.filter(c => c.status === "DRAFT").length, color: "bg-slate-300" },
-                  { label: "รอตรวจ (PENDING_REVIEW)", count: pendingClips.length, color: "bg-blue-400" },
-                  { label: "ตรวจแล้วแก้ไข (NEEDS_REVISION)", count: revisionClips.length, color: "bg-rose-400" },
-                  { label: "ผ่านอนุมัติ (APPROVED)", count: approvedClips.length, color: "bg-emerald-500" },
+                  {
+                    label: "ร่าง (DRAFT)",
+                    count: filteredClips.filter((c) => c.status === "DRAFT")
+                      .length,
+                    color: "bg-slate-300",
+                  },
+                  {
+                    label: "รอตรวจ (PENDING_REVIEW)",
+                    count: pendingClips.length,
+                    color: "bg-blue-400",
+                  },
+                  {
+                    label: "ตรวจแล้วแก้ไข (NEEDS_REVISION)",
+                    count: revisionClips.length,
+                    color: "bg-rose-400",
+                  },
+                  {
+                    label: "ผ่านอนุมัติ (APPROVED)",
+                    count: approvedClips.length,
+                    color: "bg-emerald-500",
+                  },
                 ].map((step, idx, arr) => {
                   const max = arr[0].count || 1;
                   const pct = Math.round((step.count / max) * 100) || 0;
@@ -694,10 +729,15 @@ export function AnalyticsClient({
                     <div key={idx} className="space-y-1">
                       <div className="flex justify-between text-xs font-bold text-slate-700">
                         <span>{step.label}</span>
-                        <span>{step.count} ({pct}%)</span>
+                        <span>
+                          {step.count} ({pct}%)
+                        </span>
                       </div>
                       <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                        <div className={`h-full ${step.color} transition-all duration-500`} style={{ width: `${pct}%` }} />
+                        <div
+                          className={`h-full ${step.color} transition-all duration-500`}
+                          style={{ width: `${pct}%` }}
+                        />
                       </div>
                     </div>
                   );
@@ -715,24 +755,39 @@ export function AnalyticsClient({
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 text-sm">
-              <p className="text-slate-500 mb-4">ข้อมูลเหตุการณ์จาก Analytics Backend</p>
+              <p className="text-slate-500 mb-4">
+                ข้อมูลเหตุการณ์จาก Analytics Backend
+              </p>
               {dailyMetrics.length === 0 ? (
                 <div className="py-12 flex flex-col items-center justify-center text-center">
                   <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
                     <ServerCrash size={24} className="text-slate-400" />
                   </div>
-                  <p className="text-slate-500 font-bold text-sm">ยังไม่มีข้อมูล Metrics</p>
-                  <p className="text-slate-400 text-xs mt-1">สถิติระบบจะถูกคำนวณและสรุปในเวลาเที่ยงคืน</p>
+                  <p className="text-slate-500 font-bold text-sm">
+                    ยังไม่มีข้อมูล Metrics
+                  </p>
+                  <p className="text-slate-400 text-xs mt-1">
+                    สถิติระบบจะถูกคำนวณและสรุปในเวลาเที่ยงคืน
+                  </p>
                 </div>
               ) : (
                 <ul className="space-y-3">
                   {dailyMetrics.map((m, idx) => (
-                    <li key={idx} className="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <li
+                      key={idx}
+                      className="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100"
+                    >
                       <div>
-                        <span className="font-bold text-slate-700">{m.metricName}</span>
-                        <span className="text-xs text-slate-500 ml-2">({m.dimension})</span>
+                        <span className="font-bold text-slate-700">
+                          {m.metricName}
+                        </span>
+                        <span className="text-xs text-slate-500 ml-2">
+                          ({m.dimension})
+                        </span>
                       </div>
-                      <span className="font-black text-blue-600">{m.value}</span>
+                      <span className="font-black text-blue-600">
+                        {m.value}
+                      </span>
                     </li>
                   ))}
                 </ul>

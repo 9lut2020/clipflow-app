@@ -40,14 +40,41 @@ export function MainDashboard({
   role,
   currentUser,
 }: MainDashboardProps) {
+  const [localClips, setLocalClips] = useState<Clip[]>(clips);
+  const [offset, setOffset] = useState(20);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(clips.length === 20); // If initial load had 20, there might be more
+
   // Filters State
   const [timeFilter, setTimeFilter] = useState<"7d" | "30d" | "all">("all");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
+  const handleLoadMore = async () => {
+    setIsLoadingMore(true);
+    try {
+      const { apiClient } = await import("@/lib/api-client");
+      const res = await apiClient.get<Clip[]>("/clips", {
+        limit: "20",
+        offset: offset.toString()
+      });
+      if (res.data) {
+        setLocalClips((prev) => [...prev, ...res.data]);
+        setOffset((prev) => prev + 20);
+        if (res.data.length < 20) {
+          setHasMore(false);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load more clips", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
   // Filter clips logic
   const now = new Date();
-  const filteredClips = clips.filter((c) => {
+  const filteredClips = localClips.filter((c) => {
     // Time filter
     const clipDate = new Date(c.createdAt || c.updatedAt);
     if (timeFilter === "7d") {
@@ -721,6 +748,20 @@ export function MainDashboard({
                   );
                 })}
               </div>
+              
+              {/* Load More Button */}
+              {hasMore && filteredClips.length > 0 && (
+                <div className="p-4 border-t border-slate-100 flex justify-center bg-slate-50/50">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleLoadMore}
+                    disabled={isLoadingMore}
+                    className="w-full md:w-auto min-w-[200px] border-slate-200 shadow-xs bg-white hover:bg-slate-50 text-slate-700 font-bold cursor-pointer"
+                  >
+                    {isLoadingMore ? "กำลังโหลด..." : "โหลดเพิ่มเติม (Load More)"}
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </CardContent>

@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { ChevronDown, Filter, X } from "lucide-react";
+import { ChevronDown, Filter, X, FolderX } from "lucide-react";
 import PlatformBadge from "@/components/ui/platform-badge";
 
 interface ProjectClipsListProps {
@@ -188,7 +188,7 @@ export default function ProjectClipsList({
             {/* Episode */}
             <div className="space-y-3">
               <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                ตอน (Episode)
+                ตอน
               </h4>
               <div className="flex flex-col gap-2 max-h-[150px] overflow-y-auto">
                 {episodes.map((ep) => (
@@ -340,14 +340,12 @@ export default function ProjectClipsList({
       {/* Episode Groups */}
       <div className="space-y-4 pb-24">
         {episodeGroups.length === 0 ? (
-          <div className="text-center py-16 bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
-            <span className="text-4xl mb-3 block">📭</span>
-            <h3 className="font-bold text-slate-700 text-lg mb-1">
-              ไม่พบคลิปที่ตรงกับเงื่อนไข
-            </h3>
-            <p className="text-sm text-slate-500">
-              ลองเปลี่ยนตัวกรองหรือ tab ดูนะครับ
-            </p>
+          <div className="py-16 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+              <FolderX size={32} className="text-slate-400" />
+            </div>
+            <p className="text-slate-500 font-bold text-base">ไม่พบคลิปที่ตรงกับเงื่อนไข</p>
+            <p className="text-slate-400 text-sm mt-1">ลองเปลี่ยนตัวกรอง หรือค้นหาด้วยคำอื่น</p>
           </div>
         ) : (
           episodeGroups.map(({ episode, clips: epClips }) => (
@@ -397,8 +395,9 @@ export default function ProjectClipsList({
                                 {clip.name}
                               </h3>
                               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5 sm:mt-1">
+                                <PlatformBadge platform={clip.platform} compact className="shrink-0" />
                                 {clip.description && (
-                                  <span className="text-[11px] sm:text-xs text-slate-400 truncate max-w-[200px]">
+                                  <span className="text-[11px] sm:text-xs text-slate-400 truncate max-w-[150px] sm:max-w-[200px]">
                                     {clip.description}
                                   </span>
                                 )}
@@ -425,7 +424,6 @@ export default function ProjectClipsList({
                           </div>
 
                           <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                            <PlatformBadge platform={clip.platform} />
                             <Badge
                               variant="outline"
                               className={`px-2.5 py-1 text-[10px] sm:px-3 sm:py-1 sm:text-xs font-bold whitespace-nowrap shadow-2xs ${statusInfo.className}`}
