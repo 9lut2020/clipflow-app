@@ -9,6 +9,7 @@ declare module "next-auth" {
       name?: string | null;
       image?: string | null;
       role: "USER" | "REVIEWER" | "ADMIN";
+      isBypass?: boolean;
     };
   }
 }
@@ -187,6 +188,9 @@ export const authOptions: NextAuthOptions = {
         session.user.role = (token.role as any) || "USER";
         if (token.name) session.user.name = token.name;
         if (token.picture) session.user.image = token.picture as string;
+        if (token.isBypass) {
+          session.user.isBypass = token.isBypass as boolean;
+        }
       }
       return session;
     },

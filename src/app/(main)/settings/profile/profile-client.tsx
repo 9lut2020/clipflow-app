@@ -165,7 +165,7 @@ export function ProfileClient({ userId }: { userId: string }) {
               การเชื่อมต่อ LINE
             </h2>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <p className="text-sm sm:text-lg text-slate-600">
+              <p className="text-sm text-slate-600">
                 คุณได้เชื่อมต่อบัญชี LINE เรียบร้อยแล้ว
                 ระบบจะส่งการแจ้งเตือนต่างๆ ผ่าน LINE ของคุณ
               </p>
