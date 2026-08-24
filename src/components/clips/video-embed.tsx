@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Maximize2, X, ExternalLink, Play, Film, AlertCircle, Video } from "lucide-react";
+import {
+  Maximize2,
+  X,
+  ExternalLink,
+  Play,
+  Film,
+  AlertCircle,
+  Video,
+} from "lucide-react";
 import { cn } from "@/utils/utils";
 
 interface VideoEmbedProps {
@@ -10,7 +18,11 @@ interface VideoEmbedProps {
   seekTime?: number | null;
 }
 
-export default function VideoEmbed({ url, onTimeUpdate, seekTime }: VideoEmbedProps) {
+export default function VideoEmbed({
+  url,
+  onTimeUpdate,
+  seekTime,
+}: VideoEmbedProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -52,16 +64,21 @@ export default function VideoEmbed({ url, onTimeUpdate, seekTime }: VideoEmbedPr
   if (fileId) {
     embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
   } else if (isGoogleDrive) {
-    embedUrl = url.replace(/\/view.*$/, "/preview").replace(/\/edit.*$/, "/preview");
+    embedUrl = url
+      .replace(/\/view.*$/, "/preview")
+      .replace(/\/edit.*$/, "/preview");
   } else if (url.includes("youtube.com") || url.includes("youtu.be")) {
-    const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+    const ytMatch = url.match(
+      /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([\w-]{11})/,
+    );
     if (ytMatch && ytMatch[1]) {
       embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1`;
     }
   }
 
   // Prevent loading internal app routes inside iframe (which causes 404 inside iframe)
-  const isInternalAppUrl = !url.startsWith("http://") && !url.startsWith("https://");
+  const isInternalAppUrl =
+    !url.startsWith("http://") && !url.startsWith("https://");
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
@@ -72,12 +89,10 @@ export default function VideoEmbed({ url, onTimeUpdate, seekTime }: VideoEmbedPr
       {/* Main Player Container */}
       <div
         className={cn(
-          "bg-slate-950 border border-slate-200/80 shadow-md relative group transition-all duration-300 min-h-[350px]",
+          "bg-slate-950 border border-slate-200/80 shadow-md relative group transition-all duration-300 w-full",
           isFullscreen
             ? "fixed inset-0 z-[100] w-full h-full rounded-none flex flex-col justify-center bg-black"
-            : isGoogleDrive
-              ? "aspect-[4/3] sm:aspect-[16/10] rounded-lg"
-              : "aspect-video rounded-lg"
+            : "aspect-[4/5] sm:aspect-[16/10] max-h-[100vh] sm:max-h-[60vh] rounded-lg overflow-hidden",
         )}
       >
         {isDirectVideo ? (
@@ -94,7 +109,10 @@ export default function VideoEmbed({ url, onTimeUpdate, seekTime }: VideoEmbedPr
           /* Embedded Iframe Player for Drive / YouTube */
           <iframe
             src={embedUrl}
-            className={cn("w-full h-full border-0 block", !isFullscreen && "rounded-lg")}
+            className={cn(
+              "w-full h-full border-0 block",
+              !isFullscreen && "rounded-lg",
+            )}
             width="100%"
             height="100%"
             allow="autoplay; encrypted-media; picture-in-picture"
@@ -111,7 +129,8 @@ export default function VideoEmbed({ url, onTimeUpdate, seekTime }: VideoEmbedPr
               วิดีโอต้นฉบับใน Google Drive / ลิงก์ภายนอก
             </h3>
             <p className="text-xs text-slate-400 max-w-md mb-4 leading-relaxed">
-              คลิกปุ่มด้านล่างเพื่อเปิดรับชมวิดีโอความคมชัดสูงในแอปพลิเคชัน หรือแท็บใหม่ได้ทันที
+              คลิกปุ่มด้านล่างเพื่อเปิดรับชมวิดีโอความคมชัดสูงในแอปพลิเคชัน
+              หรือแท็บใหม่ได้ทันที
             </p>
 
             <a
@@ -132,7 +151,7 @@ export default function VideoEmbed({ url, onTimeUpdate, seekTime }: VideoEmbedPr
               "absolute top-3 right-3 flex items-center gap-2 z-10",
               isFullscreen
                 ? "opacity-100"
-                : "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200"
+                : "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200",
             )}
           >
             <button

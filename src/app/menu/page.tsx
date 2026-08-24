@@ -17,7 +17,7 @@ import { useSession, signOut } from "next-auth/react";
 import useSWR from "swr";
 import { apiClient } from "@/lib/api-client";
 import { Clip } from "@/types/api";
-
+import Image from "next/image";
 export default function MenuPage() {
   const router = useRouter();
   const { data: session } = useSession();
@@ -34,9 +34,10 @@ export default function MenuPage() {
         minute: "2-digit",
       }),
     );
-    
+
     if (typeof window !== "undefined") {
-      const ua = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const ua =
+        navigator.userAgent || navigator.vendor || (window as any).opera;
       setIsLiffClient(ua.indexOf("Line") > -1);
     }
   }, []);
@@ -51,12 +52,16 @@ export default function MenuPage() {
 
   // Fetch tasks for progress bar
   const { data: clipsData } = useSWR<{ data: Clip[] }>(
-    user?.id ? (user.role === "USER" ? `/clips?ownerId=${user.id}` : "/clips") : null,
+    user?.id
+      ? user.role === "USER"
+        ? `/clips?ownerId=${user.id}`
+        : "/clips"
+      : null,
     async (url: string) => {
       const res = await apiClient.get<Clip[]>(url);
       return { data: res.data || [] };
     },
-    { refreshInterval: 60000 }
+    { refreshInterval: 60000 },
   );
 
   const clips = clipsData?.data || [];
@@ -83,7 +88,8 @@ export default function MenuPage() {
       desc: "ตรวจสอบสถานะคลิปและสิ่งที่ต้องแก้ไข",
       href: "/tasks",
       color: "group-hover:text-sky-500 dark:group-hover:text-sky-400",
-      iconBg: "group-hover:bg-gradient-to-br group-hover:from-sky-500 group-hover:to-blue-500",
+      iconBg:
+        "group-hover:bg-gradient-to-br group-hover:from-sky-500 group-hover:to-blue-500",
     },
     {
       id: "03",
@@ -92,7 +98,8 @@ export default function MenuPage() {
       desc: "ดูภาพรวมและประสิทธิภาพการทำงานของทีม",
       href: "/analytics",
       color: "group-hover:text-indigo-500 dark:group-hover:text-indigo-400",
-      iconBg: "group-hover:bg-gradient-to-br group-hover:from-indigo-500 group-hover:to-blue-500",
+      iconBg:
+        "group-hover:bg-gradient-to-br group-hover:from-indigo-500 group-hover:to-blue-500",
     },
     {
       id: "04",
@@ -101,7 +108,8 @@ export default function MenuPage() {
       desc: "ดูประวัติความเคลื่อนไหวของคลิปในระบบ",
       href: "/notifications",
       color: "group-hover:text-cyan-500 dark:group-hover:text-cyan-400",
-      iconBg: "group-hover:bg-gradient-to-br group-hover:from-cyan-500 group-hover:to-sky-500",
+      iconBg:
+        "group-hover:bg-gradient-to-br group-hover:from-cyan-500 group-hover:to-sky-500",
       roles: ["ADMIN", "REVIEWER"],
     },
     {
@@ -111,7 +119,8 @@ export default function MenuPage() {
       desc: "ตั้งค่าสิทธิ์และการเข้าถึงสำหรับแอดมิน",
       href: "/admin/users",
       color: "group-hover:text-blue-500 dark:group-hover:text-blue-400",
-      iconBg: "group-hover:bg-gradient-to-br group-hover:from-blue-500 group-hover:to-cyan-500",
+      iconBg:
+        "group-hover:bg-gradient-to-br group-hover:from-blue-500 group-hover:to-cyan-500",
       roles: ["ADMIN"],
     },
     {
@@ -121,7 +130,8 @@ export default function MenuPage() {
       desc: "ตั้งค่าบัญชีและการแจ้งเตือนผ่าน LINE",
       href: "/settings/profile",
       color: "group-hover:text-indigo-500 dark:group-hover:text-indigo-400",
-      iconBg: "group-hover:bg-gradient-to-br group-hover:from-indigo-500 group-hover:to-slate-500",
+      iconBg:
+        "group-hover:bg-gradient-to-br group-hover:from-indigo-500 group-hover:to-slate-500",
     },
   ];
 
@@ -137,7 +147,7 @@ export default function MenuPage() {
 
       <div className="mx-auto w-full max-w-7xl px-4 py-8 md:py-16 relative z-10">
         {/* Header Section */}
-        <header className="mb-10 md:mb-16 flex flex-col md:flex-row md:items-center justify-between gap-6 px-2 sm:px-6">
+        <header className="mb-5 md:mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6 px-2 sm:px-6">
           {/* ฝั่งซ้าย: ข้อความต้อนรับ */}
           <div className="text-left flex-1 min-w-0">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-bold tracking-wider uppercase mb-3 border border-blue-500/10">
@@ -148,7 +158,7 @@ export default function MenuPage() {
             <h1 className="text-3xl sm:text-[2.5rem] font-extrabold tracking-tight leading-tight">
               ยินดีต้อนรับสู่{" "}
               <span className="bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-500 bg-clip-text text-transparent">
-                ClipFlow 
+                ClipFlow
               </span>
             </h1>
             <p className="mt-2 text-slate-500 dark:text-zinc-400 text-xs sm:text-sm max-w-md leading-relaxed">
@@ -219,8 +229,12 @@ export default function MenuPage() {
 
             <div className="flex-1 w-full space-y-2">
               <div className="flex justify-between text-xs sm:text-sm font-semibold">
-                <span className="text-slate-600 dark:text-zinc-300">ความสำเร็จ (เสร็จสิ้น {approvedClips.length} จาก {totalClips})</span>
-                <span className="text-blue-600 dark:text-blue-400">{completionPercentage}%</span>
+                <span className="text-slate-600 dark:text-zinc-300">
+                  ความสำเร็จ (เสร็จสิ้น {approvedClips.length} จาก {totalClips})
+                </span>
+                <span className="text-blue-600 dark:text-blue-400">
+                  {completionPercentage}%
+                </span>
               </div>
               <div className="h-2.5 sm:h-3 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden shadow-inner w-full relative">
                 <div

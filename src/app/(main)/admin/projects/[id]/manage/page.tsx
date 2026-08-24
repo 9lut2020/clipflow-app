@@ -33,6 +33,14 @@ export default async function ProjectManagePage(props: {
   const { data: usersData } = await apiServer.get(`/users`);
   const allUsers: any[] = (usersData as any) || [];
 
+  // Fetch project members
+  const { data: membersData } = await apiServer.get(`/projects/${params.id}/members`);
+  const members: any[] = (membersData as any) || [];
+
+  // Allowed users: Members + Admins
+  const memberIds = new Set(members.map((m: any) => m.id));
+  const allowedUsers = allUsers.filter((u: any) => memberIds.has(u.id) || u.role === "ADMIN");
+
   if (!project) {
     return (
       <div className="p-8 text-center text-rose-500 font-bold">
@@ -99,7 +107,7 @@ export default async function ProjectManagePage(props: {
           projectId={project.id}
           initialClips={initialClips}
           initialEpisodes={project.episodes || []}
-          users={allUsers}
+          users={allowedUsers}
         />
       </div>
 

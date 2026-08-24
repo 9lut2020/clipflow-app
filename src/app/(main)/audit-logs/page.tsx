@@ -8,6 +8,17 @@ import {
   UploadCloud,
   RefreshCw,
   Users,
+  FolderPlus,
+  FolderEdit,
+  FolderX,
+  FilePlus,
+  FileEdit,
+  FileX,
+  UserPlus,
+  UserMinus,
+  Save,
+  Trash2,
+  UserCog,
 } from "lucide-react";
 
 import { ActivityLog } from "@/types/activity-log";
@@ -40,17 +51,83 @@ const ACTION_CONFIG: Record<
     color: "text-rose-600",
     bg: "bg-rose-50 border-rose-200",
   },
+  CLIP_DELETED: {
+    label: "ลบคลิป",
+    icon: Trash2,
+    color: "text-red-600",
+    bg: "bg-red-50 border-red-200",
+  },
+  CLIP_BATCH_SAVED: {
+    label: "บันทึก Spreadsheet",
+    icon: Save,
+    color: "text-sky-600",
+    bg: "bg-sky-50 border-sky-200",
+  },
   ROLE_CHANGED: {
     label: "เปลี่ยนบทบาทผู้ใช้",
     icon: UserCheck,
     color: "text-purple-600",
     bg: "bg-purple-50 border-purple-200",
   },
+  STATUS_CHANGED: {
+    label: "เปลี่ยนสถานะผู้ใช้",
+    icon: UserCog,
+    color: "text-indigo-600",
+    bg: "bg-indigo-50 border-indigo-200",
+  },
   TASK_ASSIGNED: {
     label: "มอบหมายงาน",
     icon: Users,
     color: "text-sky-600",
     bg: "bg-sky-50 border-sky-200",
+  },
+  PROJECT_CREATED: {
+    label: "สร้างโปรเจกต์",
+    icon: FolderPlus,
+    color: "text-teal-600",
+    bg: "bg-teal-50 border-teal-200",
+  },
+  PROJECT_UPDATED: {
+    label: "แก้ไขโปรเจกต์",
+    icon: FolderEdit,
+    color: "text-teal-600",
+    bg: "bg-teal-50 border-teal-200",
+  },
+  PROJECT_DELETED: {
+    label: "ลบโปรเจกต์",
+    icon: FolderX,
+    color: "text-red-600",
+    bg: "bg-red-50 border-red-200",
+  },
+  EPISODE_CREATED: {
+    label: "สร้างตอน",
+    icon: FilePlus,
+    color: "text-violet-600",
+    bg: "bg-violet-50 border-violet-200",
+  },
+  EPISODE_UPDATED: {
+    label: "แก้ไขตอน",
+    icon: FileEdit,
+    color: "text-violet-600",
+    bg: "bg-violet-50 border-violet-200",
+  },
+  EPISODE_DELETED: {
+    label: "ลบตอน",
+    icon: FileX,
+    color: "text-red-600",
+    bg: "bg-red-50 border-red-200",
+  },
+  MEMBER_ADDED: {
+    label: "เพิ่มสมาชิก",
+    icon: UserPlus,
+    color: "text-green-600",
+    bg: "bg-green-50 border-green-200",
+  },
+  MEMBER_REMOVED: {
+    label: "ลบสมาชิก",
+    icon: UserMinus,
+    color: "text-orange-600",
+    bg: "bg-orange-50 border-orange-200",
   },
 };
 

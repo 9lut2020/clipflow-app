@@ -33,6 +33,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    pictureUrl: "",
     isActive: true,
   });
 
@@ -61,6 +62,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
         setFormData({
           name: res.data.name,
           description: res.data.description || "",
+          pictureUrl: res.data.pictureUrl || "",
           isActive: res.data.isActive,
         });
       }
@@ -189,6 +191,21 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
                 rows={4}
                 className="rounded-xl border-slate-200 focus-visible:ring-blue-500 resize-none"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pictureUrl" className="text-slate-700 font-bold">URL รูปภาพหน้าปก (ตัวเลือก)</Label>
+              <Input 
+                id="pictureUrl" 
+                type="url"
+                placeholder="https://example.com/image.jpg" 
+                value={formData.pictureUrl}
+                onChange={(e) => setFormData({...formData, pictureUrl: e.target.value})}
+                className="rounded-xl border-slate-200 focus-visible:ring-blue-500"
+              />
+              <p className="text-[11px] sm:text-xs text-slate-500">
+                ใส่ลิงก์รูปภาพเพื่อแสดงผลสวยงามในหน้าโปรเจกต์
+              </p>
             </div>
           </CardContent>
           <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">

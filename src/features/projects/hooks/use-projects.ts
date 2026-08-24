@@ -39,7 +39,7 @@ export function useCreateProject() {
   const [isCreating, setIsCreating] = useState(false);
   const { trackEvent } = useAnalytics();
 
-  const mutateAsync = async (data: { name: string; description: string; lineGroupId: string }) => {
+  const mutateAsync = async (data: { name: string; description?: string; lineGroupId?: string; pictureUrl?: string }) => {
     setIsCreating(true);
     try {
       const res = await apiClient.post<any>(`/projects`, data);

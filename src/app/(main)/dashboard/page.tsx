@@ -15,10 +15,13 @@ export default async function DashboardPage() {
   const isUser = role === "USER";
 
   // Fetch clips, projects & users from API
+  // projects/users rarely change → revalidate every 60s instead of no-store
   const [clipsRes, projectsRes, usersRes] = await Promise.all([
-    apiServer.get<Clip[]>("/clips?limit=20"),
-    apiServer.get<Project[]>("/projects").catch(() => ({ data: [] })),
-    apiServer.get<User[]>("/users").catch(() => ({ data: [] })),
+    apiServer.get<Clip[]>("/clips?limit=20").catch(() => ({ data: [] })),
+    apiServer.get<Project[]>("/projects", undefined, { revalidate: 60 }).catch(() => ({ data: [] })),
+    !isUser
+      ? apiServer.get<User[]>("/users", undefined, { revalidate: 60 }).catch(() => ({ data: [] }))
+      : Promise.resolve({ data: [] }),
   ]);
 
   const allClips = clipsRes.data || [];

@@ -20,6 +20,7 @@ export default function CreateProjectPage() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    pictureUrl: "",
   });
 
   // Verify Admin role (in real app, this should also be protected via middleware/server)
@@ -35,6 +36,7 @@ export default function CreateProjectPage() {
       const result = await createProject({
         name: formData.name,
         description: formData.description,
+        pictureUrl: formData.pictureUrl || undefined,
         lineGroupId: "", // mock since the original didn't use it
       });
 
@@ -109,6 +111,25 @@ export default function CreateProjectPage() {
                 rows={4}
                 className="rounded-xl border-slate-200 focus-visible:ring-blue-500 resize-none"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pictureUrl" className="text-slate-700 font-bold">
+                URL รูปภาพหน้าปก (ตัวเลือก)
+              </Label>
+              <Input
+                id="pictureUrl"
+                type="url"
+                placeholder="https://example.com/image.jpg"
+                value={formData.pictureUrl}
+                onChange={(e) =>
+                  setFormData({ ...formData, pictureUrl: e.target.value })
+                }
+                className="rounded-xl border-slate-200 focus-visible:ring-blue-500"
+              />
+              <p className="text-[11px] sm:text-xs text-slate-500">
+                ใส่ลิงก์รูปภาพเพื่อแสดงผลสวยงามในหน้าโปรเจกต์
+              </p>
             </div>
           </CardContent>
           <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">

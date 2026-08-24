@@ -20,11 +20,29 @@ export interface Project {
   id: string;
   name: string;
   description: string | null;
+  pictureUrl?: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
   // Optional nested (from specific endpoints)
   episodes?: Episode[];
+  _count?: {
+    episodes: number;
+    clips: number;
+  };
+}
+
+export interface CreateProjectInput {
+  name: string;
+  description?: string;
+  pictureUrl?: string;
+}
+
+export interface UpdateProjectInput {
+  name?: string;
+  description?: string;
+  pictureUrl?: string;
+  isActive?: boolean;
 }
 
 export interface Episode {
@@ -70,6 +88,7 @@ export type ClipStatus =
   | "IN_REVIEW"
   | "NEEDS_REVISION"
   | "APPROVED"
+  | "PUBLISHED"
   | "CANCELLED";
 
 export interface Revision {

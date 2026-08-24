@@ -125,88 +125,73 @@ export function TaskAccordionSection({
       <div
         className={`transition-all duration-300 ease-in-out ${
           isOpen
-            ? "max-h-[3000px] opacity-100 p-4 pt-3 border-t border-slate-100"
+            ? "max-h-[3000px] opacity-100 p-3 pt-2 border-t border-slate-100 bg-slate-50/50"
             : "max-h-0 opacity-0 overflow-hidden p-0"
         }`}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="flex flex-col gap-2">
           {clips.map((clip) => (
             <Link
               key={clip.id}
               href={`/clips/${clip.id}`}
-              className="block group"
+              className="block group outline-none"
             >
-              <Card className="h-full hover:border-blue-400 hover:shadow-md transition-all duration-200 bg-white border-slate-200/80 overflow-hidden">
-                {/* Auto-Thumbnail */}
-                {(() => {
-                  const thumb = extractThumbnailUrl(clip.driveUrl);
-                  return thumb.url ? (
-                    <div className="relative w-full h-28 sm:h-32 overflow-hidden bg-slate-100">
+              <div className="flex items-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 rounded-xl bg-white border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all duration-200">
+                {/* Auto-Thumbnail / Icon (Left) */}
+                <div className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200/50 relative">
+                  {(() => {
+                    const thumb = extractThumbnailUrl(clip.driveUrl);
+                    return thumb.url ? (
                       <img
                         src={thumb.url}
                         alt={clip.name}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                         onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).style.display = "none";
+                          (e.currentTarget as HTMLImageElement).style.display =
+                            "none";
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    ) : (
+                      <Film size={20} className="text-slate-300" />
+                    );
+                  })()}
+                </div>
+
+                {/* Content (Middle & Right) */}
+                <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">
+                        {clip.project?.name || "Project"} • EP.
+                        {clip.episode?.episodeNo || "?"}
+                      </span>
                     </div>
-                  ) : (
-                    <div className={`w-full h-20 flex items-center justify-center ${
-                      clip.platform === "YOUTUBE" ? "bg-red-50" :
-                      clip.platform === "FB_REEL" ? "bg-blue-50" :
-                      "bg-slate-100"
-                    }`}>
-                      <Film size={28} className="text-slate-300" />
-                    </div>
-                  );
-                })()}
-                <CardContent className="p-3.5 md:p-4">
-                  <div className="flex justify-between items-center mb-2 gap-2">
-                    <span className="text-[10px] md:text-xs font-bold text-slate-600 uppercase tracking-wider truncate">
-                      {clip.project?.name || "Project"} • EP.
-                      {clip.episode?.episodeNo || "?"}
-                    </span>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <PlatformBadge platform={clip.platform} />
+                    <h3 className="font-bold text-xs sm:text-sm text-slate-800 group-hover:text-blue-600 transition-colors truncate">
+                      {clip.name}
+                    </h3>
+                    <div className="mt-0.5 flex items-center gap-2 sm:gap-3 text-[10px] sm:text-[11px] text-slate-500 font-medium flex-wrap">
+                      <span className="shrink-0">
+                        {new Date(clip.createdAt).toLocaleDateString("th-TH", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </span>
                       {clip.owner && (
-                        <div className="flex items-center gap-1 bg-slate-100/80 px-2 py-0.5 rounded-full shrink-0 border border-slate-200/50">
+                        <div className="flex items-center gap-1.5 border-l border-slate-200 pl-2 sm:pl-3 shrink-0">
+                          <span>ตัดต่อโดย:</span>
                           <UserAvatar
                             name={clip.owner.displayName}
                             pictureUrl={clip.owner.pictureUrl}
                           />
-                          <span className="text-[10px] font-bold text-slate-700 max-w-[70px] truncate">
+                          <span className="truncate max-w-[80px] sm:max-w-[120px]">
                             {clip.owner.displayName}
                           </span>
                         </div>
                       )}
                     </div>
                   </div>
-
-                  <h3 className="font-bold text-sm md:text-base text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
-                    {clip.name}
-                  </h3>
-
-                  {clip.description && (
-                    <p className="mt-1 text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                      {clip.description}
-                    </p>
-                  )}
-
-                  <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600">
-                    <span className="font-medium">
-                      {new Date(clip.createdAt).toLocaleDateString("th-TH", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </span>
-                    <span className="font-bold text-blue-600 flex items-center gap-0.5 group-hover:translate-x-1 transition-transform">
-                      ดูรายละเอียด <ChevronRight size={14} />
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </Link>
           ))}
         </div>

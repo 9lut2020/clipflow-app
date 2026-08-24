@@ -174,15 +174,22 @@ export default function RevisionTimeline({
                     {revReview ? (
                       <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
                         <div className="flex items-center justify-between">
-                          {revReview.status === "NEEDS_REVISION" ? (
-                            <span className="text-[11px] font-bold text-rose-700 flex items-center gap-1 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
-                              <MessageSquare size={13} /> สั่งแก้ไข
-                            </span>
-                          ) : (
-                            <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                              <CheckCircle size={13} /> ผ่านอนุมัติ
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {revReview.status === "NEEDS_REVISION" ? (
+                              <span className="text-[11px] font-bold text-rose-700 flex items-center gap-1 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
+                                <MessageSquare size={13} /> สั่งแก้ไข
+                              </span>
+                            ) : (
+                              <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                                <CheckCircle size={13} /> ผ่านอนุมัติ
+                              </span>
+                            )}
+                            {revReview.createdAt && (
+                              <span className="text-[10px] text-slate-400 font-medium">
+                                {format(new Date(revReview.createdAt), "dd/MM/yy HH:mm")}
+                              </span>
+                            )}
+                          </div>
 
                           {revReviewer && (
                             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">

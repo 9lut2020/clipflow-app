@@ -15,10 +15,10 @@ import {
   TrendingUp,
   Flame,
   FileVideo,
-  ListTodo,
   ArrowLeft,
 } from "lucide-react";
 import { TaskAccordionSection } from "./task-accordion";
+import { ReviewerTasksView } from "./reviewer-tasks-view";
 
 export default async function TasksPage() {
   const session = await getServerSession(authOptions);
@@ -203,7 +203,7 @@ export default async function TasksPage() {
                 {approvedClips.length}
               </span>
               <div className="text-xs font-bold text-emerald-800 uppercase tracking-wide mt-0.5">
-                อนุมัติแล้ว ({completionPercentage}%)
+                อนุมัติแล้ว
               </div>
             </div>
             <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
@@ -239,53 +239,59 @@ export default async function TasksPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* LEFT COLUMN: Pipeline & Drawer Accordions (lg:col-span-8) */}
         <div className="lg:col-span-8 space-y-4">
-          {/* Drawer 1: Needs Revision */}
-          <TaskAccordionSection
-            title="ต้องแก้ไข"
-            iconType="alert"
-            clips={revisionClips}
-            colorClass="text-rose-500"
-            badgeBg="bg-rose-100 text-rose-700"
-            emptyText="ไม่มีงานที่ต้องแก้ไข"
-            defaultOpen={true}
-            isUser={isUser}
-          />
+          {isUser ? (
+            <>
+              {/* Drawer 1: Needs Revision */}
+              <TaskAccordionSection
+                title="ต้องแก้ไข"
+                iconType="alert"
+                clips={revisionClips}
+                colorClass="text-rose-500"
+                badgeBg="bg-rose-100 text-rose-700"
+                emptyText="ไม่มีงานที่ต้องแก้ไข"
+                defaultOpen={true}
+                isUser={isUser}
+              />
 
-          {/* Drawer 2: In Progress / Pending Review */}
-          <TaskAccordionSection
-            title="กำลังดำเนินการ / รอตรวจ"
-            iconType="clock"
-            clips={inProgressClips}
-            colorClass="text-amber-500"
-            badgeBg="bg-amber-100 text-amber-700"
-            emptyText="ไม่มีงานที่รอตรวจอยู่ในขณะนี้"
-            defaultOpen={true}
-            isUser={isUser}
-          />
+              {/* Drawer 2: In Progress / Pending Review */}
+              <TaskAccordionSection
+                title="กำลังดำเนินการ / รอตรวจ"
+                iconType="clock"
+                clips={inProgressClips}
+                colorClass="text-amber-500"
+                badgeBg="bg-amber-100 text-amber-700"
+                emptyText="ไม่มีงานที่รอตรวจอยู่ในขณะนี้"
+                defaultOpen={true}
+                isUser={isUser}
+              />
 
-          {/* Drawer 3: Draft / To Do */}
-          <TaskAccordionSection
-            title="งานใหม่ / รอดำเนินการ"
-            iconType="play"
-            clips={draftClips}
-            colorClass="text-blue-500"
-            badgeBg="bg-blue-100 text-blue-700"
-            emptyText="ไม่มีงานใหม่ในระบบ"
-            defaultOpen={false}
-            isUser={isUser}
-          />
+              {/* Drawer 3: Draft / To Do */}
+              <TaskAccordionSection
+                title="งานใหม่ / รอดำเนินการ"
+                iconType="play"
+                clips={draftClips}
+                colorClass="text-blue-500"
+                badgeBg="bg-blue-100 text-blue-700"
+                emptyText="ไม่มีงานใหม่ในระบบ"
+                defaultOpen={false}
+                isUser={isUser}
+              />
 
-          {/* Drawer 4: Approved */}
-          <TaskAccordionSection
-            title="อนุมัติผ่านแล้ว"
-            iconType="check"
-            clips={approvedClips}
-            colorClass="text-emerald-500"
-            badgeBg="bg-emerald-100 text-emerald-700"
-            emptyText="ยังไม่มีงานที่ได้รับการอนุมัติ"
-            defaultOpen={false}
-            isUser={isUser}
-          />
+              {/* Drawer 4: Approved */}
+              <TaskAccordionSection
+                title="อนุมัติผ่านแล้ว"
+                iconType="check"
+                clips={approvedClips}
+                colorClass="text-emerald-500"
+                badgeBg="bg-emerald-100 text-emerald-700"
+                emptyText="ยังไม่มีงานที่ได้รับการอนุมัติ"
+                defaultOpen={false}
+                isUser={isUser}
+              />
+            </>
+          ) : (
+            <ReviewerTasksView clips={clips} />
+          )}
         </div>
 
         {/* RIGHT COLUMN: Admin Sidebar & Workload Analytics (lg:col-span-4) */}

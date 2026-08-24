@@ -66,14 +66,6 @@ export default function BottomNav() {
             </Link>
           );
         })}
-
-        {/* Additional More Menu button for users */}
-        {isUser && (
-          <button className="flex flex-1 flex-col items-center gap-1 text-slate-400 active:text-sky-500">
-            <Menu className="h-6 w-6" />
-            <span className="text-[10px] font-medium">เพิ่มเติม</span>
-          </button>
-        )}
       </div>
     </nav>
   );

@@ -103,7 +103,7 @@ export function getSidebarMenu(
             icon: Settings,
             children: [
               { title: "ตั้งค่าระบบทั่วไป", href: "/settings" },
-              { title: "จัดการผู้ใช้งาน (Users)", href: "/users" },
+              { title: "จัดการผู้ใช้งาน", href: "/users" },
               { title: "ประวัติการทำงานระบบ", href: "/admin/audit-logs" },
             ],
           },

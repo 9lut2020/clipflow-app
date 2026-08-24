@@ -48,35 +48,6 @@ export default async function ClipDetailPage(props: {
 
   return (
     <div className="max-w-full mx-auto pb-24 lg:pb-12 px-1 sm:px-0">
-      {/* Top Full-Width Header Title Bar - Compact Sleek Typography */}
-      <div className="w-full mb-4 sm:mb-5">
-        <div className="flex items-center gap-3 bg-white px-4 py-3.5 sm:px-6 sm:py-4 rounded-2xl border border-slate-200/80 shadow-xs">
-          <Link href={project?.id ? `/projects/${project.id}` : "/dashboard"}>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 shrink-0 cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-            </Button>
-          </Link>
-          <div className="min-w-0 flex-1">
-            <h1 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight leading-snug line-clamp-2">
-              {clip.name}
-            </h1>
-            <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 truncate">
-              {project?.name} • EP.{episode?.episodeNo || 1}: {episode?.name}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Stepper Status Bar */}
-      <div className="mb-5 sm:mb-6">
-        <ClipStepper status={clip.status} />
-      </div>
-
-      {/* Interactive Client View (Video, Details, Actions & Timecoded Timeline) */}
       <ClipViewClient
         clip={clip}
         allRevisions={allRevisions}

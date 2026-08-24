@@ -23,7 +23,7 @@ export default async function ProjectsPage() {
   const isUser = currentUser?.role === "USER";
 
   // Fetch projects from API
-  const { data: projectsData } = await apiServer.get<Project[]>("/projects");
+  const { data: projectsData } = await apiServer.get<Project[]>("/projects").catch(() => ({ data: [] }));
   const projects = projectsData || [];
 
   return (
@@ -68,49 +68,53 @@ export default async function ProjectsPage() {
         </div>
       </div>
 
-      {/* Projects Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+      {/* Projects Grid - Clean White Style */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
         {projects.map((project) => (
-          <div key={project.id} className="block group relative">
+          <div key={project.id} className="block group relative bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all duration-200 flex flex-col h-full">
             <Link
               href={`/projects/${project.id}`}
-              className="absolute inset-0 z-0"
+              className="absolute inset-0 z-10"
               aria-label={`View ${project.name}`}
             ></Link>
-            <Card className="h-full transition-all duration-200 hover:border-blue-400 hover:shadow-md relative z-10 flex flex-col pointer-events-none rounded-2xl border-slate-200/80">
-              <CardHeader className="p-3.5 sm:p-5 pb-2 sm:pb-3 flex-1">
-                <div className="flex justify-between items-start">
-                  <div className="p-1.5 sm:p-2 bg-blue-50 text-blue-600 rounded-xl border border-blue-100">
-                    <Video className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </div>
-                  <ChevronRight
-                    size={16}
-                    className="text-slate-300 group-hover:text-blue-600 transition-colors sm:w-5 sm:h-5"
-                  />
+            
+            {/* Top Image / Gradient Area */}
+            <div className="relative aspect-square w-full bg-slate-100 overflow-hidden border-b border-slate-100 shrink-0">
+              {project.pictureUrl ? (
+                <img 
+                  src={project.pictureUrl} 
+                  alt={project.name}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-slate-100 flex items-center justify-center">
+                  <Video className="w-8 h-8 text-blue-200" />
                 </div>
-                <CardTitle className="mt-2.5 sm:mt-3 text-xs sm:text-base font-bold text-slate-900 leading-snug line-clamp-2">
+              )}
+            </div>
+
+            {/* Card Content */}
+            <div className="p-3 sm:p-4 flex flex-col flex-1 relative z-20 pointer-events-none bg-white">
+              <div className="flex justify-between items-start gap-2 mb-2">
+                <h2 className="text-slate-900 font-bold text-[13px] sm:text-[15px] leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors flex-1">
                   {project.name}
-                </CardTitle>
-                <CardDescription className="line-clamp-2 text-[11px] sm:text-xs mt-1 text-slate-500 font-medium">
-                  {project.description || "ไม่มีรายละเอียดเพิ่มเติม"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-3.5 sm:p-5 pt-0 sm:pt-0 mt-auto pointer-events-auto">
-                <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-500 mt-2 pt-2.5 border-t border-slate-100">
-                  <span className="font-bold text-blue-600 group-hover:underline">
-                    ดูคลิปทั้งหมด →
-                  </span>
-                  {currentUser.role === "ADMIN" && (
-                    <Link
-                      href={`/admin/projects/${project.id}/manage`}
-                      className="flex items-center gap-1 text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg transition-colors relative z-20"
-                    >
-                      <Settings size={12} /> จัดการ
-                    </Link>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                </h2>
+                
+                {/* Admin Setting Button */}
+                {currentUser.role === "ADMIN" && (
+                  <Link
+                    href={`/admin/projects/${project.id}/manage`}
+                    className="shrink-0 w-6 h-6 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors pointer-events-auto"
+                    title="จัดการโปรเจกต์"
+                  >
+                    <Settings size={14} />
+                  </Link>
+                )}
+              </div>
+              <p className="text-slate-500 text-[10px] sm:text-[11px] leading-relaxed line-clamp-2 mt-auto">
+                {project.description || "ไม่มีรายละเอียด"}
+              </p>
+            </div>
           </div>
         ))}
       </div>

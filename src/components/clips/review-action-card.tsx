@@ -9,6 +9,7 @@ import ReviewConfirmModal, {
   type ReviewConfirmAction,
 } from "@/components/clips/review-confirm-modal";
 import { validateVideoUrl } from "@/utils/url-validator";
+import { ClipboardCheck, CheckCircle2, XCircle } from "lucide-react";
 
 interface ReviewActionCardProps {
   clip: any;
@@ -176,11 +177,11 @@ export default function ReviewActionCard({
             }
           />
         )}
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 lg:p-0 lg:static lg:bg-white lg:border lg:border-l-4 lg:border-l-rose-500 lg:rounded-2xl lg:shadow-sm lg:overflow-hidden animate-in slide-in-from-bottom-4 lg:slide-in-from-bottom-0">
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] lg:shadow-sm lg:p-0 lg:static lg:bg-white lg:border lg:border-l-4 lg:border-l-rose-500 lg:rounded-2xl lg:overflow-hidden animate-in slide-in-from-bottom-4 lg:slide-in-from-bottom-0">
           <div className="hidden lg:flex px-6 py-4 border-b border-slate-100 justify-between items-center bg-rose-50/30">
             <div>
               <h2 className="text-lg font-bold text-slate-800">
-                ส่งงานแก้ไข (Resubmit Revision)
+                ส่งงานแก้ไข
               </h2>
               <p className="text-xs text-slate-500 mt-1">
                 วางลิงก์ Google Drive ใหม่ที่แก้ไขแล้ว เพื่อส่งให้ผู้ตรวจเช็คอีกครั้ง
@@ -263,33 +264,38 @@ export default function ReviewActionCard({
             }
           />
         )}
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 lg:p-0 lg:static lg:bg-white lg:border lg:border-l-4 lg:border-l-sky-500 lg:rounded-2xl lg:shadow-sm lg:overflow-hidden animate-in slide-in-from-bottom-4 lg:slide-in-from-bottom-0">
-          <div className="hidden lg:flex px-6 py-4 border-b border-slate-100 justify-between items-center bg-sky-50/30">
-            <div>
-              <h2 className="text-lg font-bold text-slate-800">
-                ผลการตรวจทานคลิป (Review Action)
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] lg:shadow-sm lg:p-0 lg:static lg:bg-white lg:border lg:border-l-4 lg:border-l-sky-500 lg:rounded-2xl lg:overflow-hidden animate-in slide-in-from-bottom-4 lg:slide-in-from-bottom-0">
+          <div className="hidden lg:flex flex-col xl:flex-row xl:items-center justify-between gap-3 px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-sky-50/50 to-white">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 bg-sky-100 text-sky-600 rounded-lg shrink-0">
+                <ClipboardCheck size={20} />
+              </div>
+              <h2 className="text-base xl:text-lg font-bold text-slate-800 tracking-tight whitespace-nowrap">
+                ผลการตรวจทาน
               </h2>
             </div>
-            <div className="hidden sm:flex items-center gap-3">
-              <div className="flex items-center gap-1 text-[10px] text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200 shadow-sm">
-                <span className="text-rose-500 font-bold">❌ ตีกลับ:</span>
-                <kbd className="font-mono bg-slate-50 px-1 py-0.5 rounded border border-slate-200">
-                  Alt
-                </kbd>
-                <span>+</span>
-                <kbd className="font-mono bg-slate-50 px-1 py-0.5 rounded border border-slate-200">
-                  Enter
-                </kbd>
+            
+            <div className="flex flex-wrap xl:flex-nowrap items-center gap-2">
+              {/* Reject Shortcut */}
+              <div className="flex items-center gap-1.5 text-[10px] text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200 shadow-xs">
+                <XCircle size={14} className="text-rose-500 shrink-0" />
+                <span className="text-slate-700 font-bold uppercase tracking-wider hidden 2xl:inline-block">ตีกลับ:</span>
+                <div className="flex items-center gap-0.5">
+                  <kbd className="font-mono font-bold bg-slate-100 px-1 rounded text-slate-600">Alt</kbd>
+                  <span className="text-slate-400">+</span>
+                  <kbd className="font-mono font-bold bg-slate-100 px-1 rounded text-slate-600">Enter</kbd>
+                </div>
               </div>
-              <div className="flex items-center gap-1 text-[10px] text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200 shadow-sm">
-                <span className="text-emerald-600 font-bold">✅ ผ่าน:</span>
-                <kbd className="font-mono bg-slate-50 px-1 py-0.5 rounded border border-slate-200">
-                  Ctrl
-                </kbd>
-                <span>+</span>
-                <kbd className="font-mono bg-slate-50 px-1 py-0.5 rounded border border-slate-200">
-                  Enter
-                </kbd>
+              
+              {/* Approve Shortcut */}
+              <div className="flex items-center gap-1.5 text-[10px] text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200 shadow-xs">
+                <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+                <span className="text-slate-700 font-bold uppercase tracking-wider hidden 2xl:inline-block">ผ่าน:</span>
+                <div className="flex items-center gap-0.5">
+                  <kbd className="font-mono font-bold bg-slate-100 px-1 rounded text-slate-600">Ctrl</kbd>
+                  <span className="text-slate-400">+</span>
+                  <kbd className="font-mono font-bold bg-slate-100 px-1 rounded text-slate-600">Enter</kbd>
+                </div>
               </div>
             </div>
           </div>
