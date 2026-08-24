@@ -2,16 +2,12 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { apiServer } from "@/lib/api-server";
 import { Project } from "@/types/api";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
 import { Video, ChevronRight, Plus, Settings, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
+import { formatImageUrl } from "@/utils/utils";
 
 export default async function ProjectsPage() {
   const session = await getServerSession(authOptions);
@@ -81,11 +77,30 @@ export default async function ProjectsPage() {
             {/* Top Image / Gradient Area */}
             <div className="relative aspect-square w-full bg-slate-100 overflow-hidden border-b border-slate-100 shrink-0">
               {project.pictureUrl ? (
-                <img 
-                  src={project.pictureUrl} 
-                  alt={project.name}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
+                (() => {
+                  const formattedUrl = formatImageUrl(project.pictureUrl);
+                  const isOptimized = formattedUrl.includes("lh3.googleusercontent.com");
+                  
+                  if (isOptimized) {
+                    return (
+                      <Image 
+                        src={formattedUrl} 
+                        alt={project.name}
+                        fill
+                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    );
+                  }
+                  
+                  return (
+                    <img 
+                      src={formattedUrl} 
+                      alt={project.name}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  );
+                })()
               ) : (
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-slate-100 flex items-center justify-center">
                   <Video className="w-8 h-8 text-blue-200" />
