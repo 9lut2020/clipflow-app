@@ -66,6 +66,7 @@ export interface Clip {
   status: ClipStatus;
   platform?: PlatformType | null;
   deadline: string | null;
+  scheduledPublishAt?: string | null;
   currentRevisionId: string | null;
   createdAt: string;
   updatedAt: string;

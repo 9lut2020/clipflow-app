@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PublishModal } from "./publish-modal";
 import { SiTiktok, SiYoutube, SiFacebook, SiInstagram } from "react-icons/si";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PLATFORMS = [
   {
@@ -190,17 +191,46 @@ export function PublishClient() {
     );
   };
 
-  if (isLoading) {
-    return (
-      <div className="p-8 flex justify-center items-center h-40">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-      </div>
-    );
+  if (isLoading && clips.length === 0) {
+    // If it's the very first load and we don't have clips yet, just let the Skeleton inside ClubsTableOrList handle it.
   }
 
-  const ClipsTableOrList = () => (
-    <>
-      {paginatedClips.length === 0 ? (
+  const ClipsTableOrList = () => {
+    if (isLoading) {
+      return (
+        <div className="flex flex-col gap-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white border border-slate-200/80 rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                <Skeleton className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg shrink-0 bg-slate-100" />
+                <div className="min-w-0 flex-1 flex flex-col justify-center space-y-2">
+                  <Skeleton className="h-4.5 w-1/3 rounded bg-slate-200" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-4 w-16 rounded bg-slate-100" />
+                    <Skeleton className="h-4 w-20 rounded bg-slate-100" />
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 shrink-0">
+                <div className="flex gap-1.5 sm:gap-2">
+                  <Skeleton className="w-6 h-6 rounded-full bg-slate-100" />
+                  <Skeleton className="w-6 h-6 rounded-full bg-slate-100" />
+                  <Skeleton className="w-6 h-6 rounded-full bg-slate-100" />
+                  <Skeleton className="w-6 h-6 rounded-full bg-slate-100" />
+                </div>
+                <div className="hidden sm:block pl-4 border-l border-slate-100">
+                  <Skeleton className="h-8 w-24 rounded-lg bg-slate-100" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {paginatedClips.length === 0 ? (
         <div className="py-20 text-center bg-white rounded-2xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center">
           <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
             <Share className="w-8 h-8 text-slate-300" />
@@ -339,7 +369,8 @@ export function PublishClient() {
         </>
       )}
     </>
-  );
+    );
+  };
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-12">

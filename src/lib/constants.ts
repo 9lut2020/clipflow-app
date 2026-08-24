@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Plus,
   List,
+  CalendarDays,
 } from "lucide-react";
 
 export interface SidebarMenuItem {
@@ -40,6 +41,7 @@ export function getSidebarMenu(
         { title: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard },
         { title: "ส่งคลิป", href: "/submit", icon: Plus },
         { title: "งานของฉัน", href: "/tasks", icon: ClipboardList },
+        { title: "ปฏิทินเผยแพร่", href: "/calendar", icon: CalendarDays },
         { title: "โปรเจกต์ทั้งหมด", href: "/projects", icon: FileVideo },
       ],
     });
@@ -52,6 +54,7 @@ export function getSidebarMenu(
         items: [
           { title: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard },
           { title: "งานของฉัน", href: "/tasks", icon: ClipboardList },
+          { title: "ปฏิทินเผยแพร่", href: "/calendar", icon: CalendarDays },
           { title: "โปรเจกต์ทั้งหมด", href: "/projects", icon: FileVideo },
         ],
       },
@@ -76,6 +79,7 @@ export function getSidebarMenu(
             icon: ClipboardList,
             children: [
               { title: "ตารางงานทั้งหมด", href: "/tasks" },
+              { title: "ปฏิทินเผยแพร่", href: "/calendar" },
               { title: "จัดการการเผยแพร่", href: "/admin/publish" },
               { title: "ส่งคลิปใหม่", href: "/submit" },
               { title: "หน้าเมนู", href: "/menu" },

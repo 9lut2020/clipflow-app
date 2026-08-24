@@ -413,10 +413,7 @@ export function AnalyticsClient({
               <div>
                 <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <TrendingUp size={18} className="text-blue-600" />
-                  <span>
-                    แนวโน้มปริมาณการผลิตและการอนุมัติวิดีโอ (Production
-                    Throughput Trend)
-                  </span>
+                  <span>แนวโน้มปริมาณการผลิตและการอนุมัติวิดีโอ</span>
                 </CardTitle>
               </div>
 

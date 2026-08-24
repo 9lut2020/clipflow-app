@@ -1,4 +1,5 @@
-import useSWR from "swr";
+// Force Turbopack HMR refresh
+import useSWR, { useSWRConfig } from "swr";
 import { useState } from "react";
 import { apiClient } from "@/lib/api-client";
 import { Clip, ApiResponse } from "@/types/api";
@@ -94,4 +95,26 @@ export function useBatchCreateClips() {
   };
 
   return { batchCreateClips: mutateAsync, isSaving };
+}
+
+export function useScheduleClip() {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { mutate } = useSWRConfig();
+
+  const mutateAsync = async (clipId: string, scheduledPublishAt: string | null) => {
+    setIsUpdating(true);
+    try {
+      const res = await apiClient.patch<any>(`/clips/${clipId}/schedule`, {
+        scheduledPublishAt,
+      });
+      if (res.status !== "success") throw new Error(res.message || "Failed to update clip schedule");
+      
+      mutate((key: any) => typeof key === 'string' && key.startsWith('/clips'));
+      return res;
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  return { scheduleClip: mutateAsync, isUpdating };
 }

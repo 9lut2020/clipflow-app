@@ -48,7 +48,6 @@ const PLATFORMS = [
   { id: "YOUTUBE_SHORTS", label: "YouTube Shorts" },
   { id: "FACEBOOK_REELS", label: "Facebook Reels" },
   { id: "INSTAGRAM_REELS", label: "Instagram Reels" },
-  { id: "OTHER", label: "อื่นๆ" },
 ];
 
 export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
@@ -74,7 +73,7 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
     if (isOpen && !isLoadingRecords && publishedPosts) {
       const postedPlatforms = publishedPosts.map((p: any) => p.platform);
       const remainingPlatforms = PLATFORMS.filter(
-        (p) => p.id !== "OTHER" && !postedPlatforms.includes(p.id),
+        (p) => !postedPlatforms.includes(p.id),
       ).map((p) => p.id);
 
       setPlatforms((prev) => {
@@ -189,7 +188,7 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
                 className={`h-8 px-3 rounded-lg text-xs font-bold transition-all ${
                   copied
                     ? "bg-green-50 text-green-700 hover:bg-green-100"
-                    : "bg-blue-50 text-blue-700 hover:bg-blue-100 opacity-0 group-hover:opacity-100"
+                    : "bg-blue-50 text-blue-700 hover:bg-blue-100"
                 }`}
               >
                 {copied ? (
@@ -227,8 +226,10 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {PLATFORMS.map((p) => {
-                    const isPosted = publishedPosts?.some((post: any) => post.platform === p.id);
-                    
+                    const isPosted = publishedPosts?.some(
+                      (post: any) => post.platform === p.id,
+                    );
+
                     return (
                       <label
                         key={p.id}
@@ -281,7 +282,9 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
                             {p.label}
                           </span>
                           {isPosted && (
-                            <span className="text-[10px] text-green-600 font-bold -mt-0.5">โพสต์แล้ว</span>
+                            <span className="text-[10px] text-green-600 font-bold -mt-0.5">
+                              โพสต์แล้ว
+                            </span>
                           )}
                         </div>
                       </label>
