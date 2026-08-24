@@ -47,7 +47,7 @@ export default function BottomNav() {
       {/* Background layer for bottom nav (optional for some blur/styling) */}
       <div className="absolute inset-0"></div>
 
-      <div className="relative mx-4 mb-4 flex items-center justify-between bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl px-2 py-2 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] border border-white/20">
+      <div className="relative mx-4 mb-4 flex items-center justify-between bg-white/90 backdrop-blur-xl px-2 py-2 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] border border-slate-200/50">
         {visibleNavItems.map((item, index) => {
           const isActive = pathname === item.href;
 
