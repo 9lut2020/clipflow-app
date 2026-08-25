@@ -177,8 +177,8 @@ export default function ReviewActionCard({
             }
           />
         )}
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] lg:shadow-sm lg:p-0 lg:static lg:bg-white lg:border lg:border-l-4 lg:border-l-rose-500 lg:rounded-2xl lg:overflow-hidden animate-in slide-in-from-bottom-4 lg:slide-in-from-bottom-0">
-          <div className="hidden lg:flex px-6 py-4 border-b border-slate-100 justify-between items-center bg-rose-50/30">
+        <div className="w-full bg-white border border-slate-200 border-l-4 border-l-rose-500 rounded-2xl overflow-hidden shadow-xs sm:shadow-sm animate-in fade-in duration-300">
+          <div className="flex px-6 py-4 border-b border-slate-100 justify-between items-center bg-rose-50/30">
             <div>
               <h2 className="text-lg font-bold text-slate-800">
                 ส่งงานแก้ไข
@@ -201,11 +201,11 @@ export default function ReviewActionCard({
           </div>
 
           {/* Mobile Header */}
-          <div className="lg:hidden flex items-center justify-between mb-3">
+          <div className="hidden">
             <h2 className="text-sm font-bold text-slate-800">ส่งงานแก้ไขใหม่</h2>
           </div>
 
-          <div className="lg:p-6 space-y-4 lg:space-y-5 max-h-[40vh] lg:max-h-none overflow-y-auto custom-scrollbar">
+          <div className="p-4 sm:p-5 lg:p-6 space-y-4 lg:space-y-5 max-h-[40vh] lg:max-h-none overflow-y-auto custom-scrollbar">
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700 hidden lg:block">
                 Google Drive URL ที่แก้ไขแล้ว
@@ -264,8 +264,8 @@ export default function ReviewActionCard({
             }
           />
         )}
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] lg:shadow-sm lg:p-0 lg:static lg:bg-white lg:border lg:border-l-4 lg:border-l-sky-500 lg:rounded-2xl lg:overflow-hidden animate-in slide-in-from-bottom-4 lg:slide-in-from-bottom-0">
-          <div className="hidden lg:flex flex-col xl:flex-row xl:items-center justify-between gap-3 px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-sky-50/50 to-white">
+        <div className="w-full bg-white border border-slate-200 border-l-4 border-l-sky-500 rounded-2xl overflow-hidden shadow-xs sm:shadow-sm animate-in fade-in duration-300">
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-sky-50/50 to-white">
             <div className="flex items-center gap-2.5">
               <div className="p-1.5 bg-sky-100 text-sky-600 rounded-lg shrink-0">
                 <ClipboardCheck size={20} />
@@ -301,11 +301,11 @@ export default function ReviewActionCard({
           </div>
 
           {/* Mobile Header */}
-          <div className="lg:hidden flex items-center justify-between mb-3">
+          <div className="hidden">
             <h2 className="text-sm font-bold text-slate-800">ดำเนินการตรวจ</h2>
           </div>
 
-          <div className="lg:p-6 space-y-4 lg:space-y-5 max-h-[40vh] lg:max-h-none overflow-y-auto custom-scrollbar">
+          <div className="p-4 sm:p-5 lg:p-6 space-y-4 lg:space-y-5 max-h-[40vh] lg:max-h-none overflow-y-auto custom-scrollbar">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-bold text-slate-700 hidden lg:block">

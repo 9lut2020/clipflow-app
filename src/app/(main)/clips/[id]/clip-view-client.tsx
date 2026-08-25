@@ -27,9 +27,7 @@ export default function ClipViewClient({
   isUser,
 }: ClipViewClientProps) {
   const latestRevision = allRevisions.length > 0 ? allRevisions[0] : null;
-  const [activeVideoUrl, setActiveVideoUrl] = useState<string>(
-    clip.driveUrl || latestRevision?.driveUrl || "",
-  );
+  const [activeTab, setActiveTab] = useState<"review" | "history">("review");
   const [seekTime, setSeekTime] = useState<number | null>(null);
   const [currentTimeFormatted, setCurrentTimeFormatted] = useState<
     string | null
@@ -38,19 +36,8 @@ export default function ClipViewClient({
     null,
   );
   const [optimisticStatus, setOptimisticStatus] = useState(clip.status);
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Determine if we are watching an older revision
-  const activeRevision = allRevisions.find(
-    (r) => r.driveUrl === activeVideoUrl,
-  );
-  const isLatestVersion =
-    activeVideoUrl === (clip.driveUrl || latestRevision?.driveUrl);
-
+  const videoUrl = clip.driveUrl || latestRevision?.driveUrl || "";
   const project = clip.project;
   const episode = clip.episode;
 
@@ -61,8 +48,8 @@ export default function ClipViewClient({
 
   const handleSeek = (seconds: number) => {
     if (
-      activeVideoUrl.includes("drive.google.com") ||
-      activeVideoUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)
+      videoUrl.includes("drive.google.com") ||
+      videoUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)
     ) {
       toast.error(
         "วิดีโอจาก Google Drive ไม่รองรับการกระโดดข้ามเวลาอัตโนมัติ (กรุณาเลื่อนวิดีโอด้วยตนเอง)",
@@ -72,56 +59,8 @@ export default function ClipViewClient({
     setSeekTime(seconds);
   };
 
-  const bannerContent = (
-    <div
-      className={cn(
-        "sticky top-0 z-30 flex items-center justify-between px-4 md:px-6 py-2 border-b shadow-sm backdrop-blur-xl w-full",
-        isLatestVersion
-          ? "bg-blue-50/95 border-blue-200"
-          : "bg-amber-50/95 border-amber-200",
-      )}
-    >
-      <div className="flex items-center gap-2.5">
-        <div>
-          <h3
-            className={cn(
-              "text-sm font-bold leading-tight",
-              isLatestVersion ? "text-blue-900" : "text-amber-900",
-            )}
-          >
-            กำลังดู:{" "}
-            {activeRevision
-              ? `ส่งงานรอบที่ ${activeRevision.revisionNo}`
-              : "วิดีโอปัจจุบัน"}{" "}
-            {isLatestVersion ? "(เวอร์ชันล่าสุด)" : "(เวอร์ชันเก่า)"}
-          </h3>
-        </div>
-      </div>
-      {!isLatestVersion && (
-        <button
-          onClick={() =>
-            setActiveVideoUrl(clip.driveUrl || latestRevision?.driveUrl || "")
-          }
-          className="text-[11px] font-bold text-white bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-        >
-          กลับไปดูเวอร์ชันล่าสุด
-        </button>
-      )}
-    </div>
-  );
-
   return (
-    <div className="flex flex-col w-full">
-      {/* Render banner via React Portal if mounted */}
-      {mounted &&
-      typeof document !== "undefined" &&
-      document.getElementById("top-banner-portal")
-        ? createPortal(
-            bannerContent,
-            document.getElementById("top-banner-portal")!,
-          )
-        : null}
-
+    <div className="flex flex-col w-full pb-16">
       {/* Top Full-Width Header Title Bar - Compact Sleek Typography */}
       <div className="w-full mb-4 sm:mb-5">
         <div className="flex items-center gap-3 bg-white px-4 py-3.5 sm:px-6 sm:py-4 rounded-2xl border border-slate-200/80 shadow-xs">
@@ -154,10 +93,10 @@ export default function ClipViewClient({
         {/* Left Column (2/3 width): Video -> Info -> Action Card */}
         <div className="lg:col-span-2 flex flex-col gap-4 sm:gap-6">
           {/* Video Embed Player */}
-          {activeVideoUrl ? (
+          {videoUrl ? (
             <VideoEmbed
-              key={activeVideoUrl}
-              url={activeVideoUrl}
+              key={videoUrl}
+              url={videoUrl}
               onTimeUpdate={handleTimeUpdate}
               seekTime={seekTime}
             />
@@ -252,10 +191,58 @@ export default function ClipViewClient({
               </div>
             </div>
           </div>
+
+          {/* Mobile-Only Tabbed proofing Workspace (lg:hidden) */}
+          <div className="lg:hidden space-y-4">
+            <div className="flex bg-slate-100 p-1 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setActiveTab("review")}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all text-center cursor-pointer ${
+                  activeTab === "review"
+                    ? "bg-white text-blue-600 shadow-xs"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                ✍️ ตรวจงาน
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("history")}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all text-center cursor-pointer ${
+                  activeTab === "history"
+                    ? "bg-white text-blue-600 shadow-xs"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                💬 ประวัติการส่ง ({allRevisions.length})
+              </button>
+            </div>
+
+            <div className="animate-in fade-in duration-200">
+              {activeTab === "review" && (
+                <ReviewActionCard
+                  clip={clip}
+                  isUser={isUser}
+                  reviewerId={currentUser?.id || ""}
+                  currentTimeFormatted={currentTimeFormatted}
+                  currentTimeSeconds={currentTimeSeconds}
+                  onOptimisticUpdate={setOptimisticStatus}
+                />
+              )}
+              {activeTab === "history" && (
+                <RevisionTimeline
+                  revisions={allRevisions}
+                  className="shadow-xs"
+                  onSeekTime={handleSeek}
+                />
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Right Column (1/3 width): Review Action Card -> Revision Timeline */}
-        <div className="lg:col-span-1 flex flex-col gap-4 sm:gap-6">
+        {/* Right Column (1/3 width): Review Action Card -> Revision Timeline (Desktop Only) */}
+        <div className="hidden lg:flex lg:col-span-1 flex-col gap-4 sm:gap-6">
           {/* Review Action Card */}
           <ReviewActionCard
             clip={clip}
@@ -269,7 +256,6 @@ export default function ClipViewClient({
             revisions={allRevisions}
             className="sticky top-24"
             onSeekTime={handleSeek}
-            onSelectRevisionUrl={(url) => setActiveVideoUrl(url)}
           />
         </div>
       </div>
