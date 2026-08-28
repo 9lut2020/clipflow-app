@@ -38,6 +38,7 @@ export default function ClipViewClient({
   const [optimisticStatus, setOptimisticStatus] = useState(clip.status);
 
   const videoUrl = clip.driveUrl || latestRevision?.driveUrl || "";
+  const actionClip = { ...clip, status: optimisticStatus };
   const project = clip.project;
   const episode = clip.episode;
 
@@ -222,7 +223,8 @@ export default function ClipViewClient({
             <div className="animate-in fade-in duration-200">
               {activeTab === "review" && (
                 <ReviewActionCard
-                  clip={clip}
+                  key={`mobile-action-${clip.id}-${optimisticStatus}`}
+                  clip={actionClip}
                   isUser={isUser}
                   reviewerId={currentUser?.id || ""}
                   currentTimeFormatted={currentTimeFormatted}
@@ -245,7 +247,8 @@ export default function ClipViewClient({
         <div className="hidden lg:flex lg:col-span-1 flex-col gap-4 sm:gap-6">
           {/* Review Action Card */}
           <ReviewActionCard
-            clip={clip}
+            key={`desktop-action-${clip.id}-${optimisticStatus}`}
+            clip={actionClip}
             isUser={isUser}
             reviewerId={currentUser?.id || ""}
             currentTimeFormatted={currentTimeFormatted}

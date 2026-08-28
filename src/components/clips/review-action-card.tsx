@@ -83,9 +83,11 @@ export default function ReviewActionCard({
         reviewerId,
       });
       toast.success("บันทึกผลตรวจผ่านอนุมัติเรียบร้อยแล้ว");
+      if (textareaRef.current) textareaRef.current.value = "";
       setConfirmAction(null);
       router.refresh();
     } catch (err: any) {
+      onOptimisticUpdate?.(clip.status);
       toast.error(err?.message || "ไม่สามารถบันทึกผลตรวจได้");
     }
   };
@@ -101,9 +103,11 @@ export default function ReviewActionCard({
         reviewerId,
       });
       toast.success("ส่งกลับให้แก้ไขเรียบร้อยแล้ว");
+      if (textareaRef.current) textareaRef.current.value = "";
       setConfirmAction(null);
       router.refresh();
     } catch (err: any) {
+      onOptimisticUpdate?.(clip.status);
       toast.error(err?.message || "ไม่สามารถส่งกลับให้แก้ไขได้");
     }
   };
