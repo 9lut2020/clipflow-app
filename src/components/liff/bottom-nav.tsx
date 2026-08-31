@@ -24,8 +24,8 @@ export default function BottomNav() {
 
   const centerFloatingItem: NavItem | null = isUser
     ? {
-        href: "/submit",
-        label: "ส่งคลิป",
+        href: "/tasks",
+        label: "งานของฉัน",
         icon: PlusCircle,
       }
     : null;

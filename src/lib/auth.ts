@@ -137,7 +137,7 @@ export const authOptions: NextAuthOptions = {
       return false;
     },
 
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       // Set initial token attributes on login
       if (user) {
         token.id = (user as any).dbId;
@@ -147,6 +147,12 @@ export const authOptions: NextAuthOptions = {
         if ((user as any).isBypass) {
           token.isBypass = true;
         }
+      }
+
+      if (trigger === "update" && session?.user?.role && !token.isBypass) {
+        token.role = session.user.role;
+        if (session.user.name) token.name = session.user.name;
+        if (session.user.image) token.picture = session.user.image;
       }
 
       // Re-fetch latest role & info live from backend DB on every session check!

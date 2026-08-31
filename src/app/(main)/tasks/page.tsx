@@ -143,6 +143,7 @@ export default async function TasksPage() {
               </p>
             </div>
           </div>
+          {/* No create button for USER — clips are assigned by Admin */}
         </div>
       </div>
 
@@ -251,6 +252,7 @@ export default async function TasksPage() {
                 emptyText="ไม่มีงานที่ต้องแก้ไข"
                 defaultOpen={true}
                 isUser={isUser}
+                userId={currentUser.id}
               />
 
               {/* Drawer 2: In Progress / Pending Review */}
@@ -263,6 +265,7 @@ export default async function TasksPage() {
                 emptyText="ไม่มีงานที่รอตรวจอยู่ในขณะนี้"
                 defaultOpen={true}
                 isUser={isUser}
+                userId={currentUser.id}
               />
 
               {/* Drawer 3: Draft / To Do */}
@@ -273,8 +276,9 @@ export default async function TasksPage() {
                 colorClass="text-blue-500"
                 badgeBg="bg-blue-100 text-blue-700"
                 emptyText="ไม่มีงานใหม่ในระบบ"
-                defaultOpen={false}
+                defaultOpen={true}
                 isUser={isUser}
+                userId={currentUser.id}
               />
 
               {/* Drawer 4: Approved */}
@@ -287,6 +291,7 @@ export default async function TasksPage() {
                 emptyText="ยังไม่มีงานที่ได้รับการอนุมัติ"
                 defaultOpen={false}
                 isUser={isUser}
+                userId={currentUser.id}
               />
             </>
           ) : (

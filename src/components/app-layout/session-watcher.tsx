@@ -1,21 +1,27 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { apiClient } from "@/lib/api-client";
 import { signOut } from "next-auth/react";
+import type { User } from "@/types/api";
 
 export function SessionWatcher() {
   const { data: session, update, status } = useSession();
+  const router = useRouter();
+  const userId = session?.user?.id;
+  const sessionRole = session?.user?.role;
+  const isBypass = session?.user?.isBypass;
   const isUpdatingRef = useRef(false);
 
   useEffect(() => {
-    if (status !== "authenticated" || !session?.user?.id || session.user.isBypass) return;
+    if (status !== "authenticated" || !userId || isBypass) return;
 
     const checkUserStatus = async () => {
       if (isUpdatingRef.current) return;
       try {
-        const res = await apiClient.get<any>(`/users/${session.user.id}`);
+        const res = await apiClient.get<User>(`/users/${userId}`);
         if (res.status === "success" && res.data) {
           const dbUser = res.data;
 
@@ -27,14 +33,20 @@ export function SessionWatcher() {
           }
 
           // 2. If user role changed in DB compared to session role
-          if (dbUser.role !== session.user.role) {
+          if (dbUser.role !== sessionRole) {
             isUpdatingRef.current = true;
-            await update();
-            window.location.reload();
+            await update({
+              role: dbUser.role,
+              name: dbUser.displayName ?? session?.user?.name,
+              image: dbUser.pictureUrl ?? session?.user?.image,
+            });
+            router.refresh();
           }
         }
       } catch (err) {
         console.error("SessionWatcher error checking user status:", err);
+      } finally {
+        isUpdatingRef.current = false;
       }
     };
 
@@ -45,7 +57,7 @@ export function SessionWatcher() {
     const interval = setInterval(checkUserStatus, 5000);
 
     return () => clearInterval(interval);
-  }, [session, status, update]);
+  }, [userId, sessionRole, isBypass, status, update, router, session?.user?.name, session?.user?.image]);
 
   return null;
 }

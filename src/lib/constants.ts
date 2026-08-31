@@ -39,7 +39,6 @@ export function getSidebarMenu(
       section: "Main",
       items: [
         { title: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard },
-        { title: "ส่งคลิป", href: "/submit", icon: Plus },
         { title: "งานของฉัน", href: "/tasks", icon: ClipboardList },
         { title: "ปฏิทินเผยแพร่", href: "/calendar", icon: CalendarDays },
         { title: "โปรเจกต์ทั้งหมด", href: "/projects", icon: FileVideo },

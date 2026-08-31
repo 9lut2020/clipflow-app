@@ -12,11 +12,15 @@ import { validateVideoUrl } from "@/utils/url-validator";
 import { ClipboardCheck, CheckCircle2, XCircle } from "lucide-react";
 
 interface ReviewActionCardProps {
-  clip: any;
+  clip: {
+    id: string;
+    status: string;
+    currentRevisionId?: string | null;
+    driveUrl?: string | null;
+  };
   isUser: boolean;
   reviewerId: string;
   currentTimeFormatted?: string | null;
-  currentTimeSeconds?: number | null;
   onOptimisticUpdate?: (status: string) => void;
 }
 
@@ -25,7 +29,6 @@ export default function ReviewActionCard({
   isUser,
   reviewerId,
   currentTimeFormatted,
-  currentTimeSeconds,
   onOptimisticUpdate,
 }: ReviewActionCardProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -73,7 +76,7 @@ export default function ReviewActionCard({
     useState<ReviewConfirmAction | null>(null);
 
   const handleApprove = async () => {
-    if (!reviewerId) return;
+    if (!reviewerId || isLoading) return;
     const targetRevId = clip.currentRevisionId || clip.id;
     if (onOptimisticUpdate) onOptimisticUpdate("APPROVED");
     try {
@@ -86,14 +89,14 @@ export default function ReviewActionCard({
       if (textareaRef.current) textareaRef.current.value = "";
       setConfirmAction(null);
       router.refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       onOptimisticUpdate?.(clip.status);
-      toast.error(err?.message || "ไม่สามารถบันทึกผลตรวจได้");
+      toast.error(err instanceof Error ? err.message : "ไม่สามารถบันทึกผลตรวจได้");
     }
   };
 
   const handleReject = async () => {
-    if (!reviewerId) return;
+    if (!reviewerId || isLoading) return;
     const targetRevId = clip.currentRevisionId || clip.id;
     if (onOptimisticUpdate) onOptimisticUpdate("NEEDS_REVISION");
     try {
@@ -106,14 +109,14 @@ export default function ReviewActionCard({
       if (textareaRef.current) textareaRef.current.value = "";
       setConfirmAction(null);
       router.refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       onOptimisticUpdate?.(clip.status);
-      toast.error(err?.message || "ไม่สามารถส่งกลับให้แก้ไขได้");
+      toast.error(err instanceof Error ? err.message : "ไม่สามารถส่งกลับให้แก้ไขได้");
     }
   };
 
   const handleResubmit = async () => {
-    if (!reviewerId) return;
+    if (!reviewerId || isLoading) return;
     const driveUrlInput = document.getElementById("resubmitUrl") as HTMLInputElement;
     const submitNoteInput = document.getElementById("resubmitNote") as HTMLTextAreaElement;
 
@@ -137,21 +140,28 @@ export default function ReviewActionCard({
       toast.success("ส่งงานแก้ไขใหม่เรียบร้อยแล้ว!");
       setConfirmAction(null);
       router.refresh();
-    } catch (err: any) {
-      toast.error(err?.message || "ไม่สามารถส่งงานแก้ไขได้");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "ไม่สามารถส่งงานแก้ไขได้");
     }
   };
 
-  const requestApprove = () => setConfirmAction("APPROVE");
-  const requestReject = () => {
+  function requestApprove() {
+    if (isLoading) return;
+    setConfirmAction("APPROVE");
+  }
+
+  function requestReject() {
+    if (isLoading) return;
     if (!textareaRef.current?.value) {
       toast.error("กรุณากรอกข้อเสนอแนะสิ่งที่ต้องแก้ไขก่อนตีกลับ");
       textareaRef.current?.focus();
       return;
     }
     setConfirmAction("REJECT");
-  };
-  const requestResubmit = () => {
+  }
+
+  function requestResubmit() {
+    if (isLoading) return;
     const driveUrlInput = document.getElementById("resubmitUrl") as HTMLInputElement;
     const driveUrl = driveUrlInput?.value;
 
@@ -162,7 +172,7 @@ export default function ReviewActionCard({
     }
 
     setConfirmAction("RESUBMIT");
-  };
+  }
 
   if (isUser && clip.status === "NEEDS_REVISION") {
     return (

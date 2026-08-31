@@ -228,7 +228,6 @@ export default function ClipViewClient({
                   isUser={isUser}
                   reviewerId={currentUser?.id || ""}
                   currentTimeFormatted={currentTimeFormatted}
-                  currentTimeSeconds={currentTimeSeconds}
                   onOptimisticUpdate={setOptimisticStatus}
                 />
               )}
@@ -252,7 +251,6 @@ export default function ClipViewClient({
             isUser={isUser}
             reviewerId={currentUser?.id || ""}
             currentTimeFormatted={currentTimeFormatted}
-            currentTimeSeconds={currentTimeSeconds}
             onOptimisticUpdate={setOptimisticStatus}
           />
           <RevisionTimeline
