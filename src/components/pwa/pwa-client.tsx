@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Bell, Download, X } from "lucide-react";
-import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 
 type InstallPromptEvent = Event & {
@@ -35,7 +34,6 @@ export function PwaClient() {
     const onInstalled = () => {
       setInstallEvent(null);
       setShowInstall(false);
-      toast.success("ติดตั้ง ClipFlow บนเครื่องแล้ว");
     };
 
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
@@ -120,17 +118,14 @@ export function useBrowserNotifications(unreadCount: number) {
 
 export async function requestBrowserNotifications() {
   if (!("Notification" in window)) {
-    toast.error("เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน");
     return false;
   }
 
   const permission = await Notification.requestPermission();
   if (permission === "granted") {
     await subscribeToPush();
-    toast.success("เปิดการแจ้งเตือนแล้ว");
     return true;
   }
-  toast.error("ยังไม่ได้อนุญาตการแจ้งเตือน");
   return false;
 }
 
