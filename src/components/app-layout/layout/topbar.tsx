@@ -7,7 +7,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   CheckCircle2,
-  Clock
+  Clock,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import useSWR from "swr";
@@ -17,6 +17,7 @@ import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import Link from "next/link";
 import { toast } from "sonner";
+import { NotificationPermissionButton, useBrowserNotifications } from "@/components/pwa/pwa-client";
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -33,26 +34,33 @@ export default function Topbar({
   const [open, setOpen] = useState(false);
 
   // Poll unread count every 60 seconds to save Cloudflare Worker limits
-  const { data: unreadData, mutate: mutateUnread } = useSWR<{ status: string; data: number }>(
+  const { data: unreadData, mutate: mutateUnread } = useSWR<{
+    status: string;
+    data: number;
+  }>(
     session?.user?.id ? "/notifications/unread-count" : null,
     async (url: string) => {
       const res = await apiClient.get<number>(url);
       return { status: res.status, data: res.data || 0 };
     },
-    { refreshInterval: 60000 }
+    { refreshInterval: 60000 },
   );
 
   // Fetch notifications only when the dropdown is open
-  const { data: notifData, mutate: mutateNotifs } = useSWR<{ status: string; data: Notification[] }>(
+  const { data: notifData, mutate: mutateNotifs } = useSWR<{
+    status: string;
+    data: Notification[];
+  }>(
     open && session?.user?.id ? "/notifications" : null,
     async (url: string) => {
       const res = await apiClient.get<Notification[]>(url);
       return { status: res.status, data: res.data || [] };
-    }
+    },
   );
 
   const unreadCount = unreadData?.data || 0;
   const notifications = notifData?.data || [];
+  useBrowserNotifications(unreadCount);
 
   const handleMarkAsRead = async (id: string, linkUrl: string | null) => {
     try {
@@ -108,6 +116,7 @@ export default function Topbar({
       </div>
 
       <div className="flex items-center gap-2 relative">
+        <NotificationPermissionButton />
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -137,7 +146,9 @@ export default function Topbar({
           )}
           <div className="flex flex-col text-left min-w-0">
             <div className="font-bold text-[13px] ml-2 text-slate-700 truncate max-w-[100px]">
-              {status === "loading" ? "Loading..." : session?.user?.name || "User"}
+              {status === "loading"
+                ? "Loading..."
+                : session?.user?.name || "User"}
             </div>
             <span className="font-medium text-[10px] ml-2 text-slate-500 uppercase">
               {session?.user?.role || "USER"}
@@ -190,7 +201,8 @@ export default function Topbar({
                     const content = (
                       <div
                         onClick={() => {
-                          if (!notif.isRead) handleMarkAsRead(notif.id, notif.linkUrl);
+                          if (!notif.isRead)
+                            handleMarkAsRead(notif.id, notif.linkUrl);
                           else setOpen(false);
                         }}
                         className={`flex gap-3 p-3 rounded-xl transition-colors cursor-pointer border ${
@@ -202,7 +214,9 @@ export default function Topbar({
                         <div className="shrink-0 mt-0.5 relative">
                           <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                              notif.isRead ? "bg-gray-100 text-gray-500" : "bg-blue-100 text-blue-600"
+                              notif.isRead
+                                ? "bg-gray-100 text-gray-500"
+                                : "bg-blue-100 text-blue-600"
                             }`}
                           >
                             <Bell size={18} />
@@ -212,7 +226,9 @@ export default function Topbar({
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className={`text-sm mb-0.5 ${notif.isRead ? "text-gray-700 font-medium" : "text-gray-900 font-bold"}`}>
+                          <h4
+                            className={`text-sm mb-0.5 ${notif.isRead ? "text-gray-700 font-medium" : "text-gray-900 font-bold"}`}
+                          >
                             {notif.title}
                           </h4>
                           <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
@@ -220,7 +236,10 @@ export default function Topbar({
                           </p>
                           <div className="flex items-center gap-1 mt-2 text-[10px] text-gray-400 font-medium">
                             <Clock size={10} />
-                            {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: th })}
+                            {formatDistanceToNow(new Date(notif.createdAt), {
+                              addSuffix: true,
+                              locale: th,
+                            })}
                           </div>
                         </div>
                       </div>

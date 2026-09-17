@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { Toaster } from "sonner";
 import NextTopLoader from "nextjs-toploader";
+import { PwaClient } from "@/components/pwa/pwa-client";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +37,7 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <NextTopLoader color="#3b82f6" height={3} showSpinner={false} />
         <NextAuthProvider session={session}>{children}</NextAuthProvider>
+        <PwaClient />
         <Toaster position="top-right" richColors closeButton />
       </body>
     </html>
