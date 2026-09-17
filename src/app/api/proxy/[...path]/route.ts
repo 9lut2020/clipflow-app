@@ -32,13 +32,15 @@ async function handler(
   headers.delete("host");
 
   try {
+    let bodyData: ArrayBuffer | undefined = undefined;
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      bodyData = await req.arrayBuffer();
+    }
+
     const response = await fetch(url.toString(), {
       method: req.method,
       headers,
-      body:
-        req.method !== "GET" && req.method !== "HEAD" ? req.body : undefined,
-      // @ts-ignore - Required for forwarding streaming requests in Next.js
-      duplex: "half",
+      body: bodyData,
     });
 
     const responseHeaders = new Headers(response.headers);

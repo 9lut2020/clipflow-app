@@ -40,6 +40,7 @@ export function getSidebarMenu(
       items: [
         { title: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard },
         { title: "งานของฉัน", href: "/tasks", icon: ClipboardList },
+        { title: "ส่งงานด่วน", href: "/submit", icon: Plus },
         { title: "ปฏิทินเผยแพร่", href: "/calendar", icon: CalendarDays },
         { title: "โปรเจกต์ทั้งหมด", href: "/projects", icon: FileVideo },
       ],
@@ -53,6 +54,7 @@ export function getSidebarMenu(
         items: [
           { title: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard },
           { title: "งานของฉัน", href: "/tasks", icon: ClipboardList },
+          { title: "ส่งงานด่วน", href: "/submit", icon: Plus },
           { title: "ปฏิทินเผยแพร่", href: "/calendar", icon: CalendarDays },
           { title: "โปรเจกต์ทั้งหมด", href: "/projects", icon: FileVideo },
         ],
@@ -72,6 +74,7 @@ export function getSidebarMenu(
         section: "Main",
         items: [
           { title: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard },
+          { title: "ส่งงานด่วน", href: "/submit", icon: Plus },
           {
             title: "พื้นที่ทำงาน",
             href: "/tasks",
@@ -80,7 +83,6 @@ export function getSidebarMenu(
               { title: "ตารางงานทั้งหมด", href: "/tasks" },
               { title: "ปฏิทินเผยแพร่", href: "/calendar" },
               { title: "จัดการการเผยแพร่", href: "/admin/publish" },
-              { title: "ส่งคลิปใหม่", href: "/submit" },
               { title: "หน้าเมนู", href: "/menu" },
             ],
           },

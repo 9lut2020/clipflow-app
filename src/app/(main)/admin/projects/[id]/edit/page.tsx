@@ -22,14 +22,18 @@ import { api } from "@/lib/api-client";
 import { Project } from "@/types/api";
 import { toast } from "sonner";
 
-export default function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
+export default function EditProjectPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const router = useRouter();
   const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -87,7 +91,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !projectId) return;
-    
+
     setIsLoading(true);
     try {
       const res = await api.patch(`/projects/${projectId}`, formData);
@@ -96,7 +100,9 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
         router.push(`/projects/${projectId}`);
         router.refresh();
       } else {
-        toast.error(`Failed to update project: ${res.message || "Unknown error"}`);
+        toast.error(
+          `Failed to update project: ${res.message || "Unknown error"}`,
+        );
       }
     } catch (err) {
       console.error(err);
@@ -116,7 +122,9 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
         router.push(`/projects`);
         router.refresh();
       } else {
-        toast.error(`Failed to delete project: ${res.message || "Unknown error"}`);
+        toast.error(
+          `Failed to delete project: ${res.message || "Unknown error"}`,
+        );
       }
     } catch (err) {
       console.error(err);
@@ -130,7 +138,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
   if (!projectId) return <div className="p-8 text-center">Loading...</div>;
 
   return (
-    <div className="space-y-4 sm:space-y-6 max-w-2xl mx-auto pb-12">
+    <div className="space-y-4 sm:space-y-6 max-w-full mx-auto pb-12">
       <div className="w-full">
         <div className="flex items-center justify-between gap-3 bg-white px-4 py-3.5 sm:px-6 sm:py-4 rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
@@ -152,15 +160,15 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
               </p>
             </div>
           </div>
-          <Button 
-            type="button" 
-            variant="destructive" 
+          <Button
+            type="button"
+            variant="destructive"
             size="sm"
             onClick={() => setShowDeleteConfirm(true)}
             disabled={isDeleting}
             className="rounded-xl font-bold shadow-xs px-3 sm:px-4 h-9 sm:h-10 shrink-0"
           >
-            <Trash2 size={16} className="sm:mr-2" /> 
+            <Trash2 size={16} className="sm:mr-2" />
             <span className="hidden sm:inline">ลบโปรเจกต์</span>
           </Button>
         </div>
@@ -170,37 +178,49 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
         <form onSubmit={handleSubmit}>
           <CardContent className="p-6 space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-slate-700 font-bold">ชื่อโปรเจกต์ (รายการ) <span className="text-rose-500">*</span></Label>
-              <Input 
-                id="name" 
-                placeholder="เช่น ซีรีส์บทเรียนจากอัลกุรอาน" 
+              <Label htmlFor="name" className="text-slate-700 font-bold">
+                ชื่อโปรเจกต์ (รายการ) <span className="text-rose-500">*</span>
+              </Label>
+              <Input
+                id="name"
+                placeholder="เช่น ซีรีส์บทเรียนจากอัลกุรอาน"
                 value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 required
                 className="rounded-xl border-slate-200 focus-visible:ring-blue-500"
               />
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-slate-700 font-bold">รายละเอียด (ตัวเลือก)</Label>
-              <Textarea 
-                id="description" 
-                placeholder="คำอธิบายสั้นๆ เกี่ยวกับโปรเจกต์นี้..." 
+              <Label htmlFor="description" className="text-slate-700 font-bold">
+                รายละเอียด (ตัวเลือก)
+              </Label>
+              <Textarea
+                id="description"
+                placeholder="คำอธิบายสั้นๆ เกี่ยวกับโปรเจกต์นี้..."
                 value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 rows={4}
                 className="rounded-xl border-slate-200 focus-visible:ring-blue-500 resize-none"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="pictureUrl" className="text-slate-700 font-bold">URL รูปภาพหน้าปก (ตัวเลือก)</Label>
-              <Input 
-                id="pictureUrl" 
+              <Label htmlFor="pictureUrl" className="text-slate-700 font-bold">
+                URL รูปภาพหน้าปก (ตัวเลือก)
+              </Label>
+              <Input
+                id="pictureUrl"
                 type="url"
-                placeholder="https://example.com/image.jpg" 
+                placeholder="https://example.com/image.jpg"
                 value={formData.pictureUrl}
-                onChange={(e) => setFormData({...formData, pictureUrl: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, pictureUrl: e.target.value })
+                }
                 className="rounded-xl border-slate-200 focus-visible:ring-blue-500"
               />
               <p className="text-[11px] sm:text-xs text-slate-500">
@@ -210,16 +230,22 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
           </CardContent>
           <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
             <Link href={`/projects/${projectId}`}>
-              <Button type="button" variant="outline" className="rounded-xl border-slate-200 text-slate-600 font-bold hover:bg-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl border-slate-200 text-slate-600 font-bold hover:bg-slate-100"
+              >
                 ยกเลิก
               </Button>
             </Link>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isLoading || !formData.name}
               className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-sm px-6"
             >
-              {isLoading ? "กำลังบันทึก..." : (
+              {isLoading ? (
+                "กำลังบันทึก..."
+              ) : (
                 <>
                   <Save size={16} className="mr-2" /> บันทึก
                 </>
@@ -231,7 +257,9 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
 
       <Dialog
         open={showDeleteConfirm}
-        onOpenChange={(open) => !open && !isDeleting && setShowDeleteConfirm(false)}
+        onOpenChange={(open) =>
+          !open && !isDeleting && setShowDeleteConfirm(false)
+        }
       >
         <DialogContent className="max-w-[400px] sm:max-w-[400px]">
           <DialogHeader>

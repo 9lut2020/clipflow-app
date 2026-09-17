@@ -3,7 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
-import { useSubmitRevision, useSubmitReview } from "@/features/reviews/hooks/use-reviews";
+import {
+  useSubmitRevision,
+  useSubmitReview,
+} from "@/features/reviews/hooks/use-reviews";
 import { toast } from "sonner";
 import ReviewConfirmModal, {
   type ReviewConfirmAction,
@@ -37,40 +40,6 @@ export default function ReviewActionCard({
   const { submitReview, isSubmitting: isSubmittingReview } = useSubmitReview();
   const isLoading = isSubmittingRevision || isSubmittingReview;
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Reviewer shortcuts (Trigger Confirmation Modal first)
-      if (
-        !isUser &&
-        (clip.status === "PENDING_REVIEW" ||
-          clip.status === "IN_REVIEW" ||
-          clip.status === "NEEDS_REVISION")
-      ) {
-        // Ctrl + Enter (Approve)
-        if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          requestApprove();
-        }
-        // Alt + Enter (Reject)
-        if (e.altKey && e.key === "Enter") {
-          e.preventDefault();
-          requestReject();
-        }
-      }
-
-      // User shortcuts (Resubmit)
-      if (isUser && clip.status === "NEEDS_REVISION") {
-        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-          e.preventDefault();
-          requestResubmit();
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [clip.status, isUser, clip.currentRevisionId, clip.id, reviewerId]);
-
   const router = useRouter();
   const [confirmAction, setConfirmAction] =
     useState<ReviewConfirmAction | null>(null);
@@ -91,7 +60,9 @@ export default function ReviewActionCard({
       router.refresh();
     } catch (err: unknown) {
       onOptimisticUpdate?.(clip.status);
-      toast.error(err instanceof Error ? err.message : "ไม่สามารถบันทึกผลตรวจได้");
+      toast.error(
+        err instanceof Error ? err.message : "ไม่สามารถบันทึกผลตรวจได้",
+      );
     }
   };
 
@@ -111,14 +82,20 @@ export default function ReviewActionCard({
       router.refresh();
     } catch (err: unknown) {
       onOptimisticUpdate?.(clip.status);
-      toast.error(err instanceof Error ? err.message : "ไม่สามารถส่งกลับให้แก้ไขได้");
+      toast.error(
+        err instanceof Error ? err.message : "ไม่สามารถส่งกลับให้แก้ไขได้",
+      );
     }
   };
 
   const handleResubmit = async () => {
     if (!reviewerId || isLoading) return;
-    const driveUrlInput = document.getElementById("resubmitUrl") as HTMLInputElement;
-    const submitNoteInput = document.getElementById("resubmitNote") as HTMLTextAreaElement;
+    const driveUrlInput = document.getElementById(
+      "resubmitUrl",
+    ) as HTMLInputElement;
+    const submitNoteInput = document.getElementById(
+      "resubmitNote",
+    ) as HTMLTextAreaElement;
 
     const driveUrl = driveUrlInput?.value || clip.driveUrl || "";
     const submitNote = submitNoteInput?.value || "";
@@ -141,7 +118,9 @@ export default function ReviewActionCard({
       setConfirmAction(null);
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "ไม่สามารถส่งงานแก้ไขได้");
+      toast.error(
+        err instanceof Error ? err.message : "ไม่สามารถส่งงานแก้ไขได้",
+      );
     }
   };
 
@@ -162,7 +141,9 @@ export default function ReviewActionCard({
 
   function requestResubmit() {
     if (isLoading) return;
-    const driveUrlInput = document.getElementById("resubmitUrl") as HTMLInputElement;
+    const driveUrlInput = document.getElementById(
+      "resubmitUrl",
+    ) as HTMLInputElement;
     const driveUrl = driveUrlInput?.value;
 
     const validation = validateVideoUrl(driveUrl || clip.driveUrl || "");
@@ -194,29 +175,19 @@ export default function ReviewActionCard({
         <div className="w-full bg-white border border-slate-200 border-l-4 border-l-rose-500 rounded-2xl overflow-hidden shadow-xs sm:shadow-sm animate-in fade-in duration-300">
           <div className="flex px-6 py-4 border-b border-slate-100 justify-between items-center bg-rose-50/30">
             <div>
-              <h2 className="text-lg font-bold text-slate-800">
-                ส่งงานแก้ไข
-              </h2>
+              <h2 className="text-lg font-bold text-slate-800">ส่งงานแก้ไข</h2>
               <p className="text-xs text-slate-500 mt-1">
-                วางลิงก์ Google Drive ใหม่ที่แก้ไขแล้ว เพื่อส่งให้ผู้ตรวจเช็คอีกครั้ง
+                วางลิงก์ Google Drive ใหม่ที่แก้ไขแล้ว
+                เพื่อส่งให้ผู้ตรวจเช็คอีกครั้ง
               </p>
-            </div>
-            <div className="hidden sm:flex items-center gap-1 text-[10px] text-slate-400 bg-white px-2 py-1 rounded-md border border-slate-200 shadow-sm">
-              <span>กด</span>
-              <kbd className="font-mono bg-slate-50 px-1 py-0.5 rounded border border-slate-200">
-                Ctrl
-              </kbd>
-              <span>+</span>
-              <kbd className="font-mono bg-slate-50 px-1 py-0.5 rounded border border-slate-200">
-                Enter
-              </kbd>
-              <span>เพื่อส่งงาน</span>
             </div>
           </div>
 
           {/* Mobile Header */}
           <div className="hidden">
-            <h2 className="text-sm font-bold text-slate-800">ส่งงานแก้ไขใหม่</h2>
+            <h2 className="text-sm font-bold text-slate-800">
+              ส่งงานแก้ไขใหม่
+            </h2>
           </div>
 
           <div className="p-4 sm:p-5 lg:p-6 space-y-4 lg:space-y-5 max-h-[40vh] lg:max-h-none overflow-y-auto custom-scrollbar">
@@ -288,27 +259,39 @@ export default function ReviewActionCard({
                 ผลการตรวจทาน
               </h2>
             </div>
-            
+
             <div className="flex flex-wrap xl:flex-nowrap items-center gap-2">
               {/* Reject Shortcut */}
               <div className="flex items-center gap-1.5 text-[10px] text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200 shadow-xs">
                 <XCircle size={14} className="text-rose-500 shrink-0" />
-                <span className="text-slate-700 font-bold uppercase tracking-wider hidden 2xl:inline-block">ตีกลับ:</span>
+                <span className="text-slate-700 font-bold uppercase tracking-wider hidden 2xl:inline-block">
+                  ตีกลับ:
+                </span>
                 <div className="flex items-center gap-0.5">
-                  <kbd className="font-mono font-bold bg-slate-100 px-1 rounded text-slate-600">Alt</kbd>
+                  <kbd className="font-mono font-bold bg-slate-100 px-1 rounded text-slate-600">
+                    Alt
+                  </kbd>
                   <span className="text-slate-400">+</span>
-                  <kbd className="font-mono font-bold bg-slate-100 px-1 rounded text-slate-600">Enter</kbd>
+                  <kbd className="font-mono font-bold bg-slate-100 px-1 rounded text-slate-600">
+                    Enter
+                  </kbd>
                 </div>
               </div>
-              
+
               {/* Approve Shortcut */}
               <div className="flex items-center gap-1.5 text-[10px] text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200 shadow-xs">
                 <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
-                <span className="text-slate-700 font-bold uppercase tracking-wider hidden 2xl:inline-block">ผ่าน:</span>
+                <span className="text-slate-700 font-bold uppercase tracking-wider hidden 2xl:inline-block">
+                  ผ่าน:
+                </span>
                 <div className="flex items-center gap-0.5">
-                  <kbd className="font-mono font-bold bg-slate-100 px-1 rounded text-slate-600">Ctrl</kbd>
+                  <kbd className="font-mono font-bold bg-slate-100 px-1 rounded text-slate-600">
+                    Ctrl
+                  </kbd>
                   <span className="text-slate-400">+</span>
-                  <kbd className="font-mono font-bold bg-slate-100 px-1 rounded text-slate-600">Enter</kbd>
+                  <kbd className="font-mono font-bold bg-slate-100 px-1 rounded text-slate-600">
+                    Enter
+                  </kbd>
                 </div>
               </div>
             </div>
@@ -340,7 +323,9 @@ export default function ReviewActionCard({
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-all cursor-pointer shadow-2xs"
                   >
                     <span>📌 ปักหมุดเวลา</span>
-                    <span className="font-mono text-amber-900">({currentTimeFormatted})</span>
+                    <span className="font-mono text-amber-900">
+                      ({currentTimeFormatted})
+                    </span>
                   </button>
                 )}
               </div>
@@ -348,7 +333,11 @@ export default function ReviewActionCard({
                 ref={textareaRef}
                 autoFocus
                 className="rounded-xl border-slate-200 bg-slate-50 focus:bg-white focus:ring-sky-500/20 focus:border-sky-500 text-sm resize-none"
-                placeholder={currentTimeFormatted ? "พิมพ์สิ่งที่ต้องแก้ไขให้ทีมตัดต่อ หรือกดปุ่มปักหมุดเวลาเพื่อระบุวินาที..." : "พิมพ์สิ่งที่ต้องแก้ไข (สามารถพิมพ์เวลาเช่น [01:15] เพื่อระบุวินาทีได้)"}
+                placeholder={
+                  currentTimeFormatted
+                    ? "พิมพ์สิ่งที่ต้องแก้ไขให้ทีมตัดต่อ หรือกดปุ่มปักหมุดเวลาเพื่อระบุวินาที..."
+                    : "พิมพ์สิ่งที่ต้องแก้ไข (สามารถพิมพ์เวลาเช่น [01:15] เพื่อระบุวินาทีได้)"
+                }
                 rows={2}
               />
             </div>

@@ -75,6 +75,7 @@ export interface Clip {
   episode?: Pick<Episode, "id" | "episodeNo" | "name">;
   owner?: Pick<User, "id" | "displayName" | "pictureUrl">;
   publishedPosts?: { id: string; platform: string }[];
+  currentRevision?: any;
   // Raw IDs (still available for filtering in list endpoints)
   episodeId?: string;
   ownerId?: string;

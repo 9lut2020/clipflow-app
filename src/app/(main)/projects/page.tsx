@@ -4,7 +4,7 @@ import { apiServer } from "@/lib/api-server";
 import { Project } from "@/types/api";
 
 import { Button } from "@/components/ui/button";
-import { Video, ChevronRight, Plus, Settings, ArrowLeft } from "lucide-react";
+import { Video, Pencil, Plus, Settings, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatImageUrl } from "@/utils/utils";
@@ -19,7 +19,9 @@ export default async function ProjectsPage() {
   const isUser = currentUser?.role === "USER";
 
   // Fetch projects from API
-  const { data: projectsData } = await apiServer.get<Project[]>("/projects").catch(() => ({ data: [] }));
+  const { data: projectsData } = await apiServer
+    .get<Project[]>("/projects")
+    .catch(() => ({ data: [] }));
   const projects = projectsData || [];
 
   return (
@@ -67,24 +69,29 @@ export default async function ProjectsPage() {
       {/* Projects Grid - Clean White Style */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
         {projects.map((project) => (
-          <div key={project.id} className="block group relative bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all duration-200 flex flex-col h-full">
+          <div
+            key={project.id}
+            className="block group relative bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all duration-200 flex flex-col h-full"
+          >
             <Link
               href={`/projects/${project.id}`}
               className="absolute inset-0 z-10"
               aria-label={`View ${project.name}`}
             ></Link>
-            
+
             {/* Top Image / Gradient Area */}
             <div className="relative aspect-square w-full bg-slate-100 overflow-hidden border-b border-slate-100 shrink-0">
               {project.pictureUrl ? (
                 (() => {
                   const formattedUrl = formatImageUrl(project.pictureUrl);
-                  const isOptimized = formattedUrl.includes("lh3.googleusercontent.com");
-                  
+                  const isOptimized = formattedUrl.includes(
+                    "lh3.googleusercontent.com",
+                  );
+
                   if (isOptimized) {
                     return (
-                      <Image 
-                        src={formattedUrl} 
+                      <Image
+                        src={formattedUrl}
                         alt={project.name}
                         fill
                         sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
@@ -92,10 +99,10 @@ export default async function ProjectsPage() {
                       />
                     );
                   }
-                  
+
                   return (
-                    <img 
-                      src={formattedUrl} 
+                    <img
+                      src={formattedUrl}
                       alt={project.name}
                       className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
@@ -109,26 +116,37 @@ export default async function ProjectsPage() {
             </div>
 
             {/* Card Content */}
-            <div className="p-3 sm:p-4 flex flex-col flex-1 relative z-20 pointer-events-none bg-white">
-              <div className="flex justify-between items-start gap-2 mb-2">
-                <h2 className="text-slate-900 font-bold text-[13px] sm:text-[15px] leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors flex-1">
+            <div className="flex flex-col flex-1 relative z-20 pointer-events-none bg-white">
+              <div className="p-3 sm:p-4 flex-1">
+                <h2 className="text-slate-900 font-bold text-[13px] sm:text-[15px] leading-snug group-hover:text-blue-600 transition-colors break-words mb-2">
                   {project.name}
                 </h2>
-                
-                {/* Admin Setting Button */}
-                {currentUser.role === "ADMIN" && (
+                <p className="text-slate-500 text-[10px] sm:text-[11px] leading-relaxed line-clamp-2">
+                  {project.description || "ไม่มีรายละเอียด"}
+                </p>
+              </div>
+
+              {/* Admin Setting Button (Footer) */}
+              {currentUser.role === "ADMIN" && (
+                <div className="p-2 sm:px-3 sm:py-2.5 bg-slate-50/50 border-t border-slate-100 flex flex-row gap-2 pointer-events-auto">
                   <Link
                     href={`/admin/projects/${project.id}/manage`}
-                    className="shrink-0 w-6 h-6 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors pointer-events-auto"
-                    title="จัดการโปรเจกต์"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 sm:py-1.5 bg-white hover:bg-blue-50 text-slate-500 hover:text-blue-600 rounded-md transition-all text-[10.5px] sm:text-[11px] font-semibold border border-slate-200 hover:border-blue-200 shadow-2xs hover:shadow-sm group/btn"
+                    title="มอบหมายงาน"
                   >
-                    <Settings size={14} />
+                    <Settings size={13} className="group-hover/btn:rotate-90 transition-transform duration-300" />
+                    <span>มอบหมายงาน</span>
                   </Link>
-                )}
-              </div>
-              <p className="text-slate-500 text-[10px] sm:text-[11px] leading-relaxed line-clamp-2 mt-auto">
-                {project.description || "ไม่มีรายละเอียด"}
-              </p>
+                  <Link
+                    href={`/admin/projects/${project.id}/edit`}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 sm:py-1.5 bg-white hover:bg-amber-50 text-slate-500 hover:text-amber-600 rounded-md transition-all text-[10.5px] sm:text-[11px] font-semibold border border-slate-200 hover:border-amber-200 shadow-2xs hover:shadow-sm"
+                    title="แก้ไขโปรเจกต์"
+                  >
+                    <Pencil size={13} />
+                    <span>แก้ไขโปรเจกต์</span>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         ))}

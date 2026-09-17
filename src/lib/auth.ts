@@ -45,14 +45,17 @@ if (process.env.NODE_ENV === "development") {
         bypassRole: { label: "Bypass Role", type: "text" },
       },
       async authorize(credentials) {
-        console.log("[Bypass] Authorize started with credentials:", credentials);
+        console.log(
+          "[Bypass] Authorize started with credentials:",
+          credentials,
+        );
         if (!credentials?.bypassRole) {
-           console.log("[Bypass] bypassRole is empty!");
-           return null;
+          console.log("[Bypass] bypassRole is empty!");
+          return null;
         }
 
         const role = credentials.bypassRole.toUpperCase();
-        
+
         // Mock user data
         const mockUser = {
           id: `mock-${role.toLowerCase()}`,
@@ -75,9 +78,9 @@ if (process.env.NODE_ENV === "development") {
                 displayName: mockUser.name,
                 pictureUrl: mockUser.image,
               }),
-            }
+            },
           );
-          
+
           if (res.ok) {
             const data = await res.json();
             if (data.status === "success" && data.data) {
@@ -86,25 +89,29 @@ if (process.env.NODE_ENV === "development") {
             }
           }
         } catch (e) {
-          console.error("[Bypass] Backend sync failed, but proceeding with mock user anyway:", e);
+          console.error(
+            "[Bypass] Backend sync failed, but proceeding with mock user anyway:",
+            e,
+          );
         }
 
         console.log("[Bypass] Returning user:", mockUser);
         return mockUser as any;
       },
-    })
+    }),
   );
 }
 
 export const authOptions: NextAuthOptions = {
   providers,
   pages: {
-    signIn: '/login',
+    signIn: "/login",
   },
   callbacks: {
     async signIn({ user, account }) {
       // Allow bypass provider
-      if (account?.provider === "bypass" || account?.type === "credentials") return true;
+      if (account?.provider === "bypass" || account?.type === "credentials")
+        return true;
 
       if (account?.provider === "line") {
         try {

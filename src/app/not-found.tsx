@@ -1,20 +1,27 @@
 import Link from "next/link";
-import { Home, Search, Film } from "lucide-react";
+import { Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-slate-50/80 text-slate-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full text-center space-y-6 bg-white p-8 rounded-2xl border border-slate-200/80 shadow-md animate-in fade-in zoom-in-95 duration-300">
+    <div className="min-h-screen text-slate-900 flex items-center justify-center p-4">
+      <div className="max-w-md w-full text-center space-y-6 p-8 animate-in fade-in zoom-in-95 duration-300">
         {/* Title & Message */}
-        <div className="space-y-2">
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900">
-            ไม่พบหน้าที่คุณต้องการ
-          </h1>
-          <p className="text-slate-600 text-xs md:text-sm leading-relaxed max-w-sm mx-auto">
-            หน้าที่คุณกำลังค้นหาอาจถูกลบ ย้ายที่ หรือคุณอาจพิมพ์ที่อยู่ URL
-            ไม่ถูกต้อง
-          </p>
+        <div className="flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in duration-300 min-h-[400px]">
+          <img
+            src="/Image/Clipflow-404.png"
+            alt="No tasks"
+            className="w-56 h-56 object-contain opacity-90"
+          />
+          <div className="space-y-2">
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900">
+              ไม่พบหน้าที่คุณต้องการ
+            </h1>
+            <h3 className="text-lg text-slate-800 tracking-tight">
+              หน้าที่คุณกำลังค้นหาอาจถูกลบ ย้ายที่ หรือคุณอาจพิมพ์ที่อยู่ URL
+              ไม่ถูกต้อง
+            </h3>
+          </div>
         </div>
 
         {/* Actions */}

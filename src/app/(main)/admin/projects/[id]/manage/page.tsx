@@ -34,12 +34,16 @@ export default async function ProjectManagePage(props: {
   const allUsers: any[] = (usersData as any) || [];
 
   // Fetch project members
-  const { data: membersData } = await apiServer.get(`/projects/${params.id}/members`);
+  const { data: membersData } = await apiServer.get(
+    `/projects/${params.id}/members`,
+  );
   const members: any[] = (membersData as any) || [];
 
   // Allowed users: Members + Admins
   const memberIds = new Set(members.map((m: any) => m.id));
-  const allowedUsers = allUsers.filter((u: any) => memberIds.has(u.id) || u.role === "ADMIN");
+  const allowedUsers = allUsers.filter(
+    (u: any) => memberIds.has(u.id) || u.role === "ADMIN",
+  );
 
   if (!project) {
     return (
@@ -61,6 +65,7 @@ export default async function ProjectManagePage(props: {
             name: clip.name,
             description: clip.description || "",
             ownerId: clip.ownerId,
+            videoSizeId: clip.videoSizeId || "",
             status: clip.status,
           });
         });
@@ -103,16 +108,15 @@ export default async function ProjectManagePage(props: {
       </div>
 
       <div className="bg-white rounded-base shadow-sm border border-slate-200 overflow-hidden mb-6">
+        <MembersClient projectId={project.id} allUsers={allUsers} />
+      </div>
+      <div className="bg-white rounded-base shadow-sm border border-slate-200 overflow-hidden mb-6">
         <SpreadsheetManager
           projectId={project.id}
           initialClips={initialClips}
           initialEpisodes={project.episodes || []}
           users={allowedUsers}
         />
-      </div>
-
-      <div className="bg-white rounded-base shadow-sm border border-slate-200 overflow-hidden mb-6">
-        <MembersClient projectId={project.id} allUsers={allUsers} />
       </div>
     </div>
   );

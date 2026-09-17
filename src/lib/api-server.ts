@@ -10,7 +10,7 @@ async function request<T>(
   path: string,
   body?: unknown,
   params?: Record<string, string>,
-  options?: { revalidate?: number }
+  options?: { revalidate?: number },
 ): Promise<ApiResponse<T>> {
   let url = `${baseURL}${path}`;
   if (params) {
@@ -21,7 +21,7 @@ async function request<T>(
 
   const headers: HeadersInit = {
     "Content-Type": "application/json",
-    "Connection": "close",
+    Connection: "close",
   };
 
   if (session?.user) {
@@ -64,18 +64,17 @@ async function request<T>(
 }
 
 export const apiServer = {
-  get: <T>(path: string, params?: Record<string, string>, options?: { revalidate?: number }) =>
-    request<T>("GET", path, undefined, params, options),
+  get: <T>(
+    path: string,
+    params?: Record<string, string>,
+    options?: { revalidate?: number },
+  ) => request<T>("GET", path, undefined, params, options),
 
-  post: <T>(path: string, body: unknown) =>
-    request<T>("POST", path, body),
+  post: <T>(path: string, body: unknown) => request<T>("POST", path, body),
 
-  patch: <T>(path: string, body: unknown) =>
-    request<T>("PATCH", path, body),
+  patch: <T>(path: string, body: unknown) => request<T>("PATCH", path, body),
 
-  put: <T>(path: string, body: unknown) =>
-    request<T>("PUT", path, body),
+  put: <T>(path: string, body: unknown) => request<T>("PUT", path, body),
 
-  delete: <T>(path: string) =>
-    request<T>("DELETE", path),
+  delete: <T>(path: string) => request<T>("DELETE", path),
 };
