@@ -25,6 +25,7 @@ interface ReviewActionCardProps {
   reviewerId: string;
   currentTimeFormatted?: string | null;
   onOptimisticUpdate?: (status: string) => void;
+  onReviewComplete?: (message: string) => void;
 }
 
 export default function ReviewActionCard({
@@ -33,6 +34,7 @@ export default function ReviewActionCard({
   reviewerId,
   currentTimeFormatted,
   onOptimisticUpdate,
+  onReviewComplete,
 }: ReviewActionCardProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { submitRevision, isSubmitting: isSubmittingRevision } =
@@ -47,7 +49,6 @@ export default function ReviewActionCard({
   const handleApprove = async () => {
     if (!reviewerId || isLoading) return;
     const targetRevId = clip.currentRevisionId || clip.id;
-    if (onOptimisticUpdate) onOptimisticUpdate("APPROVED");
     try {
       await submitReview(targetRevId, {
         status: "APPROVED",
@@ -55,8 +56,10 @@ export default function ReviewActionCard({
         reviewerId,
       });
       toast.success("บันทึกผลตรวจผ่านอนุมัติเรียบร้อยแล้ว");
+      onReviewComplete?.("บันทึกคอมเมนต์และผลตรวจแล้ว กำลังรีเฟรชข้อมูล...");
       if (textareaRef.current) textareaRef.current.value = "";
       setConfirmAction(null);
+      onOptimisticUpdate?.("APPROVED");
       router.refresh();
     } catch (err: unknown) {
       onOptimisticUpdate?.(clip.status);
@@ -69,7 +72,6 @@ export default function ReviewActionCard({
   const handleReject = async () => {
     if (!reviewerId || isLoading) return;
     const targetRevId = clip.currentRevisionId || clip.id;
-    if (onOptimisticUpdate) onOptimisticUpdate("NEEDS_REVISION");
     try {
       await submitReview(targetRevId, {
         status: "NEEDS_REVISION",
@@ -77,8 +79,10 @@ export default function ReviewActionCard({
         reviewerId,
       });
       toast.success("ส่งกลับให้แก้ไขเรียบร้อยแล้ว");
+      onReviewComplete?.("บันทึกคอมเมนต์ส่งกลับแก้ไขแล้ว กำลังรีเฟรชข้อมูล...");
       if (textareaRef.current) textareaRef.current.value = "";
       setConfirmAction(null);
+      onOptimisticUpdate?.("NEEDS_REVISION");
       router.refresh();
     } catch (err: unknown) {
       onOptimisticUpdate?.(clip.status);
@@ -258,42 +262,6 @@ export default function ReviewActionCard({
               <h2 className="text-base xl:text-lg font-bold text-slate-800 tracking-tight whitespace-nowrap">
                 ผลการตรวจทาน
               </h2>
-            </div>
-
-            <div className="flex flex-wrap xl:flex-nowrap items-center gap-2">
-              {/* Reject Shortcut */}
-              <div className="flex items-center gap-1.5 text-[10px] text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200 shadow-xs">
-                <XCircle size={14} className="text-rose-500 shrink-0" />
-                <span className="text-slate-700 font-bold uppercase tracking-wider hidden 2xl:inline-block">
-                  ตีกลับ:
-                </span>
-                <div className="flex items-center gap-0.5">
-                  <kbd className="font-mono font-bold bg-slate-100 px-1 rounded text-slate-600">
-                    Alt
-                  </kbd>
-                  <span className="text-slate-400">+</span>
-                  <kbd className="font-mono font-bold bg-slate-100 px-1 rounded text-slate-600">
-                    Enter
-                  </kbd>
-                </div>
-              </div>
-
-              {/* Approve Shortcut */}
-              <div className="flex items-center gap-1.5 text-[10px] text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200 shadow-xs">
-                <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
-                <span className="text-slate-700 font-bold uppercase tracking-wider hidden 2xl:inline-block">
-                  ผ่าน:
-                </span>
-                <div className="flex items-center gap-0.5">
-                  <kbd className="font-mono font-bold bg-slate-100 px-1 rounded text-slate-600">
-                    Ctrl
-                  </kbd>
-                  <span className="text-slate-400">+</span>
-                  <kbd className="font-mono font-bold bg-slate-100 px-1 rounded text-slate-600">
-                    Enter
-                  </kbd>
-                </div>
-              </div>
             </div>
           </div>
 

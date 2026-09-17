@@ -36,6 +36,7 @@ export default function ClipViewClient({
     null,
   );
   const [optimisticStatus, setOptimisticStatus] = useState(clip.status);
+  const [reviewFeedback, setReviewFeedback] = useState<string | null>(null);
 
   const videoUrl = clip.driveUrl || latestRevision?.driveUrl || "";
   const actionClip = { ...clip, status: optimisticStatus };
@@ -58,6 +59,11 @@ export default function ClipViewClient({
       return;
     }
     setSeekTime(seconds);
+  };
+
+  const handleReviewComplete = (message: string) => {
+    setReviewFeedback(message);
+    window.setTimeout(() => setReviewFeedback(null), 4500);
   };
 
   return (
@@ -89,6 +95,18 @@ export default function ClipViewClient({
       <div className="mb-5 sm:mb-6">
         <ClipStepper status={optimisticStatus} />
       </div>
+
+      {reviewFeedback && (
+        <div className="mb-5 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800 shadow-xs animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white text-sm font-black">
+            ✓
+          </div>
+          <div>
+            <p className="text-sm font-bold">บันทึกสำเร็จ</p>
+            <p className="text-xs font-medium text-emerald-700">{reviewFeedback}</p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-8 items-start">
         {/* Left Column (2/3 width): Video -> Info -> Action Card */}
@@ -229,6 +247,7 @@ export default function ClipViewClient({
                   reviewerId={currentUser?.id || ""}
                   currentTimeFormatted={currentTimeFormatted}
                   onOptimisticUpdate={setOptimisticStatus}
+                  onReviewComplete={handleReviewComplete}
                 />
               )}
               {activeTab === "history" && (
@@ -252,6 +271,7 @@ export default function ClipViewClient({
             reviewerId={currentUser?.id || ""}
             currentTimeFormatted={currentTimeFormatted}
             onOptimisticUpdate={setOptimisticStatus}
+            onReviewComplete={handleReviewComplete}
           />
           <RevisionTimeline
             revisions={allRevisions}
