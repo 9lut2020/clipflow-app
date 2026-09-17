@@ -9,6 +9,10 @@ import {
   X,
   ChevronRight,
   ChevronLeft,
+  ExternalLink,
+  Download,
+  CheckCircle2,
+  CalendarClock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,7 +59,7 @@ export function PublishClient() {
   const [selectedClip, setSelectedClip] = useState<any | null>(null);
 
   // Tabs
-  const [activeTab, setActiveTab] = useState("todo");
+  const [scheduleFilter, setScheduleFilter] = useState<"all" | "scheduled" | "unscheduled">("all");
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -104,6 +108,19 @@ export function PublishClient() {
 
   const activeFilterCount = selectedProjects.length + selectedOwners.length;
 
+  const scheduleCounts = useMemo(() => {
+    const scheduled = baseClips.filter((clip) => clip.scheduledPublishAt).length;
+    const published = baseClips.filter(
+      (clip) => (clip.publishedPosts?.length || 0) >= PLATFORMS.length,
+    ).length;
+    return {
+      total: baseClips.length,
+      scheduled,
+      unscheduled: baseClips.length - scheduled,
+      published,
+    };
+  }, [baseClips]);
+
   const filteredClips = useMemo(() => {
     return baseClips.filter((c) => {
       const matchProject =
@@ -112,32 +129,37 @@ export function PublishClient() {
       const matchOwner =
         selectedOwners.length === 0 ||
         (c.owner?.id && selectedOwners.includes(c.owner.id));
+      const matchSchedule =
+        scheduleFilter === "all" ||
+        (scheduleFilter === "scheduled" && !!c.scheduledPublishAt) ||
+        (scheduleFilter === "unscheduled" && !c.scheduledPublishAt);
 
       const publishedCount = c.publishedPosts?.length || 0;
 
-      let matchTab = false;
-      if (activeTab === "todo") {
-        matchTab = publishedCount === 0;
-      } else if (activeTab === "in_progress") {
-        matchTab = publishedCount > 0 && publishedCount < PLATFORMS.length;
-      } else if (activeTab === "completed") {
-        matchTab = publishedCount >= PLATFORMS.length;
-      }
-
-      return matchProject && matchOwner && matchTab;
+      return matchProject && matchOwner && matchSchedule;
     });
-  }, [baseClips, selectedProjects, selectedOwners, activeTab]);
+  }, [baseClips, selectedProjects, selectedOwners, scheduleFilter]);
 
   // Reset page when filters or tabs change
   useMemo(() => {
     setCurrentPage(1);
-  }, [selectedProjects, selectedOwners, activeTab]);
+  }, [selectedProjects, selectedOwners, scheduleFilter]);
 
   const totalPages = Math.ceil(filteredClips.length / ITEMS_PER_PAGE) || 1;
   const paginatedClips = filteredClips.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE,
   );
+
+  const getApprovedClipUrl = (clip: any) =>
+    clip.currentRevision?.driveUrl || clip.driveUrl || "";
+
+  const getDownloadUrl = (url: string) => {
+    const driveId = url.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] || url.match(/[?&]id=([a-zA-Z0-9_-]+)/)?.[1];
+    return driveId
+      ? `https://drive.google.com/uc?export=download&id=${driveId}`
+      : url;
+  };
 
   const renderPlatforms = (clip: any, align: "left" | "right" = "left") => {
     const publishedList =
@@ -249,6 +271,7 @@ export function PublishClient() {
             {paginatedClips.map((clip) => {
               const isFullyPublished =
                 (clip.publishedPosts?.length || 0) >= PLATFORMS.length;
+              const approvedClipUrl = getApprovedClipUrl(clip);
 
               return (
                 <div
@@ -309,6 +332,12 @@ export function PublishClient() {
                               {clip.owner?.displayName}
                             </span>
                           </div>
+                          <div className={`flex items-center gap-1 text-[11px] font-bold ${clip.scheduledPublishAt ? "text-violet-700" : "text-amber-600"}`}>
+                            <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                            {clip.scheduledPublishAt
+                              ? new Date(clip.scheduledPublishAt).toLocaleString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+                              : "ยังไม่กำหนดวันโพสต์"}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -326,6 +355,43 @@ export function PublishClient() {
                         </Button>
                       </div>
                     </div>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/60 px-3 py-2.5 sm:px-4">
+                    <div className="flex min-w-0 items-center gap-2 text-[11px] font-semibold text-slate-500">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                      </span>
+                      <span className="truncate">คลิปผ่านการตรวจแล้ว</span>
+                    </div>
+                    {approvedClipUrl ? (
+                      <div className="flex shrink-0 items-center gap-2">
+                        <a
+                          href={approvedClipUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-3 text-xs font-bold text-blue-700 transition-colors hover:bg-blue-50"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          เปิดคลิป
+                        </a>
+                        <a
+                          href={getDownloadUrl(approvedClipUrl)}
+                          target="_blank"
+                          rel="noreferrer"
+                          download
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white transition-colors hover:bg-emerald-700"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          ดาวน์โหลด
+                        </a>
+                      </div>
+                    ) : (
+                      <span className="text-[11px] font-medium text-rose-500">
+                        ยังไม่มีลิงก์คลิป
+                      </span>
+                    )}
                   </div>
                 </div>
               );
@@ -393,27 +459,49 @@ export function PublishClient() {
         </div>
       </div>
 
-      {/* Tab + Filter Controls */}
+      {/* Queue overview */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+        {[
+          { key: "all" as const, label: "คลิปผ่านตรวจ", value: scheduleCounts.total, tone: "text-blue-700 bg-blue-50 border-blue-100" },
+          { key: "unscheduled" as const, label: "ยังไม่กำหนดเวลา", value: scheduleCounts.unscheduled, tone: "text-amber-700 bg-amber-50 border-amber-100" },
+          { key: "scheduled" as const, label: "กำหนดเวลาแล้ว", value: scheduleCounts.scheduled, tone: "text-violet-700 bg-violet-50 border-violet-100" },
+          { key: "all" as const, label: "โพสต์ครบแล้ว", value: scheduleCounts.published, tone: "text-emerald-700 bg-emerald-50 border-emerald-100" },
+        ].map((item, index) => (
+          <button
+            key={`${item.label}-${index}`}
+            type="button"
+            onClick={() => {
+              setScheduleFilter(item.key);
+            }}
+            className={`rounded-2xl border px-3 py-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm ${item.tone} ${
+              item.key === scheduleFilter
+                ? "ring-2 ring-current/20"
+                : ""
+            }`}
+          >
+            <p className="text-[10px] font-bold opacity-75">{item.label}</p>
+            <p className="mt-1 text-xl font-black">{item.value}</p>
+          </button>
+        ))}
+      </div>
+
+      {/* Queue filters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 max-w-full">
-        <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
-          <button
-            onClick={() => setActiveTab("todo")}
-            className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "todo" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-          >
-            ยังไม่เริ่ม
-          </button>
-          <button
-            onClick={() => setActiveTab("in_progress")}
-            className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "in_progress" ? "bg-white text-orange-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-          >
-            กำลังดำเนินการ
-          </button>
-          <button
-            onClick={() => setActiveTab("completed")}
-            className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "completed" ? "bg-white text-green-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-          >
-            เสร็จสิ้น
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {[
+            ["all", "ทั้งหมด"],
+            ["unscheduled", "ยังไม่กำหนดวัน"],
+            ["scheduled", "กำหนดวันแล้ว"],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setScheduleFilter(value as typeof scheduleFilter)}
+              className={`rounded-lg border px-3 py-2 text-xs font-bold transition-all ${scheduleFilter === value ? "border-blue-200 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"}`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         <button

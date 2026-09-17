@@ -101,11 +101,12 @@ export function useScheduleClip() {
   const [isUpdating, setIsUpdating] = useState(false);
   const { mutate } = useSWRConfig();
 
-  const mutateAsync = async (clipId: string, scheduledPublishAt: string | null) => {
+  const mutateAsync = async (clipId: string, scheduledPublishAt: string | null, isRepeat = false) => {
     setIsUpdating(true);
     try {
       const res = await apiClient.patch<any>(`/clips/${clipId}/schedule`, {
         scheduledPublishAt,
+        isRepeat,
       });
       if (res.status !== "success") throw new Error(res.message || "Failed to update clip schedule");
       

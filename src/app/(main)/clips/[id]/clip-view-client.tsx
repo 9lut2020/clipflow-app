@@ -37,9 +37,14 @@ export default function ClipViewClient({
   );
   const [optimisticStatus, setOptimisticStatus] = useState(clip.status);
   const [reviewFeedback, setReviewFeedback] = useState<string | null>(null);
+  const [isReviewLoading, setIsReviewLoading] = useState(false);
 
   const videoUrl = clip.driveUrl || latestRevision?.driveUrl || "";
-  const actionClip = { ...clip, status: optimisticStatus };
+  const actionClip = {
+    ...clip,
+    status: optimisticStatus,
+    driveUrl: clip.driveUrl || latestRevision?.driveUrl || "",
+  };
   const project = clip.project;
   const episode = clip.episode;
 
@@ -104,6 +109,20 @@ export default function ClipViewClient({
           <div>
             <p className="text-sm font-bold">บันทึกสำเร็จ</p>
             <p className="text-xs font-medium text-emerald-700">{reviewFeedback}</p>
+          </div>
+        </div>
+      )}
+
+      {isReviewLoading && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-[2px] animate-in fade-in duration-200" role="status" aria-live="polite" aria-label="กำลังบันทึกผลตรวจ">
+          <div className="flex w-full max-w-xs flex-col items-center gap-3 rounded-3xl border border-white/60 bg-white/95 px-6 py-7 text-center shadow-2xl">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+              <span className="h-7 w-7 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm font-black text-slate-800">กำลังบันทึกผลตรวจ</p>
+              <p className="mt-1 text-xs font-medium text-slate-500">กรุณารอสักครู่ อย่าปิดหน้านี้</p>
+            </div>
           </div>
         </div>
       )}
@@ -248,6 +267,7 @@ export default function ClipViewClient({
                   currentTimeFormatted={currentTimeFormatted}
                   onOptimisticUpdate={setOptimisticStatus}
                   onReviewComplete={handleReviewComplete}
+                  onLoadingChange={setIsReviewLoading}
                 />
               )}
               {activeTab === "history" && (
@@ -255,6 +275,8 @@ export default function ClipViewClient({
                   revisions={allRevisions}
                   className="shadow-xs"
                   onSeekTime={handleSeek}
+                  currentStatus={optimisticStatus}
+                  showStatus={!isUser}
                 />
               )}
             </div>
@@ -272,11 +294,14 @@ export default function ClipViewClient({
             currentTimeFormatted={currentTimeFormatted}
             onOptimisticUpdate={setOptimisticStatus}
             onReviewComplete={handleReviewComplete}
+            onLoadingChange={setIsReviewLoading}
           />
           <RevisionTimeline
             revisions={allRevisions}
             className="sticky top-24"
             onSeekTime={handleSeek}
+            currentStatus={optimisticStatus}
+            showStatus={!isUser}
           />
         </div>
       </div>

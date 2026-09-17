@@ -29,11 +29,15 @@ import {
   History,
   Loader2,
   FileText,
+  Download,
+  CalendarClock,
+  Trash2,
 } from "lucide-react";
 import {
   usePublishRecords,
   usePublishClip,
 } from "@/features/clips/hooks/use-publish";
+import { useScheduleClip } from "@/features/clips/hooks/use-clips";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
 
@@ -50,21 +54,42 @@ const PLATFORMS = [
   { id: "INSTAGRAM_REELS", label: "Instagram Reels" },
 ];
 
+const toDateTimeLocal = (value?: string | null) => {
+  if (!value) return "";
+  const date = new Date(value);
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
 export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
   const [activeTab, setActiveTab] = useState("caption");
   const [copied, setCopied] = useState(false);
+  const [copiedTitle, setCopiedTitle] = useState(false);
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [url, setUrl] = useState("");
+  const [scheduleAt, setScheduleAt] = useState("");
+  const [isRepeat, setIsRepeat] = useState(false);
 
   const { data: publishedPosts, isLoading: isLoadingRecords } =
     usePublishRecords(clip.id);
   const { publishClip, isPublishing } = usePublishClip();
+  const { scheduleClip, isUpdating: isScheduling } = useScheduleClip();
+
+  const approvedClipUrl = clip.currentRevision?.driveUrl || clip.driveUrl || "";
+  const downloadUrl = (() => {
+    const driveId = approvedClipUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] || approvedClipUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/)?.[1];
+    return driveId
+      ? `https://drive.google.com/uc?export=download&id=${driveId}`
+      : approvedClipUrl;
+  })();
 
   // Auto-select missing platforms once data is loaded
   useEffect(() => {
     if (!isOpen) {
       setPlatforms([]);
       setUrl("");
+      setScheduleAt("");
+      setIsRepeat(false);
       setCaption(generatedCaption);
       setActiveTab("caption");
       return;
@@ -83,7 +108,12 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
         return isSame ? prev : remainingPlatforms;
       });
     }
-  }, [isOpen, publishedPosts, isLoadingRecords]);
+
+    if (isOpen) {
+      setScheduleAt(toDateTimeLocal(clip.scheduledPublishAt));
+      setIsRepeat(clip.publishSchedule?.isRepeat ?? false);
+    }
+  }, [isOpen, publishedPosts, isLoadingRecords, clip.scheduledPublishAt]);
 
   // Generate caption
   const generatedCaption = `${clip.name}
@@ -96,11 +126,23 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
 #${clip.project?.name || "อัลมะดาริจญ์"} #แนวคิดการพัฒนาตนเองจากอัลกุรอาน #อิสลาม #มุสลิม #ข้อคิดอิสลาม #พัฒนาตนเอง #เตือนใจ #tmyda`;
 
   const [caption, setCaption] = useState(generatedCaption);
+  const clipTitle = `${clip.name} | รายการ ${clip.project?.name || "อัลมะดาริจญ์"} ตอนที่ ${clip.episode?.episodeNo || ""}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(caption);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyTitle = async () => {
+    await navigator.clipboard.writeText(clipTitle);
+    setCopiedTitle(true);
+    setTimeout(() => setCopiedTitle(false), 2000);
+  };
+
+  const handleSchedule = async () => {
+    await scheduleClip(clip.id, scheduleAt ? new Date(scheduleAt).toISOString() : null, isRepeat);
+    setScheduleAt(scheduleAt);
   };
 
   const handlePublish = async () => {
@@ -143,6 +185,35 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
         <DialogDescription className="text-slate-500 font-medium mt-1.5 line-clamp-1">
           {clip.name}
         </DialogDescription>
+        <div className="relative mt-4 flex flex-wrap items-center gap-2">
+          {approvedClipUrl ? (
+            <>
+              <a
+                href={approvedClipUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-3 text-xs font-bold text-blue-700 shadow-xs transition-colors hover:bg-blue-50"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                เปิดคลิปที่ผ่านการตรวจ
+              </a>
+              <a
+                href={downloadUrl}
+                target="_blank"
+                rel="noreferrer"
+                download
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white shadow-xs transition-colors hover:bg-emerald-700"
+              >
+                <Download className="h-3.5 w-3.5" />
+                ดาวน์โหลดคลิป
+              </a>
+            </>
+          ) : (
+            <span className="text-xs font-semibold text-rose-500">
+              ยังไม่มีลิงก์คลิปที่ผ่านการตรวจ
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -176,6 +247,95 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
 
       <div className="p-4 md:p-6 flex-1 overflow-y-auto custom-scrollbar bg-white">
         <TabsContent value="caption" className="mt-0 outline-none space-y-6">
+          <div className="space-y-3 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <label className="text-sm font-bold text-slate-700">
+                ไตเติ้ลชื่อคลิป
+              </label>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopyTitle}
+                className={`h-8 shrink-0 rounded-lg px-3 text-xs font-bold transition-all ${
+                  copiedTitle
+                    ? "bg-green-100 text-green-700 hover:bg-green-200"
+                    : "bg-white text-indigo-700 hover:bg-indigo-100"
+                }`}
+              >
+                {copiedTitle ? (
+                  <>
+                    <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> คัดลอกแล้ว
+                  </>
+                ) : (
+                  <>
+                    <Copy className="mr-1.5 h-3.5 w-3.5" /> คัดลอกไตเติ้ล
+                  </>
+                )}
+              </Button>
+            </div>
+            <div className="rounded-xl border border-indigo-100 bg-white px-3.5 py-3 text-sm font-semibold leading-relaxed text-slate-800">
+              {clipTitle}
+            </div>
+          </div>
+
+          <div className="space-y-3 rounded-2xl border border-violet-100 bg-violet-50/60 p-4">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 text-violet-700">
+                <CalendarClock className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-sm font-bold text-slate-800">กำหนดวันเวลาโพสต์</p>
+                <p className="text-[11px] font-medium text-slate-500">ตั้งเวลาสำหรับคลิปนี้ได้จากหน้านี้เลย</p>
+              </div>
+            </div>
+            <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600">
+              <input
+                type="checkbox"
+                checked={isRepeat}
+                onChange={(e) => setIsRepeat(e.target.checked)}
+                className="h-4 w-4 rounded border-violet-300 text-violet-600 focus:ring-violet-500"
+              />
+              อนุญาตให้รายการนี้ลงซ้ำในวันเดียวกัน
+            </label>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <input
+                type="datetime-local"
+                value={scheduleAt}
+                onChange={(e) => setScheduleAt(e.target.value)}
+                className="h-10 min-w-0 flex-1 rounded-lg border border-violet-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+              />
+              <div className="flex shrink-0 gap-2">
+                <Button
+                  onClick={handleSchedule}
+                  disabled={isScheduling || !scheduleAt}
+                  className="h-10 rounded-lg bg-violet-600 px-4 text-xs font-bold text-white hover:bg-violet-700"
+                >
+                  {isScheduling && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                  บันทึกเวลา
+                </Button>
+                {clip.scheduledPublishAt && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setScheduleAt("");
+                      void scheduleClip(clip.id, null);
+                    }}
+                    disabled={isScheduling}
+                    className="h-10 rounded-lg border-rose-200 px-3 text-xs font-bold text-rose-600 hover:bg-rose-50"
+                    title="ยกเลิกกำหนดเวลา"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            </div>
+            {clip.scheduledPublishAt && (
+              <p className="text-xs font-bold text-violet-700">
+                กำหนดไว้: {new Date(clip.scheduledPublishAt).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })}
+              </p>
+            )}
+          </div>
+
           <div className="space-y-3 relative group">
             <div className="flex items-center justify-between">
               <label className="text-sm font-bold text-slate-700">

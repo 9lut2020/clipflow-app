@@ -26,6 +26,7 @@ interface ReviewActionCardProps {
   currentTimeFormatted?: string | null;
   onOptimisticUpdate?: (status: string) => void;
   onReviewComplete?: (message: string) => void;
+  onLoadingChange?: (isLoading: boolean) => void;
 }
 
 export default function ReviewActionCard({
@@ -35,12 +36,17 @@ export default function ReviewActionCard({
   currentTimeFormatted,
   onOptimisticUpdate,
   onReviewComplete,
+  onLoadingChange,
 }: ReviewActionCardProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { submitRevision, isSubmitting: isSubmittingRevision } =
     useSubmitRevision();
   const { submitReview, isSubmitting: isSubmittingReview } = useSubmitReview();
   const isLoading = isSubmittingRevision || isSubmittingReview;
+
+  useEffect(() => {
+    onLoadingChange?.(isLoading);
+  }, [isLoading, onLoadingChange]);
 
   const router = useRouter();
   const [confirmAction, setConfirmAction] =
@@ -234,8 +240,7 @@ export default function ReviewActionCard({
   if (
     !isUser &&
     (clip.status === "PENDING_REVIEW" ||
-      clip.status === "IN_REVIEW" ||
-      clip.status === "NEEDS_REVISION")
+      clip.status === "IN_REVIEW")
   ) {
     return (
       <>

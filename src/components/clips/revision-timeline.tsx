@@ -40,6 +40,8 @@ interface RevisionTimelineProps {
   className?: string;
   onSeekTime?: (seconds: number) => void;
   onSelectRevisionUrl?: (url: string) => void;
+  currentStatus?: string;
+  showStatus?: boolean;
 }
 
 export default function RevisionTimeline({
@@ -47,8 +49,46 @@ export default function RevisionTimeline({
   className,
   onSeekTime,
   onSelectRevisionUrl,
+  currentStatus,
+  showStatus = false,
 }: RevisionTimelineProps) {
   const [selectedRevUrl, setSelectedRevUrl] = useState<string | null>(null);
+
+  const statusMeta = {
+    PENDING_REVIEW: {
+      label: "PENDING_REVIEW",
+      description: "พร้อมให้ผู้ตรวจทาน",
+      styles: "border-amber-200 bg-amber-50 text-amber-800",
+      dot: "bg-amber-500",
+    },
+    IN_REVIEW: {
+      label: "IN_REVIEW",
+      description: "กำลังอยู่ระหว่างการตรวจทาน",
+      styles: "border-blue-200 bg-blue-50 text-blue-800",
+      dot: "bg-blue-500",
+    },
+    NEEDS_REVISION: {
+      label: "NEEDS_REVISION",
+      description: "รอสมาชิกส่งงานแก้ไขใหม่",
+      styles: "border-rose-200 bg-rose-50 text-rose-800",
+      dot: "bg-rose-500",
+    },
+    APPROVED: {
+      label: "APPROVED",
+      description: "ผ่านการอนุมัติแล้ว",
+      styles: "border-emerald-200 bg-emerald-50 text-emerald-800",
+      dot: "bg-emerald-500",
+    },
+  } as const;
+
+  const activeStatus = currentStatus && currentStatus in statusMeta
+    ? statusMeta[currentStatus as keyof typeof statusMeta]
+    : {
+        label: currentStatus || "ยังไม่ระบุสถานะ",
+        description: "สถานะปัจจุบันของคลิป",
+        styles: "border-slate-200 bg-slate-50 text-slate-700",
+        dot: "bg-slate-400",
+      };
 
   // Helper to parse timecodes inside comment strings (e.g. "[01:15] fix music volume")
   const renderCommentWithTimecodePills = (text: string) => {
@@ -100,13 +140,28 @@ export default function RevisionTimeline({
         className,
       )}
     >
-      <div className="px-5 py-4 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+      <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6 sm:py-4">
         <div className="flex items-center gap-2">
           <History size={18} className="text-blue-600" />
           <h2 className="text-base font-bold text-slate-900">
             ประวัติการส่งตรวจ ({revisions.length} รอบ)
           </h2>
         </div>
+
+        {showStatus && currentStatus && (
+          <div className={cn("mt-4 flex items-center justify-between gap-3 rounded-xl border px-3.5 py-3 shadow-xs", activeStatus.styles)}>
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full ring-4 ring-white/70", activeStatus.dot)} />
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-wider opacity-70">สถานะปัจจุบัน</p>
+                <p className="truncate text-sm font-black tracking-tight">{activeStatus.description}</p>
+              </div>
+            </div>
+            <span className="shrink-0 rounded-lg bg-white/80 px-2.5 py-1 text-[11px] font-black tracking-wide shadow-2xs">
+              {activeStatus.label}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="p-4 sm:p-6">
