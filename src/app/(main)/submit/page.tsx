@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   ClipboardList,
   AlertCircle,
+  Folder,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -19,6 +20,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { apiClient } from "@/lib/api-client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Clip } from "@/types/api";
+import { useProjects, useEpisodes } from "@/features/projects/hooks/use-projects";
 
 const fetcher = async (url: string) => {
   const res = await apiClient.get<any>(url);
