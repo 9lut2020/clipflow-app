@@ -12,12 +12,12 @@ import {
 import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import { apiClient } from "@/lib/api-client";
-import { Notification } from "@/types/api";
+import type { Notification } from "@/types/api";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import Link from "next/link";
 import { toast } from "sonner";
-import { NotificationPermissionButton, useBrowserNotifications } from "@/components/pwa/pwa-client";
+import { requestBrowserNotifications, useBrowserNotifications } from "@/components/pwa/pwa-client";
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -85,6 +85,13 @@ export default function Topbar({
     }
   };
 
+  const handleNotificationClick = async () => {
+    if ("Notification" in window && Notification.permission === "default") {
+      await requestBrowserNotifications();
+    }
+    setOpen((v) => !v);
+  };
+
   return (
     <header className="h-16 px-4 md:px-6 flex items-center justify-between border-b border-slate-200 bg-white/80 backdrop-blur-xl z-40 sticky top-0 shrink-0 shadow-sm transition-all duration-300">
       <div className="flex items-center gap-3">
@@ -116,10 +123,9 @@ export default function Topbar({
       </div>
 
       <div className="flex items-center gap-2 relative">
-        <NotificationPermissionButton />
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={handleNotificationClick}
           className="p-2 rounded-md hover:bg-gray-100 text-gray-500 transition relative"
           title="แจ้งเตือน"
         >
