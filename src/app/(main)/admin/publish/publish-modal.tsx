@@ -19,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Copy,
   CheckCircle2,
@@ -30,14 +29,12 @@ import {
   Loader2,
   FileText,
   Download,
-  CalendarClock,
-  Trash2,
 } from "lucide-react";
 import {
   usePublishRecords,
   usePublishClip,
 } from "@/features/clips/hooks/use-publish";
-import { useScheduleClip } from "@/features/clips/hooks/use-clips";
+import { ScheduleEditor } from "@/components/publish/schedule-editor";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
 
@@ -54,26 +51,15 @@ const PLATFORMS = [
   { id: "INSTAGRAM_REELS", label: "Instagram Reels" },
 ];
 
-const toDateTimeLocal = (value?: string | null) => {
-  if (!value) return "";
-  const date = new Date(value);
-  const pad = (part: number) => String(part).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-};
-
 export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
-  const [activeTab, setActiveTab] = useState("caption");
   const [copied, setCopied] = useState(false);
   const [copiedTitle, setCopiedTitle] = useState(false);
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [url, setUrl] = useState("");
-  const [scheduleAt, setScheduleAt] = useState("");
-  const [isRepeat, setIsRepeat] = useState(false);
 
   const { data: publishedPosts, isLoading: isLoadingRecords } =
     usePublishRecords(clip.id);
   const { publishClip, isPublishing } = usePublishClip();
-  const { scheduleClip, isUpdating: isScheduling } = useScheduleClip();
 
   const approvedClipUrl = clip.currentRevision?.driveUrl || clip.driveUrl || "";
   const downloadUrl = (() => {
@@ -88,10 +74,7 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
     if (!isOpen) {
       setPlatforms([]);
       setUrl("");
-      setScheduleAt("");
-      setIsRepeat(false);
       setCaption(generatedCaption);
-      setActiveTab("caption");
       return;
     }
 
@@ -109,11 +92,7 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
       });
     }
 
-    if (isOpen) {
-      setScheduleAt(toDateTimeLocal(clip.scheduledPublishAt));
-      setIsRepeat(clip.publishSchedule?.isRepeat ?? false);
-    }
-  }, [isOpen, publishedPosts, isLoadingRecords, clip.scheduledPublishAt]);
+  }, [isOpen, publishedPosts, isLoadingRecords]);
 
   // Generate caption
   const generatedCaption = `${clip.name}
@@ -140,11 +119,6 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
     setTimeout(() => setCopiedTitle(false), 2000);
   };
 
-  const handleSchedule = async () => {
-    await scheduleClip(clip.id, scheduleAt ? new Date(scheduleAt).toISOString() : null, isRepeat);
-    setScheduleAt(scheduleAt);
-  };
-
   const handlePublish = async () => {
     if (platforms.length === 0) return;
     try {
@@ -160,7 +134,6 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
       );
       setUrl("");
       setPlatforms([]);
-      setActiveTab("history"); // Switch to history tab after success
     } catch (err) {
       console.error(err);
     }
@@ -219,34 +192,9 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
   );
 
   const ModalContent = () => (
-    <Tabs
-      value={activeTab}
-      onValueChange={setActiveTab}
-      className="w-full flex-1 flex flex-col min-h-0"
-    >
-      <div className="px-6 pt-4 border-b border-slate-100 bg-white shrink-0">
-        <TabsList className="bg-slate-100/50 p-1 rounded-xl h-auto w-full grid grid-cols-2">
-          <TabsTrigger
-            value="caption"
-            className="rounded-lg py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm font-bold text-sm transition-all"
-          >
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4" /> แคปชั่น & โพสต์
-            </div>
-          </TabsTrigger>
-          <TabsTrigger
-            value="history"
-            className="rounded-lg py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm font-bold text-sm transition-all"
-          >
-            <div className="flex items-center gap-2">
-              <History className="w-4 h-4" /> ประวัติการโพสต์
-            </div>
-          </TabsTrigger>
-        </TabsList>
-      </div>
-
+    <div className="w-full flex-1 flex flex-col min-h-0">
       <div className="p-4 md:p-6 flex-1 overflow-y-auto custom-scrollbar bg-white">
-        <TabsContent value="caption" className="mt-0 outline-none space-y-6">
+        <div className="space-y-6">
           <div className="space-y-3 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
             <div className="flex items-center justify-between gap-3">
               <label className="text-sm font-bold text-slate-700">
@@ -278,63 +226,7 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
             </div>
           </div>
 
-          <div className="space-y-3 rounded-2xl border border-violet-100 bg-violet-50/60 p-4">
-            <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 text-violet-700">
-                <CalendarClock className="h-4 w-4" />
-              </span>
-              <div>
-                <p className="text-sm font-bold text-slate-800">กำหนดวันเวลาโพสต์</p>
-                <p className="text-[11px] font-medium text-slate-500">ตั้งเวลาสำหรับคลิปนี้ได้จากหน้านี้เลย</p>
-              </div>
-            </div>
-            <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600">
-              <input
-                type="checkbox"
-                checked={isRepeat}
-                onChange={(e) => setIsRepeat(e.target.checked)}
-                className="h-4 w-4 rounded border-violet-300 text-violet-600 focus:ring-violet-500"
-              />
-              อนุญาตให้รายการนี้ลงซ้ำในวันเดียวกัน
-            </label>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <input
-                type="datetime-local"
-                value={scheduleAt}
-                onChange={(e) => setScheduleAt(e.target.value)}
-                className="h-10 min-w-0 flex-1 rounded-lg border border-violet-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
-              />
-              <div className="flex shrink-0 gap-2">
-                <Button
-                  onClick={handleSchedule}
-                  disabled={isScheduling || !scheduleAt}
-                  className="h-10 rounded-lg bg-violet-600 px-4 text-xs font-bold text-white hover:bg-violet-700"
-                >
-                  {isScheduling && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-                  บันทึกเวลา
-                </Button>
-                {clip.scheduledPublishAt && (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setScheduleAt("");
-                      void scheduleClip(clip.id, null);
-                    }}
-                    disabled={isScheduling}
-                    className="h-10 rounded-lg border-rose-200 px-3 text-xs font-bold text-rose-600 hover:bg-rose-50"
-                    title="ยกเลิกกำหนดเวลา"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
-            </div>
-            {clip.scheduledPublishAt && (
-              <p className="text-xs font-bold text-violet-700">
-                กำหนดไว้: {new Date(clip.scheduledPublishAt).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })}
-              </p>
-            )}
-          </div>
+          <ScheduleEditor clip={clip} />
 
           <div className="space-y-3 relative group">
             <div className="flex items-center justify-between">
@@ -469,9 +361,10 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
               </Button>
             </div>
           </div>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="history" className="mt-4">
+        <div className="mt-6">
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-black text-slate-800"><History className="h-4 w-4 text-blue-600" /> ประวัติการโพสต์</h3>
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
             {isLoadingRecords ? (
               <div className="p-8 flex justify-center">
@@ -528,9 +421,9 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
               </div>
             )}
           </div>
-        </TabsContent>
+        </div>
       </div>
-    </Tabs>
+    </div>
   );
 
   const isDesktop = useMediaQuery("(min-width: 768px)");

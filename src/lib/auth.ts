@@ -69,7 +69,7 @@ if (process.env.NODE_ENV === "development") {
         try {
           // Attempt to sync with backend to ensure the user exists in DB
           const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8787/api"}/users/sync`,
+            `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8787/api"}/internal/users/sync`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -116,7 +116,7 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === "line") {
         try {
           const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8787/api"}/users/sync`,
+            `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8787/api"}/internal/users/sync`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },

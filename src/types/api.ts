@@ -151,11 +151,38 @@ export interface ApiResponse<T = unknown> {
   status: "success" | "error";
   message: string;
   data: T | null;
+  /** Legacy meta field (deprecated — prefer PaginatedData<T>) */
   meta?: {
     total: number;
     page: number;
   };
+  /** Error contract */
+  code?: string;
+  errors?: Record<string, string>;
 }
+
+// ─── Pagination ───────────────────────────────────────────────────────────
+
+/** Standard pagination metadata returned by all collection endpoints */
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+/**
+ * Paginated collection response — matches backend `paginated()` helper.
+ * All GET list endpoints return: { items: T[], pagination: PaginationMeta, context?: C }
+ */
+export interface PaginatedData<T, C = undefined> {
+  items: T[];
+  pagination: PaginationMeta;
+  context: C extends undefined ? undefined : C;
+}
+
 
 export interface AuditLog {
   id: string;
