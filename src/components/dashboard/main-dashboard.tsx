@@ -41,7 +41,7 @@ export function MainDashboard({
   currentUser,
 }: MainDashboardProps) {
   const [localClips, setLocalClips] = useState<Clip[]>(clips);
-  const [offset, setOffset] = useState(20);
+  const [nextPage, setNextPage] = useState(2);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(clips.length === 20); // If initial load had 20, there might be more
 
@@ -54,16 +54,14 @@ export function MainDashboard({
     setIsLoadingMore(true);
     try {
       const { apiClient } = await import("@/lib/api-client");
-      const res = await apiClient.get<Clip[]>("/clips", {
-        limit: "20",
-        offset: offset.toString()
+      const res = await apiClient.get<{ items: Clip[]; pagination: { hasNext: boolean } }>("/clips", {
+        limit: 20,
+        page: nextPage,
       });
       if (res.data) {
-        setLocalClips((prev) => [...prev, ...(res.data || [])]);
-        setOffset((prev) => prev + 20);
-        if (res.data.length < 20) {
-          setHasMore(false);
-        }
+        setLocalClips((prev) => [...prev, ...res.data!.items]);
+        setNextPage((prev) => prev + 1);
+        setHasMore(res.data.pagination.hasNext);
       }
     } catch (err) {
       console.error("Failed to load more clips", err);

@@ -142,9 +142,9 @@ function formatDate(dateStr: string) {
 export default async function AuditLogsPage() {
   let logs: ActivityLog[] = [];
   try {
-    const res = await apiServer.get<ActivityLog[]>("/activity-logs");
-    if (res.status === "success" && Array.isArray(res.data)) {
-      logs = res.data;
+    const res = await apiServer.get<{ items: ActivityLog[] }>("/admin/audit-logs?page=1&limit=100");
+    if (res.status === "success" && res.data?.items) {
+      logs = res.data.items;
     }
   } catch (err) {
     console.error("Failed to load activity logs:", err);

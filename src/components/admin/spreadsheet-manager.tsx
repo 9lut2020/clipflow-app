@@ -228,8 +228,8 @@ export default function SpreadsheetManager({
   const [isSavingVideoSize, setIsSavingVideoSize] = useState(false);
 
   useEffect(() => {
-    api.get<any[]>("/video-sizes").then((res) => {
-      if (res.status === "success") setVideoSizes(res.data || []);
+    api.get<{ items: any[] }>("/video-sizes?page=1&limit=100").then((res) => {
+      if (res.status === "success") setVideoSizes(res.data?.items || []);
     }).catch(() => toast.error("Unable to load video sizes"));
   }, []);
 

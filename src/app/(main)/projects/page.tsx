@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { apiServer } from "@/lib/api-server";
-import { Project } from "@/types/api";
+import { PaginatedData, Project } from "@/types/api";
 
 import { Button } from "@/components/ui/button";
 import { Video, Pencil, Plus, Settings, ArrowLeft } from "lucide-react";
@@ -20,9 +20,9 @@ export default async function ProjectsPage() {
 
   // Fetch projects from API
   const { data: projectsData } = await apiServer
-    .get<Project[]>("/projects")
-    .catch(() => ({ data: [] }));
-  const projects = projectsData || [];
+    .get<PaginatedData<Project>>("/projects?page=1&limit=100")
+    .catch(() => ({ data: null }));
+  const projects = projectsData?.items || [];
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-12">

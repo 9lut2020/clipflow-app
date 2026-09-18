@@ -51,10 +51,10 @@ export default function Topbar({
     status: string;
     data: Notification[];
   }>(
-    open && session?.user?.id ? "/notifications" : null,
+    open && session?.user?.id ? "/notifications?page=1&limit=20" : null,
     async (url: string) => {
-      const res = await apiClient.get<Notification[]>(url);
-      return { status: res.status, data: res.data || [] };
+      const res = await apiClient.get<{ items: Notification[] }>(url);
+      return { status: res.status, data: res.data?.items || [] };
     },
   );
 

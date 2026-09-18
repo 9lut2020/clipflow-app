@@ -8,25 +8,28 @@ async function handler(
   req: NextRequest,
   { params }: { params: Promise<{ path: string[] }> },
 ) {
+  const resolvedParams = await params;
+  const path = resolvedParams.path.join("/");
+  const isPublic = path.startsWith("public/");
   const session = await getServerSession(authOptions);
 
-  if (!session?.user) {
+  if (!isPublic && !session?.user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },
     });
   }
 
-  const resolvedParams = await params;
-  const path = resolvedParams.path.join("/");
   const url = new URL(`${baseURL}/${path}`);
 
   // Forward query params
   url.search = req.nextUrl.search;
 
   const headers = new Headers(req.headers);
-  headers.set("x-user-id", session.user.id);
-  headers.set("x-user-role", session.user.role);
+  if (session?.user) {
+    headers.set("x-user-id", session.user.id);
+    headers.set("x-user-role", session.user.role);
+  }
 
   // Don't forward the host header as it breaks cloudflare fetch
   headers.delete("host");

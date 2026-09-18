@@ -28,9 +28,9 @@ export default function MembersClient({
   const { data: membersResponse, mutate } = useSWR<{
     status: string;
     data: User[];
-  }>(`/projects/${projectId}/members`, async (url: string) => {
-    const res = await apiClient.get<User[]>(url);
-    return { status: res.status, data: res.data || [] };
+  }>(`/projects/${projectId}/members?page=1&limit=100`, async (url: string) => {
+    const res = await apiClient.get<{ items: User[] }>(url);
+    return { status: res.status, data: res.data?.items || [] };
   });
 
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);

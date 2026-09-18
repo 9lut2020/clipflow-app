@@ -1,6 +1,6 @@
 import useSWR from "swr";
 import { apiClient } from "@/lib/api-client";
-import { AuditLog } from "@/types/api";
+import { AuditLog, PaginatedData } from "@/types/api";
 
 export function useAuditLogs(query?: {
   page?: number;
@@ -21,17 +21,19 @@ export function useAuditLogs(query?: {
     ? `/admin/audit-logs?${queryString}`
     : "/admin/audit-logs";
 
-  const { data, error, isLoading, mutate } = useSWR<any>(
+  const { data, error, isLoading, mutate } = useSWR<PaginatedData<AuditLog>>(
     url,
     async (url: string) => {
       const res = await apiClient.get(url);
-      return res.data;
+      if (res.status !== "success") throw new Error(res.message);
+      return res.data as PaginatedData<AuditLog>;
     },
   );
 
   return {
-    data: (data?.data as AuditLog[]) || [],
-    meta: data?.meta,
+    data: data?.items || [],
+    pagination: data?.pagination,
+    meta: data?.pagination,
     isLoading,
     isError: error,
     mutate,
@@ -43,12 +45,13 @@ export function useAuditLogsSummary() {
     "/admin/audit-logs/summary",
     async (url: string) => {
       const res = await apiClient.get(url);
+      if (res.status !== "success") throw new Error(res.message);
       return res.data;
     },
   );
 
   return {
-    data: data?.data as { totalLogs: number; todayLogs: number } | null,
+    data: data as { totalLogs: number; todayLogs: number } | null,
     isLoading,
     isError: error,
     mutate,

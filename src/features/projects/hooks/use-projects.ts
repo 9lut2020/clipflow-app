@@ -1,7 +1,7 @@
 import useSWR from "swr";
 import { useState } from "react";
 import { apiClient } from "@/lib/api-client";
-import { Project, Episode, ApiResponse } from "@/types/api";
+import { Project, Episode, ApiResponse, PaginatedData } from "@/types/api";
 import { useAnalytics } from "@/hooks/use-analytics";
 
 const fetcher = async <T>(url: string) => {
@@ -12,24 +12,28 @@ const fetcher = async <T>(url: string) => {
   return res;
 };
 
-export function useProjects() {
-  const { data, error, isLoading } = useSWR<ApiResponse<Project[]>>("/projects", fetcher);
+export function useProjects(params: Record<string, string | number | boolean | undefined> = {}) {
+  const query = new URLSearchParams();
+  Object.entries({ page: 1, limit: 100, ...params }).forEach(([key, value]) => { if (value !== undefined) query.set(key, String(value)); });
+  const { data, error, isLoading } = useSWR<ApiResponse<PaginatedData<Project>>>(`/projects?${query.toString()}`, fetcher);
   
   return { 
-    data: data?.data || [], 
+    data: data?.data?.items || [],
+    pagination: data?.data?.pagination,
     isLoading, 
     error 
   };
 }
 
 export function useEpisodes(projectId?: string) {
-  const { data, error, isLoading } = useSWR<ApiResponse<Episode[]>>(
-    projectId ? `/episodes?projectId=${projectId}` : null,
+  const { data, error, isLoading } = useSWR<ApiResponse<PaginatedData<Episode>>>(
+    projectId ? `/episodes?projectId=${projectId}&page=1&limit=100` : null,
     fetcher
   );
 
   return { 
-    data: data?.data || [], 
+    data: data?.data?.items || [],
+    pagination: data?.data?.pagination,
     isLoading, 
     error 
   };

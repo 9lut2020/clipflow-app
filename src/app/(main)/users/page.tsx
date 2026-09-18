@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { apiServer } from "@/lib/api-server";
-import { User } from "@/types/api";
+import { User, PaginatedData } from "@/types/api";
 import { UsersClient } from "./users-client";
 import { redirect } from "next/navigation";
 
@@ -19,8 +19,8 @@ export default async function UsersPage() {
 
   let allUsers: User[] = [];
   try {
-    const res = await apiServer.get<User[]>("/users");
-    allUsers = res.data || [];
+    const res = await apiServer.get<PaginatedData<User>>("/users?page=1&limit=100");
+    allUsers = res.data?.items || [];
   } catch (error) {
     // If backend returns Unauthorized or any error, redirect directly to /dashboard
     redirect("/dashboard");

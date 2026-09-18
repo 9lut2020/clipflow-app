@@ -72,7 +72,10 @@ if (process.env.NODE_ENV === "development") {
             `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8787/api"}/internal/users/sync`,
             {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type": "application/json",
+                "x-internal-secret": process.env.INTERNAL_API_SECRET || "",
+              },
               body: JSON.stringify({
                 lineUserId: mockUser.id,
                 displayName: mockUser.name,
@@ -119,7 +122,10 @@ export const authOptions: NextAuthOptions = {
             `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8787/api"}/internal/users/sync`,
             {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type": "application/json",
+                "x-internal-secret": process.env.INTERNAL_API_SECRET || "",
+              },
               body: JSON.stringify({
                 lineUserId: account.providerAccountId,
                 displayName: user.name,

@@ -82,7 +82,7 @@ async function subscribeToPush() {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
   try {
     const registration = await navigator.serviceWorker.ready;
-    const keyResponse = await apiClient.get<string>("/notifications/push/public-key");
+    const keyResponse = await apiClient.get<string>("/public/push/vapid-key");
     if (keyResponse.status !== "success" || !keyResponse.data) return false;
     const existing = await registration.pushManager.getSubscription();
     const subscription = existing || await registration.pushManager.subscribe({

@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import { apiClient } from "@/lib/api-client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Clip } from "@/types/api";
+import { Clip, PaginatedData } from "@/types/api";
 import { useProjects, useEpisodes } from "@/features/projects/hooks/use-projects";
 
 const fetcher = async (url: string) => {
@@ -205,7 +205,7 @@ function FastSubmitForm({ currentUser }: { currentUser: any }) {
     selectedEpisode ? `/episodes/${selectedEpisode}/clips` : null,
     fetcher,
   );
-  const clips = episodeClipsRes?.clips || [];
+  const clips = episodeClipsRes?.items || [];
 
   const handleProjectChange = (val: string) => {
     setSelectedProject(val);
@@ -429,14 +429,12 @@ export default function SubmitPage() {
 
   const currentUser = session?.user || { id: "", name: "Guest" };
 
-  const { data: clips, isLoading } = useSWR<Clip[]>(
-    currentUser?.id ? `/clips?ownerId=${currentUser.id}` : null,
+  const { data: clipsData, isLoading } = useSWR<PaginatedData<Clip>>(
+    currentUser?.id ? `/clips?ownerId=${currentUser.id}&status=DRAFT,NEEDS_REVISION&page=1&limit=100` : null,
     fetcher,
   );
 
-  const availableClips = (clips || []).filter(
-    (c) => c.status === "DRAFT" || c.status === "NEEDS_REVISION",
-  );
+  const availableClips = clipsData?.items || [];
 
   if (status === "loading" || isLoading) {
     return (

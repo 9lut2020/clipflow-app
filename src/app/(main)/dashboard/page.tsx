@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { apiServer } from "@/lib/api-server";
-import { Clip, Project, User } from "@/types/api";
+import { Clip, Project, User, PaginatedData } from "@/types/api";
 import { MainDashboard } from "@/components/dashboard/main-dashboard";
 import { redirect } from "next/navigation";
 
@@ -17,23 +17,19 @@ export default async function DashboardPage() {
   // Fetch clips, projects & users from API
   // projects/users rarely change → revalidate every 60s instead of no-store
   const [clipsRes, projectsRes, usersRes] = await Promise.all([
-    apiServer.get<Clip[]>("/clips?limit=20").catch(() => ({ data: [] })),
-    apiServer.get<Project[]>("/projects", undefined, { revalidate: 60 }).catch(() => ({ data: [] })),
+    apiServer.get<PaginatedData<Clip>>("/clips?page=1&limit=20").catch(() => ({ data: null })),
+    apiServer.get<PaginatedData<Project>>("/projects?page=1&limit=100", undefined, { revalidate: 60 }).catch(() => ({ data: null })),
     !isUser
-      ? apiServer.get<User[]>("/users", undefined, { revalidate: 60 }).catch(() => ({ data: [] }))
-      : Promise.resolve({ data: [] }),
+      ? apiServer.get<PaginatedData<User>>("/users?page=1&limit=100", undefined, { revalidate: 60 }).catch(() => ({ data: null }))
+      : Promise.resolve({ data: null }),
   ]);
 
-  const allClips = clipsRes.data || [];
-  const allProjects = projectsRes.data || [];
-  const allUsers = usersRes.data || [];
+  const allClips = clipsRes.data?.items || [];
+  const allProjects = projectsRes.data?.items || [];
+  const allUsers = usersRes.data?.items || [];
 
   // Filter clips based on role
-  const displayedClips = isUser
-    ? allClips.filter(
-        (c) => c.ownerId === currentUser.id || c.owner?.id === currentUser.id
-      )
-    : allClips;
+  const displayedClips = allClips;
 
   return (
     <MainDashboard

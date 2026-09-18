@@ -1,4 +1,4 @@
-import { PublishClient } from "./publish-client";
+import { PublishDashboard } from "./publish-dashboard";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -18,5 +18,5 @@ export default async function PublishPage() {
     redirect("/dashboard");
   }
 
-  return <PublishClient />;
+  return <PublishDashboard />;
 }

@@ -54,12 +54,12 @@ export default function MenuPage() {
   const { data: clipsData } = useSWR<{ data: Clip[] }>(
     user?.id
       ? user.role === "USER"
-        ? `/clips?ownerId=${user.id}`
-        : "/clips"
+        ? `/clips?ownerId=${user.id}&page=1&limit=100`
+        : "/clips?page=1&limit=100"
       : null,
     async (url: string) => {
-      const res = await apiClient.get<Clip[]>(url);
-      return { data: res.data || [] };
+      const res = await apiClient.get<{ items: Clip[] }>(url);
+      return { data: res.data?.items || [] };
     },
     { refreshInterval: 60000 },
   );

@@ -2,6 +2,7 @@
 
 import useSWR, { useSWRConfig } from "swr";
 import { apiClient } from "@/lib/api-client";
+import type { PaginatedData } from "@/types/api";
 
 export interface ProjectPublishSlot {
   id: string;
@@ -34,10 +35,28 @@ const fetcher = async <T,>(url: string): Promise<T> => {
   return response.data as T;
 };
 
-export function usePublishSlots(projectId?: string) {
-  const key = projectId ? `/publish-schedules/slots?projectId=${projectId}` : "/publish-schedules/slots";
-  const { data, error, isLoading } = useSWR<ProjectPublishSlot[]>(key, fetcher);
-  return { data: data || [], error, isLoading };
+export interface PublishSummary { unscheduled: number; scheduled: number; overdue: number; partial: number; completed: number }
+
+export function usePublishSummary() {
+  const { data, error, isLoading, mutate } = useSWR<PublishSummary>("/publish-schedules/summary", fetcher);
+  return { data, error, isLoading, mutate };
+}
+
+export function usePublishItems(params: Record<string, string | number | undefined>) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => { if (value !== undefined && value !== "") query.set(key, String(value)); });
+  const key = `/publish-schedules/items?${query.toString()}`;
+  const { data, error, isLoading, mutate } = useSWR<PaginatedData<any>>(key, fetcher, { keepPreviousData: true });
+  return { items: data?.items || [], pagination: data?.pagination, error, isLoading, mutate };
+}
+
+export function usePublishSlots(params?: { projectId?: string; q?: string; dayOfWeek?: number; isActive?: boolean; page?: number; limit?: number }) {
+  const query = new URLSearchParams();
+  Object.entries(params || {}).forEach(([key, value]) => { if (value !== undefined && value !== "") query.set(key, String(value)); });
+  if (!query.has("page")) query.set("page", "1");
+  if (!query.has("limit")) query.set("limit", "20");
+  const { data, error, isLoading } = useSWR<PaginatedData<ProjectPublishSlot>>(`/publish-schedules/slots?${query.toString()}`, fetcher, { keepPreviousData: true });
+  return { data: data?.items || [], pagination: data?.pagination, error, isLoading };
 }
 
 export function usePublishQueue(params?: { projectId?: string; from?: string; to?: string }) {
@@ -45,8 +64,20 @@ export function usePublishQueue(params?: { projectId?: string; from?: string; to
   if (params?.projectId) query.set("projectId", params.projectId);
   if (params?.from) query.set("from", params.from);
   if (params?.to) query.set("to", params.to);
-  const suffix = query.toString() ? `?${query.toString()}` : "";
-  const { data, error, isLoading } = useSWR<PublishQueueItem[]>(`/publish-schedules/queue${suffix}`, fetcher);
+  query.set("page", "1");
+  query.set("limit", "100");
+  const key = params?.from && params?.to ? `/publish-schedules/queue?${query.toString()}` : null;
+  const { data, error, isLoading } = useSWR<PublishQueueItem[]>(key, async (url: string) => {
+    const first = await fetcher<PaginatedData<PublishQueueItem>>(url);
+    const all = [...first.items];
+    for (let page = 2; page <= first.pagination.totalPages; page += 1) {
+      const nextUrl = new URL(url, "http://local");
+      nextUrl.searchParams.set("page", String(page));
+      const next = await fetcher<PaginatedData<PublishQueueItem>>(`${nextUrl.pathname}${nextUrl.search}`);
+      all.push(...next.items);
+    }
+    return all;
+  });
   return { data: data || [], error, isLoading };
 }
 

@@ -2,6 +2,7 @@ import useSWR from "swr";
 import { useState } from "react";
 import { apiClient } from "@/lib/api-client";
 import { useSWRConfig } from "swr";
+import type { PaginatedData } from "@/types/api";
 
 export interface PublishedPost {
   id: string;
@@ -18,17 +19,17 @@ const fetcher = async <T>(url: string) => {
   if ((res as any).status !== "success") {
     throw new Error((res as any).message || "Failed to fetch data");
   }
-  return res as T;
+  return res.data as T;
 };
 
 export function usePublishRecords(clipId: string) {
-  const { data, error, isLoading } = useSWR<any>(
-    clipId ? `/clips/${clipId}/published-posts` : null,
+  const { data, error, isLoading } = useSWR<PaginatedData<PublishedPost>>(
+    clipId ? `/clips/${clipId}/published-posts?page=1&limit=100` : null,
     fetcher
   );
 
   return {
-    data: data?.data || [],
+    data: data?.items || [],
     isLoading,
     error,
   };

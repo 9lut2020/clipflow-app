@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { apiServer } from "@/lib/api-server";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clip } from "@/types/api";
+import { Clip, PaginatedData } from "@/types/api";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,9 +31,9 @@ export default async function TasksPage() {
   const isUser = currentUser.role === "USER";
 
   // Fetch clips (My Tasks for Users, All for Admins/Reviewers)
-  const endpoint = isUser ? `/clips?ownerId=${currentUser.id}` : "/clips";
-  const { data: clipsData } = await apiServer.get<Clip[]>(endpoint);
-  const clips = clipsData || [];
+  const endpoint = isUser ? `/clips?ownerId=${currentUser.id}&page=1&limit=100` : "/clips?page=1&limit=100";
+  const { data: clipsData } = await apiServer.get<PaginatedData<Clip>>(endpoint);
+  const clips = clipsData?.items || [];
 
   // Grouping by status
   const draftClips = clips.filter((c) => c.status === "DRAFT");

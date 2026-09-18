@@ -2,7 +2,7 @@
 import useSWR, { useSWRConfig } from "swr";
 import { useState } from "react";
 import { apiClient } from "@/lib/api-client";
-import { Clip, ApiResponse } from "@/types/api";
+import { Clip, ApiResponse, PaginatedData } from "@/types/api";
 import { useAnalytics } from "@/hooks/use-analytics";
 
 const fetcher = async <T>(url: string) => {
@@ -14,28 +14,30 @@ const fetcher = async <T>(url: string) => {
 };
 
 export function useClips(episodeId?: string, excludeApproved = true) {
-  const { data, error, isLoading } = useSWR<ApiResponse<Clip[]>>(
-    episodeId ? `/clips?episodeId=${episodeId}&excludeApproved=${String(excludeApproved)}` : null,
+  const { data, error, isLoading } = useSWR<ApiResponse<PaginatedData<Clip>>>(
+    episodeId ? `/clips?episodeId=${episodeId}&excludeApproved=${String(excludeApproved)}&page=1&limit=100` : null,
     fetcher
   );
 
   return { 
-    data: data?.data || [], 
+    data: data?.data?.items || [],
+    pagination: data?.data?.pagination,
     isLoading, 
     error 
   };
 }
 
 export function useAllClips(status?: string, excludeApproved = true) {
-  let url = `/clips?excludeApproved=${String(excludeApproved)}`;
+  let url = `/clips?excludeApproved=${String(excludeApproved)}&page=1&limit=100`;
   if (status) {
     url += `&status=${status}`;
   }
   
-  const { data, error, isLoading } = useSWR<ApiResponse<Clip[]>>(url, fetcher);
+  const { data, error, isLoading } = useSWR<ApiResponse<PaginatedData<Clip>>>(url, fetcher);
 
   return { 
-    data: data?.data || [], 
+    data: data?.data?.items || [],
+    pagination: data?.data?.pagination,
     isLoading, 
     error 
   };
@@ -104,10 +106,9 @@ export function useScheduleClip() {
   const mutateAsync = async (clipId: string, scheduledPublishAt: string | null, isRepeat = false) => {
     setIsUpdating(true);
     try {
-      const res = await apiClient.patch<any>(`/clips/${clipId}/schedule`, {
-        scheduledPublishAt,
-        isRepeat,
-      });
+      const res = scheduledPublishAt
+        ? await apiClient.put<any>(`/publish-schedules/queue/${clipId}`, { scheduledAt: scheduledPublishAt, allowSameDay: isRepeat })
+        : await apiClient.delete<any>(`/publish-schedules/queue/${clipId}`);
       if (res.status !== "success") throw new Error(res.message || "Failed to update clip schedule");
       
       mutate((key: any) => typeof key === 'string' && key.startsWith('/clips'));

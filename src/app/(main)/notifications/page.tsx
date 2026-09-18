@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { apiServer } from "@/lib/api-server";
-import { Clip } from "@/types/api";
+import { Clip, PaginatedData } from "@/types/api";
 import { NotificationsClient } from "./notifications-client";
 
 export default async function NotificationsPage() {
@@ -17,8 +17,8 @@ export default async function NotificationsPage() {
     redirect("/");
   }
 
-  const { data } = await apiServer.get<Clip[]>("/clips");
-  const clips = data || [];
+  const { data } = await apiServer.get<PaginatedData<Clip>>("/clips?page=1&limit=100");
+  const clips = data?.items || [];
 
   return <NotificationsClient clips={clips} />;
 }

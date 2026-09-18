@@ -159,6 +159,7 @@ export interface ApiResponse<T = unknown> {
   /** Error contract */
   code?: string;
   errors?: Record<string, string>;
+  httpStatus?: number;
 }
 
 // ─── Pagination ───────────────────────────────────────────────────────────
@@ -180,7 +181,7 @@ export interface PaginationMeta {
 export interface PaginatedData<T, C = undefined> {
   items: T[];
   pagination: PaginationMeta;
-  context: C extends undefined ? undefined : C;
+  context?: C;
 }
 
 

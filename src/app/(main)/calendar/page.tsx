@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default async function CalendarPage() {
-  redirect("/admin/publish#calendar");
+  redirect("/admin/publish?tab=calendar");
 }
