@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { CalendarClock, Loader2, Sparkles, Trash2, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { usePublishScheduleActions } from "@/features/clips/hooks/use-publish-schedules";
+import { usePublishScheduleActions, usePublishSlots } from "@/features/clips/hooks/use-publish-schedules";
 
 function toLocalInput(value?: string | null) {
   if (!value) return "";
@@ -15,6 +15,7 @@ function toLocalInput(value?: string | null) {
 
 export function ScheduleEditor({ clip, onSaved }: { clip: any; onSaved?: () => void }) {
   const actions = usePublishScheduleActions();
+  const { data: slots } = usePublishSlots({ projectId: clip.project?.id, isActive: true, limit: 20 });
   const [value, setValue] = useState(toLocalInput(clip.scheduledPublishAt));
   const [slotId, setSlotId] = useState<string | null>(clip.publishSchedule?.slotId || null);
   const [note, setNote] = useState(clip.publishSchedule?.note || "");
@@ -45,17 +46,18 @@ export function ScheduleEditor({ clip, onSaved }: { clip: any; onSaved?: () => v
   };
 
   const save = async (allowSameDay = false) => {
-    if (!value) return toast.error("กรุณาเลือกวันและเวลา");
+    if (!slotId) return toast.error("Please select a project publishing slot");
     setIsBusy(true);
     setConflict(null);
     try {
-      await actions.saveQueue(clip.id, {
-        scheduledAt: new Date(value).toISOString(),
+      const saved = await actions.saveQueue(clip.id, {
+        scheduledAt: value ? new Date(value).toISOString() : new Date().toISOString(),
         slotId,
         allowSameDay,
         note,
       });
       setHasSavedSchedule(true);
+      if (saved?.publishDate && saved?.publishTime) setValue(`${saved.publishDate}T${String(saved.publishTime).slice(0, 5)}`);
       toast.success("บันทึกคิวเผยแพร่แล้ว");
       onSaved?.();
     } catch (error: any) {
@@ -101,8 +103,11 @@ export function ScheduleEditor({ clip, onSaved }: { clip: any; onSaved?: () => v
       </div>
 
       <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-        <input type="datetime-local" value={value} onChange={(event) => { setValue(event.target.value); setSlotId(null); setConflict(null); }} className="h-10 rounded-lg border border-violet-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20" />
-        <Button type="button" onClick={() => save(false)} disabled={isBusy || !value} className="h-10 rounded-lg bg-violet-600 px-5 text-xs font-bold text-white hover:bg-violet-700">
+        <select value={slotId || ""} onChange={(event) => { setSlotId(event.target.value || null); setConflict(null); }} className="h-10 rounded-lg border border-violet-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20">
+          <option value="">Select an active project slot</option>
+          {slots.map((slot) => <option key={slot.id} value={slot.id}>{["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][slot.dayOfWeek]} {String(slot.publishTime).slice(0, 5)}</option>)}
+        </select>
+        <Button type="button" onClick={() => save(false)} disabled={isBusy || !slotId} className="h-10 rounded-lg bg-violet-600 px-5 text-xs font-bold text-white hover:bg-violet-700">
           {isBusy && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />} บันทึกคิว
         </Button>
       </div>

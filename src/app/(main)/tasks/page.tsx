@@ -31,8 +31,9 @@ export default async function TasksPage() {
   const isUser = currentUser.role === "USER";
 
   // Fetch clips (My Tasks for Users, All for Admins/Reviewers)
-  const endpoint = isUser ? `/clips?ownerId=${currentUser.id}&page=1&limit=100` : "/clips?page=1&limit=100";
-  const { data: clipsData } = await apiServer.get<PaginatedData<Clip>>(endpoint);
+  const endpoint = isUser ? `/clips?ownerId=${currentUser.id}&page=1&limit=20` : "/clips?page=1&limit=20";
+  const response = await apiServer.get<PaginatedData<Clip>>(endpoint).catch(() => ({ data: null }));
+  const clipsData = response.data;
   const clips = clipsData?.items || [];
 
   // Grouping by status
