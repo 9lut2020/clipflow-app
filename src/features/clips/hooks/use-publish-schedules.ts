@@ -38,7 +38,10 @@ const fetcher = async <T,>(url: string): Promise<T> => {
 export interface PublishSummary { unscheduled: number; scheduled: number; overdue: number; partial: number; completed: number }
 
 export function usePublishSummary() {
-  const { data, error, isLoading, mutate } = useSWR<PublishSummary>("/publish-schedules/summary", fetcher);
+  const { data, error, isLoading, mutate } = useSWR<PublishSummary>("/publish-schedules/summary", fetcher, {
+    dedupingInterval: 10_000,
+    revalidateOnFocus: false,
+  });
   return { data, error, isLoading, mutate };
 }
 
@@ -46,7 +49,11 @@ export function usePublishItems(params: Record<string, string | number | undefin
   const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => { if (value !== undefined && value !== "") query.set(key, String(value)); });
   const key = `/publish-schedules/items?${query.toString()}`;
-  const { data, error, isLoading, mutate } = useSWR<PaginatedData<any>>(key, fetcher, { keepPreviousData: true });
+  const { data, error, isLoading, mutate } = useSWR<PaginatedData<any>>(key, fetcher, {
+    keepPreviousData: true,
+    dedupingInterval: 3_000,
+    revalidateOnFocus: false,
+  });
   return { items: data?.items || [], pagination: data?.pagination, error, isLoading, mutate };
 }
 
@@ -69,15 +76,19 @@ export function usePublishQueue(params?: { projectId?: string; from?: string; to
   const key = params?.from && params?.to ? `/publish-schedules/queue?${query.toString()}` : null;
   const { data, error, isLoading } = useSWR<PublishQueueItem[]>(key, async (url: string) => {
     const first = await fetcher<PaginatedData<PublishQueueItem>>(url);
-    const all = [...first.items];
-    for (let page = 2; page <= first.pagination.totalPages; page += 1) {
+    if (!first.pagination.hasNext) return first.items;
+
+    const remainingPages = Array.from(
+      { length: first.pagination.totalPages - 1 },
+      (_, index) => index + 2,
+    );
+    const remaining = await Promise.all(remainingPages.map(async (page) => {
       const nextUrl = new URL(url, "http://local");
       nextUrl.searchParams.set("page", String(page));
-      const next = await fetcher<PaginatedData<PublishQueueItem>>(`${nextUrl.pathname}${nextUrl.search}`);
-      all.push(...next.items);
-    }
-    return all;
-  });
+      return fetcher<PaginatedData<PublishQueueItem>>(`${nextUrl.pathname}${nextUrl.search}`);
+    }));
+    return first.items.concat(...remaining.map((page) => page.items));
+  }, { dedupingInterval: 10_000, revalidateOnFocus: false });
   return { data: data || [], error, isLoading };
 }
 

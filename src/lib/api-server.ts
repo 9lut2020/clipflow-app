@@ -21,7 +21,6 @@ async function request<T>(
 
   const headers: HeadersInit = {
     "Content-Type": "application/json",
-    Connection: "close",
   };
 
   if (session?.user) {

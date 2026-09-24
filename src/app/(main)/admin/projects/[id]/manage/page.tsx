@@ -7,6 +7,7 @@ import { Edit, ArrowLeft } from "lucide-react";
 import SpreadsheetManager from "@/components/admin/spreadsheet-manager";
 import MembersClient from "./members-client";
 import { Button } from "@/components/ui/button";
+import type { PaginatedData, User } from "@/types/api";
 
 export default async function ProjectManagePage(props: {
   params: Promise<{ id: string }>;
@@ -23,21 +24,15 @@ export default async function ProjectManagePage(props: {
     redirect("/projects");
   }
 
-  // Fetch project with full payload (episodes + clips + owners) via /manage endpoint
-  const { data: projectData } = await apiServer.get(
-    `/projects/${params.id}/manage`,
-  );
-  const project: any = projectData;
-
-  // Fetch all users for the assignee dropdown (Editors, Reviewers, Admins)
-  const { data: usersData } = await apiServer.get(`/users`);
-  const allUsers: any[] = (usersData as any) || [];
-
-  // Fetch project members
-  const { data: membersData } = await apiServer.get(
-    `/projects/${params.id}/members`,
-  );
-  const members: any[] = (membersData as any) || [];
+  // These independent reads use the paginated collection contract from the API.
+  const [projectResult, usersResult, membersResult] = await Promise.all([
+    apiServer.get<any>(`/projects/${params.id}/manage`).catch(() => ({ data: null })),
+    apiServer.get<PaginatedData<User>>("/users?page=1&limit=100").catch(() => ({ data: null })),
+    apiServer.get<PaginatedData<User>>(`/projects/${params.id}/members?page=1&limit=100`).catch(() => ({ data: null })),
+  ]);
+  const project: any = projectResult.data;
+  const allUsers = usersResult.data?.items || [];
+  const members = membersResult.data?.items || [];
 
   // Allowed users: Members + Admins
   const memberIds = new Set(members.map((m: any) => m.id));

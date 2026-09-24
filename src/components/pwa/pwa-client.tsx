@@ -16,13 +16,24 @@ export function PwaClient() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
-    navigator.serviceWorker.register("/sw.js").then(async () => {
-      if ("Notification" in window && Notification.permission === "granted") {
-        await subscribeToPush();
-      }
-    }).catch((error) => {
-      console.error("PWA service worker registration failed", error);
-    });
+    let idleId: number | undefined;
+    let timeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
+    const registerServiceWorker = () => {
+      navigator.serviceWorker.register("/sw.js").then(async () => {
+        if ("Notification" in window && Notification.permission === "granted") {
+          await subscribeToPush();
+        }
+      }).catch((error) => {
+        console.error("PWA service worker registration failed", error);
+      });
+    };
+
+    // Do not compete with the page's initial API calls and critical assets.
+    if ("requestIdleCallback" in window) {
+      idleId = window.requestIdleCallback(registerServiceWorker, { timeout: 3000 });
+    } else {
+      timeoutId = globalThis.setTimeout(registerServiceWorker, 1200);
+    }
 
     const onBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
@@ -41,6 +52,11 @@ export function PwaClient() {
     return () => {
       window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
       window.removeEventListener("appinstalled", onInstalled);
+      if ("cancelIdleCallback" in window && "requestIdleCallback" in window) {
+        window.cancelIdleCallback(idleId!);
+      } else if (timeoutId !== undefined) {
+        globalThis.clearTimeout(timeoutId);
+      }
     };
   }, []);
 
@@ -82,7 +98,7 @@ async function subscribeToPush() {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
   try {
     const registration = await navigator.serviceWorker.ready;
-    const keyResponse = await apiClient.get<string>("/public/push/vapid-key");
+    const keyResponse = await apiClient.get<string>("/notifications/push/vapid-key");
     if (keyResponse.status !== "success" || !keyResponse.data) return false;
     const existing = await registration.pushManager.getSubscription();
     const subscription = existing || await registration.pushManager.subscribe({
