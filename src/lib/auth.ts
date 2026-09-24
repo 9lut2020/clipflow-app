@@ -18,6 +18,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: "USER" | "REVIEWER" | "ADMIN";
+    roleCheckedAt?: number;
   }
 }
 
@@ -155,6 +156,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = (user as any).dbId;
         token.role = (user as any).role;
+        token.roleCheckedAt = Date.now();
         token.name = user.name;
         token.picture = user.image;
         if ((user as any).isBypass) {
@@ -168,8 +170,15 @@ export const authOptions: NextAuthOptions = {
         if (session.user.image) token.picture = session.user.image;
       }
 
-      // Re-fetch latest role & info live from backend DB on every session check!
-      if (token.id) {
+      // The Worker remains authoritative for every API request. Refreshing this
+      // presentation-layer role on every getServerSession caused several extra
+      // Worker + Neon round trips for every page render, so refresh at most once
+      // per minute instead.
+      const roleRefreshIntervalMs = 60_000;
+      const shouldRefreshRole = Boolean(token.id) && !token.isBypass && (
+        !token.roleCheckedAt || Date.now() - token.roleCheckedAt > roleRefreshIntervalMs
+      );
+      if (shouldRefreshRole) {
         try {
           const res = await fetch(
             `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8787/api"}/users/${token.id}`,
@@ -189,6 +198,7 @@ export const authOptions: NextAuthOptions = {
               if (!token.isBypass) {
                 token.role = data.data.role;
               }
+              token.roleCheckedAt = Date.now();
               if (data.data.displayName) token.name = data.data.displayName;
               if (data.data.pictureUrl) token.picture = data.data.pictureUrl;
             }
