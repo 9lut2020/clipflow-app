@@ -42,6 +42,7 @@ interface SpreadsheetManagerProps {
   projectId: string;
   initialClips: any[];
   initialEpisodes?: any[];
+  initialVideoSizes?: any[];
   users: any[];
 }
 
@@ -203,6 +204,7 @@ export default function SpreadsheetManager({
   projectId,
   initialClips,
   initialEpisodes = [],
+  initialVideoSizes = [],
   users,
 }: SpreadsheetManagerProps) {
   const router = useRouter();
@@ -219,7 +221,7 @@ export default function SpreadsheetManager({
   const [newEpisodeNo, setNewEpisodeNo] = useState<number | "">("");
   const [newEpisodeName, setNewEpisodeName] = useState("");
   const [isCreatingEpisode, setIsCreatingEpisode] = useState(false);
-  const [videoSizes, setVideoSizes] = useState<any[]>([]);
+  const [videoSizes, setVideoSizes] = useState<any[]>(initialVideoSizes);
   const [showVideoSizeModal, setShowVideoSizeModal] = useState(false);
   const [editingVideoSize, setEditingVideoSize] = useState<any | null>(null);
   const [videoSizeName, setVideoSizeName] = useState("");

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { ArrowLeft, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProjectClipsList from "@/components/projects/project-clips-list";
+import type { Clip, Episode, PaginatedData, Project } from "@/types/api";
 
 export default async function ProjectDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -19,10 +20,19 @@ export default async function ProjectDetailPage(props: {
   const currentUser = session.user;
   const isUser = currentUser.role === "USER";
 
-  let data;
+  let project: Project | null = null;
+  let clips: Clip[] = [];
+  let episodes: Episode[] = [];
   try {
-    const response = await apiServer.get<any>(`/projects/${params.id}/clips`);
-    data = response.data;
+    const [projectResponse, clipsResponse, episodesResponse] = await Promise.all([
+      apiServer.get<Project>(`/projects/${params.id}`),
+      apiServer.get<PaginatedData<Clip>>(`/projects/${params.id}/clips?page=1&limit=100`),
+      apiServer.get<PaginatedData<Episode>>(`/episodes?projectId=${params.id}&page=1&limit=100`),
+    ]);
+
+    project = projectResponse.data;
+    clips = clipsResponse.data?.items || [];
+    episodes = episodesResponse.data?.items || [];
   } catch (error: any) {
     // If it's a 403 Forbidden error (user not assigned to project)
     if (error.message.includes("Forbidden") || error.message.includes("403") || error.message.includes("404")) {
@@ -30,12 +40,9 @@ export default async function ProjectDetailPage(props: {
     }
   }
 
-  if (!data) {
+  if (!project) {
     redirect("/projects");
   }
-
-  const { project, clips } = data;
-  const episodes = project?.episodes || [];
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-12">
@@ -82,8 +89,11 @@ export default async function ProjectDetailPage(props: {
       </div>
 
       <ProjectClipsList
-        project={project}
-        episodes={episodes}
+        project={{ ...project, description: project.description ?? undefined }}
+        episodes={episodes.map((episode) => ({
+          ...episode,
+          name: episode.name ?? undefined,
+        }))}
         clips={clips}
         currentUser={currentUser}
         isUser={isUser}

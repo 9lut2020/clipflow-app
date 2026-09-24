@@ -14,8 +14,11 @@ export default async function AnalyticsPage() {
 
   // Fetch clips, projects, users
   const [clipsRes, projectsRes, usersRes, metricsRes] = await Promise.all([
-    apiServer.get<PaginatedData<Clip>>("/clips?page=1&limit=100"),
-    apiServer.get<PaginatedData<Project>>("/projects?page=1&limit=100"),
+    // Analytics must remain available even while a secondary collection is
+    // slow or temporarily unavailable. Start with a bounded page; detailed
+    // metrics are loaded independently from the backend aggregate endpoint.
+    apiServer.get<PaginatedData<Clip>>("/clips?page=1&limit=20").catch(() => ({ data: null })),
+    apiServer.get<PaginatedData<Project>>("/projects?page=1&limit=20").catch(() => ({ data: null })),
     apiServer.get<PaginatedData<User>>("/users?page=1&limit=100").catch(() => ({ data: null })),
     apiServer.get<PaginatedData<any>>("/analytics/metrics?page=1&limit=100").catch(() => ({ data: null })),
   ]);

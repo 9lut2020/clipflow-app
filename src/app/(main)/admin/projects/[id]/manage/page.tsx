@@ -7,7 +7,7 @@ import { Edit, ArrowLeft } from "lucide-react";
 import SpreadsheetManager from "@/components/admin/spreadsheet-manager";
 import MembersClient from "./members-client";
 import { Button } from "@/components/ui/button";
-import type { PaginatedData, User } from "@/types/api";
+import type { Clip, Episode, PaginatedData, User } from "@/types/api";
 
 export default async function ProjectManagePage(props: {
   params: Promise<{ id: string }>;
@@ -25,14 +25,20 @@ export default async function ProjectManagePage(props: {
   }
 
   // These independent reads use the paginated collection contract from the API.
-  const [projectResult, usersResult, membersResult] = await Promise.all([
+  const [projectResult, usersResult, membersResult, episodesResult, clipsResult, videoSizesResult] = await Promise.all([
     apiServer.get<any>(`/projects/${params.id}/manage`).catch(() => ({ data: null })),
     apiServer.get<PaginatedData<User>>("/users?page=1&limit=100").catch(() => ({ data: null })),
     apiServer.get<PaginatedData<User>>(`/projects/${params.id}/members?page=1&limit=100`).catch(() => ({ data: null })),
+    apiServer.get<PaginatedData<Episode>>(`/episodes?projectId=${params.id}&page=1&limit=100`).catch(() => ({ data: null })),
+    apiServer.get<PaginatedData<Clip>>(`/projects/${params.id}/clips?page=1&limit=100`).catch(() => ({ data: null })),
+    apiServer.get<PaginatedData<any>>("/video-sizes?page=1&limit=100&isActive=true").catch(() => ({ data: null })),
   ]);
   const project: any = projectResult.data;
   const allUsers = usersResult.data?.items || [];
   const members = membersResult.data?.items || [];
+  const episodes = episodesResult.data?.items || [];
+  const clips = clipsResult.data?.items || [];
+  const videoSizes = videoSizesResult.data?.items || [];
 
   // Allowed users: Members + Admins
   const memberIds = new Set(members.map((m: any) => m.id));
@@ -48,25 +54,16 @@ export default async function ProjectManagePage(props: {
     );
   }
 
-  // Flatten episodes into a list of clips
-  let initialClips: any[] = [];
-  if (project.episodes) {
-    project.episodes.forEach((ep: any) => {
-      if (ep.clips) {
-        ep.clips.forEach((clip: any) => {
-          initialClips.push({
-            id: clip.id,
-            episodeNo: ep.episodeNo,
-            name: clip.name,
-            description: clip.description || "",
-            ownerId: clip.ownerId,
-            videoSizeId: clip.videoSizeId || "",
-            status: clip.status,
-          });
-        });
-      }
-    });
-  }
+  const episodeNumbers = new Map(episodes.map((episode: Episode) => [episode.id, episode.episodeNo]));
+  const initialClips = clips.map((clip: Clip) => ({
+    id: clip.id,
+    episodeNo: clip.episode?.episodeNo ?? (clip.episodeId ? episodeNumbers.get(clip.episodeId) : undefined),
+    name: clip.name,
+    description: clip.description || "",
+    ownerId: clip.owner?.id || clip.ownerId || "",
+    videoSizeId: (clip as any).videoSizeId || (clip as any).videoSize?.id || "",
+    status: clip.status,
+  }));
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-12">
@@ -109,7 +106,8 @@ export default async function ProjectManagePage(props: {
         <SpreadsheetManager
           projectId={project.id}
           initialClips={initialClips}
-          initialEpisodes={project.episodes || []}
+          initialEpisodes={episodes}
+          initialVideoSizes={videoSizes}
           users={allowedUsers}
         />
       </div>
