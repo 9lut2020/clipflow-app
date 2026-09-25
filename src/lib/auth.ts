@@ -164,10 +164,14 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      if (trigger === "update" && session?.user?.role && !token.isBypass) {
-        token.role = session.user.role;
-        if (session.user.name) token.name = session.user.name;
-        if (session.user.image) token.picture = session.user.image;
+      if (trigger === 'update' && !token.isBypass) {
+        const newRole = session?.role || session?.user?.role;
+        const newName = session?.name || session?.user?.name;
+        const newImage = session?.image || session?.user?.image;
+
+        if (newRole) token.role = newRole;
+        if (newName) token.name = newName;
+        if (newImage) token.picture = newImage;
       }
 
       // The Worker remains authoritative for every API request. Refreshing this
