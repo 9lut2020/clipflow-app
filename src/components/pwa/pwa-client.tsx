@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Bell, Download, X } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 
@@ -146,11 +146,13 @@ export async function requestBrowserNotifications() {
 }
 
 export function NotificationPermissionButton() {
-  const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
-
-  useEffect(() => {
-    setPermission("Notification" in window ? Notification.permission : "unsupported");
-  }, []);
+  const [requestedPermission, setRequestedPermission] = useState<NotificationPermission | "unsupported">("default");
+  const browserPermission = useSyncExternalStore(
+    () => () => {},
+    () => ("Notification" in window ? Notification.permission : "unsupported"),
+    () => "default" as NotificationPermission | "unsupported",
+  );
+  const permission = browserPermission === "default" ? requestedPermission : browserPermission;
 
   if (permission === "granted" || permission === "unsupported") return null;
 
@@ -159,7 +161,7 @@ export function NotificationPermissionButton() {
       type="button"
       onClick={async () => {
         const granted = await requestBrowserNotifications();
-        if (granted) setPermission("granted");
+        if (granted) setRequestedPermission("granted");
       }}
       className="inline-flex rounded-lg p-2 text-slate-500 hover:bg-blue-50 hover:text-blue-600"
       title="เปิดการแจ้งเตือนบนอุปกรณ์"

@@ -9,6 +9,8 @@ export function UserAvatar({
 }) {
   if (pictureUrl) {
     return (
+      // LINE and Google avatars use dynamic external hosts.
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={pictureUrl}
         alt={name}
