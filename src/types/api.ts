@@ -188,13 +188,12 @@ export interface PaginatedData<T, C = undefined> {
 export interface AuditLog {
   id: string;
   action: string;
-  oldStatus?: string | null;
-  newStatus?: string | null;
-  metadata?: any;
+  entityType: string;
+  entityId: string;
+  meta: any;
   createdAt: string;
-  user?: Pick<User, "id" | "displayName" | "pictureUrl" | "role"> | null;
-  clip?: Pick<Clip, "id" | "name"> | null;
-  revision?: Pick<Revision, "id" | "revisionNo"> | null;
+  actorId: string | null;
+  actor?: Pick<User, "id" | "displayName" | "pictureUrl" | "role"> | null;
 }
 
 export interface Notification {

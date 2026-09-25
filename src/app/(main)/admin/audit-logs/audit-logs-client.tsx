@@ -244,15 +244,15 @@ export function AuditLogsClient() {
                           })}
                         </td>
                         <td className="px-5 py-3.5 whitespace-nowrap">
-                          {log.user ? (
+                          {log.actor ? (
                             <div className="flex items-center gap-2">
                               <UserAvatar
-                                name={log.user.displayName}
-                                pictureUrl={log.user.pictureUrl}
+                                name={log.actor.displayName}
+                                pictureUrl={log.actor.pictureUrl}
                                 size="w-6 h-6"
                               />
                               <span className="font-bold text-slate-700">
-                                {log.user.displayName}
+                                {log.actor.displayName}
                               </span>
                             </div>
                           ) : (
@@ -270,7 +270,7 @@ export function AuditLogsClient() {
                         </td>
                         <td className="px-5 py-3.5">
                           <span className="font-medium text-slate-800 line-clamp-1 max-w-[200px]">
-                            {log.clip?.name || "ไม่ระบุ"}
+                            {log.meta?.clipName || "ไม่ระบุ"}
                           </span>
                         </td>
                         <td className="px-5 py-3.5 text-right text-slate-400">
@@ -346,16 +346,16 @@ export function AuditLogsClient() {
               {/* User Box */}
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center gap-3">
                 <UserAvatar
-                  name={selectedLog.user?.displayName || "?"}
-                  pictureUrl={selectedLog.user?.pictureUrl}
+                  name={selectedLog.actor?.displayName || "?"}
+                  pictureUrl={selectedLog.actor?.pictureUrl}
                   size="w-10 h-10"
                 />
                 <div>
                   <p className="font-bold text-slate-900">
-                    {selectedLog.user?.displayName || "Unknown User"}
+                    {selectedLog.actor?.displayName || "Unknown User"}
                   </p>
                   <p className="text-xs text-slate-500 font-medium">
-                    Role: {selectedLog.user?.role || "N/A"}
+                    Role: {selectedLog.actor?.role || "N/A"}
                   </p>
                 </div>
               </div>
@@ -379,18 +379,18 @@ export function AuditLogsClient() {
               </div>
 
               {/* Status Change Flow */}
-              {(selectedLog.oldStatus || selectedLog.newStatus) && (
+              {(selectedLog.meta?.oldStatus || selectedLog.meta?.newStatus) && (
                 <div>
                   <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">
                     การเปลี่ยนสถานะ
                   </h4>
                   <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
-                    {selectedLog.oldStatus ? (
+                    {selectedLog.meta?.oldStatus ? (
                       <span
-                        className={`px-2 py-1 rounded text-xs font-bold ${STATUS_LABELS[selectedLog.oldStatus]?.color || "bg-slate-100"}`}
+                        className={`px-2 py-1 rounded text-xs font-bold ${STATUS_LABELS[selectedLog.meta?.oldStatus]?.color || "bg-slate-100"}`}
                       >
-                        {STATUS_LABELS[selectedLog.oldStatus]?.label ||
-                          selectedLog.oldStatus}
+                        {STATUS_LABELS[selectedLog.meta?.oldStatus]?.label ||
+                          selectedLog.meta?.oldStatus}
                       </span>
                     ) : (
                       <span className="text-slate-400 italic text-xs">
@@ -398,12 +398,12 @@ export function AuditLogsClient() {
                       </span>
                     )}
                     <ChevronRight className="text-slate-300" size={16} />
-                    {selectedLog.newStatus ? (
+                    {selectedLog.meta?.newStatus ? (
                       <span
-                        className={`px-2 py-1 rounded text-xs font-bold ${STATUS_LABELS[selectedLog.newStatus]?.color || "bg-slate-100"}`}
+                        className={`px-2 py-1 rounded text-xs font-bold ${STATUS_LABELS[selectedLog.meta?.newStatus]?.color || "bg-slate-100"}`}
                       >
-                        {STATUS_LABELS[selectedLog.newStatus]?.label ||
-                          selectedLog.newStatus}
+                        {STATUS_LABELS[selectedLog.meta?.newStatus]?.label ||
+                          selectedLog.meta?.newStatus}
                       </span>
                     ) : (
                       <span className="text-slate-400 italic text-xs">
@@ -415,23 +415,23 @@ export function AuditLogsClient() {
               )}
 
               {/* Target Item */}
-              {selectedLog.clip && (
+              {selectedLog.entityType === 'clip' && (
                 <div>
                   <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">
                     เป้าหมาย (Clip)
                   </h4>
                   <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
                     <p className="font-bold text-slate-800 text-sm">
-                      {selectedLog.clip.name}
+                      {selectedLog.meta?.clipName}
                     </p>
                     <p className="text-xs text-slate-500 mt-1 font-mono">
-                      ID: {selectedLog.clip.id}
+                      ID: {selectedLog.entityId}
                     </p>
-                    {selectedLog.revision && (
+                    {selectedLog.meta?.revisionNo && (
                       <p className="text-xs text-slate-500 mt-1">
                         Revision No:{" "}
                         <span className="font-bold">
-                          {selectedLog.revision.revisionNo}
+                          {selectedLog.meta?.revisionNo}
                         </span>
                       </p>
                     )}
@@ -440,8 +440,8 @@ export function AuditLogsClient() {
               )}
 
               {/* Raw Metadata Accordion */}
-              {selectedLog.metadata &&
-                Object.keys(selectedLog.metadata).length > 0 && (
+              {selectedLog.meta &&
+                Object.keys(selectedLog.meta).length > 0 && (
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem
                       value="metadata"
@@ -453,7 +453,7 @@ export function AuditLogsClient() {
                       <AccordionContent>
                         <pre className="bg-slate-900 text-emerald-400 p-4 rounded-xl text-xs overflow-x-auto">
                           <code>
-                            {JSON.stringify(selectedLog.metadata, null, 2)}
+                            {JSON.stringify(selectedLog.meta, null, 2)}
                           </code>
                         </pre>
                       </AccordionContent>
