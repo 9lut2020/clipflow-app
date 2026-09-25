@@ -25,12 +25,20 @@ self.addEventListener("push", (event) => {
   } catch (_) {
     if (event.data) data.body = event.data.text();
   }
-  event.waitUntil(self.registration.showNotification(data.title, {
-    body: data.body,
-    icon: "/icon.svg",
-    badge: "/icon.svg",
-    data: { url: data.url },
-  }));
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/icon-192x192.png",
+      badge: "/icon-192x192.png",
+      data: { url: data.url },
+    }).then(() => {
+      return self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    }).then((clientList) => {
+      clientList.forEach((client) => {
+        client.postMessage({ type: 'PUSH_RECEIVED' });
+      });
+    })
+  );
 });
 
 self.addEventListener("message", (event) => {
@@ -38,8 +46,8 @@ self.addEventListener("message", (event) => {
   event.waitUntil(
     self.registration.showNotification(event.data.title || "ClipFlow", {
       body: event.data.body || "มีการแจ้งเตือนใหม่",
-      icon: "/icon.svg",
-      badge: "/icon.svg",
+      icon: "/icon-192x192.png",
+      badge: "/icon-192x192.png",
       data: { url: event.data.url || "/notifications" },
     }),
   );

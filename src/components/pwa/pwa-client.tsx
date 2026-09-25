@@ -71,8 +71,8 @@ export function PwaClient() {
 
   return (
     <div className="fixed inset-x-3 bottom-24 z-50 mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-blue-100 bg-white p-3 shadow-xl md:bottom-6">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-        <Download size={18} />
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 overflow-hidden shadow-sm">
+        <img src="/icon-192x192.png" alt="ClipFlow Logo" className="w-full h-full object-cover" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold text-slate-800">ติดตั้ง ClipFlow</p>

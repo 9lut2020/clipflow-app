@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Bell,
   Menu,
@@ -17,7 +17,10 @@ import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import Link from "next/link";
 import { toast } from "sonner";
-import { requestBrowserNotifications, useBrowserNotifications } from "@/components/pwa/pwa-client";
+import {
+  requestBrowserNotifications,
+  useBrowserNotifications,
+} from "@/components/pwa/pwa-client";
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -61,6 +64,19 @@ export default function Topbar({
   const unreadCount = unreadData?.data;
   const notifications = notifData?.data || [];
   useBrowserNotifications(unreadCount);
+
+  // Listen for instant push notifications from sw.js
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "PUSH_RECEIVED") {
+        mutateUnread();
+        if (open) mutateNotifs();
+      }
+    };
+    navigator.serviceWorker?.addEventListener("message", handleMessage);
+    return () =>
+      navigator.serviceWorker?.removeEventListener("message", handleMessage);
+  }, [mutateUnread, mutateNotifs, open]);
 
   const handleMarkAsRead = async (id: string, linkUrl: string | null) => {
     try {

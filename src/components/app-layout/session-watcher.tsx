@@ -40,7 +40,7 @@ export function SessionWatcher() {
               name: dbUser.displayName ?? session?.user?.name,
               image: dbUser.pictureUrl ?? session?.user?.image,
             });
-            router.refresh();
+            window.location.reload();
           }
         }
       } catch (err) {
@@ -54,7 +54,7 @@ export function SessionWatcher() {
     checkUserStatus();
 
     // The Worker validates the account on every API request. Polling only keeps the visible session projection current.
-    const interval = setInterval(checkUserStatus, 60_000);
+    const interval = setInterval(checkUserStatus, 15_000);
 
     return () => clearInterval(interval);
   }, [userId, sessionRole, isBypass, status, update, router, session?.user?.name, session?.user?.image]);
