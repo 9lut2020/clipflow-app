@@ -9,12 +9,46 @@ type InstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
-export function PwaClient() {
-  const [installEvent, setInstallEvent] = useState<InstallPromptEvent | null>(
-    null,
-  );
-  const [showInstall, setShowInstall] = useState(false);
+let deferredPrompt: InstallPromptEvent | null = null;
+const installListeners = new Set<(p: InstallPromptEvent | null) => void>();
 
+export function usePwaInstall() {
+  const [prompt, setPrompt] = useState<InstallPromptEvent | null>(deferredPrompt);
+  
+  useEffect(() => {
+    const listener = (p: InstallPromptEvent | null) => setPrompt(p);
+    installListeners.add(listener);
+    return () => { installListeners.delete(listener); };
+  }, []);
+  
+  const install = async () => {
+    if (!prompt) return;
+    await prompt.prompt();
+    const choice = await prompt.userChoice;
+    if (choice.outcome === "accepted") {
+      deferredPrompt = null;
+      installListeners.forEach((l) => l(null));
+    }
+  };
+  return { prompt, install };
+}
+
+export function PwaInstallButton() {
+  const { prompt, install } = usePwaInstall();
+  if (!prompt) return null;
+  return (
+    <button
+      onClick={install}
+      className="p-2 rounded-md hover:bg-gray-100 text-gray-500 transition relative"
+      title="ติดตั้งแอป ClipFlow"
+      aria-label="ติดตั้งแอป ClipFlow"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+    </button>
+  );
+}
+
+export function PwaClient() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
@@ -36,7 +70,6 @@ export function PwaClient() {
         });
     };
 
-    // Do not compete with the page's initial API calls and critical assets.
     if ("requestIdleCallback" in window) {
       idleId = window.requestIdleCallback(registerServiceWorker, {
         timeout: 3000,
@@ -47,14 +80,13 @@ export function PwaClient() {
 
     const onBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
-      const promptEvent = event as InstallPromptEvent;
-      setInstallEvent(promptEvent);
-      setShowInstall(true);
+      deferredPrompt = event as InstallPromptEvent;
+      installListeners.forEach((l) => l(deferredPrompt));
     };
 
     const onInstalled = () => {
-      setInstallEvent(null);
-      setShowInstall(false);
+      deferredPrompt = null;
+      installListeners.forEach((l) => l(null));
     };
 
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
@@ -70,45 +102,7 @@ export function PwaClient() {
     };
   }, []);
 
-  if (!showInstall || !installEvent) return null;
-
-  const install = async () => {
-    await installEvent.prompt();
-    const choice = await installEvent.userChoice;
-    if (choice.outcome === "accepted") setShowInstall(false);
-    setInstallEvent(null);
-  };
-
-  return (
-    <div className="fixed inset-x-3 bottom-24 z-50 mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-blue-100 bg-white p-3 shadow-xl md:bottom-6">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 overflow-hidden shadow-sm">
-        <img
-          src="/icon-192x192.png"
-          alt="ClipFlow Logo"
-          className="w-full h-full object-cover"
-        />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold text-slate-800">ติดตั้ง ClipFlow</p>
-        <p className="text-[11px] text-slate-500">
-          เปิดงานและแจ้งเตือนได้สะดวกบนมือถือ
-        </p>
-      </div>
-      <button
-        onClick={install}
-        className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700"
-      >
-        ติดตั้ง
-      </button>
-      <button
-        onClick={() => setShowInstall(false)}
-        className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"
-        aria-label="ปิด"
-      >
-        <X size={16} />
-      </button>
-    </div>
-  );
+  return null;
 }
 
 function base64UrlToBytes(value: string) {

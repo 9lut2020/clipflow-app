@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import {
   requestBrowserNotifications,
   useBrowserNotifications,
+  PwaInstallButton,
 } from "@/components/pwa/pwa-client";
 
 interface TopbarProps {
@@ -140,6 +141,8 @@ export default function Topbar({
       </div>
 
       <div className="flex items-center gap-2 relative">
+        <PwaInstallButton />
+        
         <button
           type="button"
           onClick={handleNotificationClick}
