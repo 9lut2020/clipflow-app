@@ -53,8 +53,8 @@ export function SessionWatcher() {
     // Check once immediately on load
     checkUserStatus();
 
-    // Then check every 5 seconds for fast response time
-    const interval = setInterval(checkUserStatus, 5000);
+    // The Worker validates the account on every API request. Polling only keeps the visible session projection current.
+    const interval = setInterval(checkUserStatus, 60_000);
 
     return () => clearInterval(interval);
   }, [userId, sessionRole, isBypass, status, update, router, session?.user?.name, session?.user?.image]);

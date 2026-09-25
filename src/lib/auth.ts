@@ -174,7 +174,7 @@ export const authOptions: NextAuthOptions = {
       // presentation-layer role on every getServerSession caused several extra
       // Worker + Neon round trips for every page render, so refresh at most once
       // per minute instead.
-      const roleRefreshIntervalMs = 60_000;
+      const roleRefreshIntervalMs = 5 * 60_000;
       const shouldRefreshRole = Boolean(token.id) && !token.isBypass && (
         !token.roleCheckedAt || Date.now() - token.roleCheckedAt > roleRefreshIntervalMs
       );
@@ -229,5 +229,5 @@ export const authOptions: NextAuthOptions = {
   },
   useSecureCookies: isHttps,
   secret: process.env.NEXTAUTH_SECRET || "fallback_secret_for_development_only",
-  debug: true,
+  debug: process.env.NODE_ENV === "development",
 };
