@@ -72,22 +72,20 @@ export function usePublishQueue(params?: { projectId?: string; from?: string; to
   if (params?.from) query.set("from", params.from);
   if (params?.to) query.set("to", params.to);
   query.set("page", "1");
-  query.set("limit", "100");
+  query.set("limit", "50");
   const key = params?.from && params?.to ? `/publish-schedules/queue?${query.toString()}` : null;
   const { data, error, isLoading } = useSWR<PublishQueueItem[]>(key, async (url: string) => {
     const first = await fetcher<PaginatedData<PublishQueueItem>>(url);
     if (!first.pagination.hasNext) return first.items;
 
-    const remainingPages = Array.from(
-      { length: first.pagination.totalPages - 1 },
-      (_, index) => index + 2,
-    );
-    const remaining = await Promise.all(remainingPages.map(async (page) => {
+    const items = [...first.items];
+    for (let page = 2; page <= first.pagination.totalPages; page += 1) {
       const nextUrl = new URL(url, "http://local");
       nextUrl.searchParams.set("page", String(page));
-      return fetcher<PaginatedData<PublishQueueItem>>(`${nextUrl.pathname}${nextUrl.search}`);
-    }));
-    return first.items.concat(...remaining.map((page) => page.items));
+      const next = await fetcher<PaginatedData<PublishQueueItem>>(`${nextUrl.pathname}${nextUrl.search}`);
+      items.push(...next.items);
+    }
+    return items;
   }, { dedupingInterval: 10_000, revalidateOnFocus: false });
   return { data: data || [], error, isLoading };
 }
