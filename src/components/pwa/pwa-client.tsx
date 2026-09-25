@@ -113,11 +113,13 @@ async function subscribeToPush() {
   }
 }
 
-export function useBrowserNotifications(unreadCount: number) {
+export function useBrowserNotifications(unreadCount: number | undefined) {
   const previousCount = useRef(unreadCount);
 
   useEffect(() => {
-    if (unreadCount > previousCount.current && "Notification" in window && Notification.permission === "granted") {
+    if (unreadCount === undefined) return;
+
+    if (previousCount.current !== undefined && unreadCount > previousCount.current && "Notification" in window && Notification.permission === "granted") {
       const registration = navigator.serviceWorker?.controller;
       if (registration) {
         registration.postMessage({

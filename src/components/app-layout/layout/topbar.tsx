@@ -58,7 +58,7 @@ export default function Topbar({
     },
   );
 
-  const unreadCount = unreadData?.data || 0;
+  const unreadCount = unreadData?.data;
   const notifications = notifData?.data || [];
   useBrowserNotifications(unreadCount);
 
@@ -130,9 +130,9 @@ export default function Topbar({
           title="แจ้งเตือน"
         >
           <Bell size={16} />
-          {unreadCount > 0 && (
+          {(unreadCount || 0) > 0 && (
             <span className="absolute top-1 right-1 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-[9px] text-white font-bold flex items-center justify-center">
-              {unreadCount > 9 ? "9+" : unreadCount}
+              {(unreadCount || 0) > 9 ? "9+" : unreadCount}
             </span>
           )}
         </button>

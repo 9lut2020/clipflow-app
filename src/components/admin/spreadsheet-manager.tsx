@@ -211,6 +211,14 @@ export default function SpreadsheetManager({
   const { batchCreateClips, isSaving } = useBatchCreateClips();
   const [clips, setClips] = useState<any[]>(initialClips);
   const [episodes, setEpisodes] = useState<any[]>(initialEpisodes);
+
+  useEffect(() => {
+    setClips(initialClips);
+  }, [JSON.stringify(initialClips)]);
+
+  useEffect(() => {
+    setEpisodes(initialEpisodes);
+  }, [JSON.stringify(initialEpisodes)]);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState("");
 
