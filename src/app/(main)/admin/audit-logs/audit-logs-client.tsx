@@ -38,38 +38,16 @@ import {
 } from "@/components/ui/accordion";
 
 const ACTION_LABELS: Record<string, { label: string; color: string }> = {
-  CREATE_CLIP: {
-    label: "สร้างคลิป",
-    color: "bg-blue-100 text-blue-800 border-blue-200",
-  },
-  SUBMIT_CLIP: {
-    label: "ส่งคลิป",
-    color: "bg-purple-100 text-purple-800 border-purple-200",
-  },
-  START_REVIEW: {
-    label: "เริ่มตรวจ",
-    color: "bg-sky-100 text-sky-800 border-sky-200",
-  },
-  REVIEW_CLIP: {
-    label: "บันทึกผลตรวจ",
-    color: "bg-indigo-100 text-indigo-800 border-indigo-200",
-  },
-  REQUEST_REVISION: {
-    label: "สั่งแก้ไข",
-    color: "bg-rose-100 text-rose-800 border-rose-200",
-  },
-  RESUBMIT_CLIP: {
-    label: "ส่งแก้ไข",
-    color: "bg-orange-100 text-orange-800 border-orange-200",
-  },
-  APPROVE_CLIP: {
-    label: "อนุมัติ",
-    color: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  },
-  CANCEL_CLIP: {
-    label: "ยกเลิก",
-    color: "bg-slate-100 text-slate-800 border-slate-300",
-  },
+  CLIP_BATCH_SAVED: { label: "สร้างคลิป", color: "bg-blue-100 text-blue-800 border-blue-200" },
+  CLIP_SUBMITTED: { label: "ส่งคลิป", color: "bg-purple-100 text-purple-800 border-purple-200" },
+  CLIP_RESUBMITTED: { label: "ส่งแก้ไข", color: "bg-orange-100 text-orange-800 border-orange-200" },
+  CLIP_APPROVED: { label: "อนุมัติ", color: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  CLIP_REJECTED: { label: "สั่งแก้ไข", color: "bg-rose-100 text-rose-800 border-rose-200" },
+  TASK_ASSIGNED: { label: "มอบหมายงาน", color: "bg-sky-100 text-sky-800 border-sky-200" },
+  PROJECT_CREATED: { label: "สร้างโปรเจกต์", color: "bg-indigo-100 text-indigo-800 border-indigo-200" },
+  CLIP_SCHEDULED: { label: "ตั้งเวลาโพสต์", color: "bg-amber-100 text-amber-800 border-amber-200" },
+  STATUS_CHANGED: { label: "เปลี่ยนสถานะ", color: "bg-slate-100 text-slate-800 border-slate-300" },
+  CLIP_DELETED: { label: "ลบคลิป", color: "bg-red-100 text-red-800 border-red-200" },
 };
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
