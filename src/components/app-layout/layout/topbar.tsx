@@ -23,9 +23,9 @@ import {
 } from "@/components/pwa/pwa-client";
 
 interface TopbarProps {
-  onMenuClick: () => void;
-  isCollapsed?: boolean;
-  onToggleCollapse?: () => void;
+  readonly onMenuClick: () => void;
+  readonly isCollapsed?: boolean;
+  readonly onToggleCollapse?: () => void;
 }
 
 export default function Topbar({
@@ -97,6 +97,7 @@ export default function Topbar({
       mutateNotifs();
       toast.success("ทำเครื่องหมายอ่านแล้วทั้งหมด");
     } catch (error) {
+      console.error(error);
       toast.error("เกิดข้อผิดพลาด");
     }
   };
@@ -192,13 +193,13 @@ export default function Topbar({
                   <h3 className="text-sm font-bold text-gray-800">
                     การแจ้งเตือน
                   </h3>
-                  {unreadCount > 0 && (
+                  {(unreadCount ?? 0) > 0 && (
                     <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-bold">
                       {unreadCount} ใหม่
                     </span>
                   )}
                 </div>
-                {unreadCount > 0 && (
+                {(unreadCount ?? 0) > 0 && (
                   <button
                     onClick={handleMarkAllAsRead}
                     className="text-[11px] text-slate-500 hover:text-slate-800 font-semibold flex items-center gap-1"
@@ -221,13 +222,14 @@ export default function Topbar({
                 ) : (
                   notifications.map((notif) => {
                     const content = (
-                      <div
+                      <button
+                        type="button"
                         onClick={() => {
                           if (!notif.isRead)
                             handleMarkAsRead(notif.id, notif.linkUrl);
                           else setOpen(false);
                         }}
-                        className={`flex gap-3 p-3 rounded-xl transition-colors cursor-pointer border ${
+                        className={`w-full text-left flex gap-3 p-3 rounded-xl transition-colors cursor-pointer border ${
                           notif.isRead
                             ? "bg-transparent border-transparent hover:bg-gray-50"
                             : "bg-blue-50/50 border-blue-100/50 hover:bg-blue-50"
@@ -264,7 +266,7 @@ export default function Topbar({
                             })}
                           </div>
                         </div>
-                      </div>
+                      </button>
                     );
 
                     if (notif.linkUrl) {

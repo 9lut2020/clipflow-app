@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Bell, Download, X } from "lucide-react";
+import { Bell, X } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 
 type InstallPromptEvent = Event & {
@@ -10,7 +10,9 @@ type InstallPromptEvent = Event & {
 };
 
 export function PwaClient() {
-  const [installEvent, setInstallEvent] = useState<InstallPromptEvent | null>(null);
+  const [installEvent, setInstallEvent] = useState<InstallPromptEvent | null>(
+    null,
+  );
   const [showInstall, setShowInstall] = useState(false);
 
   useEffect(() => {
@@ -19,18 +21,26 @@ export function PwaClient() {
     let idleId: number | undefined;
     let timeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
     const registerServiceWorker = () => {
-      navigator.serviceWorker.register("/sw.js").then(async () => {
-        if ("Notification" in window && Notification.permission === "granted") {
-          await subscribeToPush();
-        }
-      }).catch((error) => {
-        console.error("PWA service worker registration failed", error);
-      });
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then(async () => {
+          if (
+            "Notification" in window &&
+            Notification.permission === "granted"
+          ) {
+            await subscribeToPush();
+          }
+        })
+        .catch((error) => {
+          console.error("PWA service worker registration failed", error);
+        });
     };
 
     // Do not compete with the page's initial API calls and critical assets.
     if ("requestIdleCallback" in window) {
-      idleId = window.requestIdleCallback(registerServiceWorker, { timeout: 3000 });
+      idleId = window.requestIdleCallback(registerServiceWorker, {
+        timeout: 3000,
+      });
     } else {
       timeoutId = globalThis.setTimeout(registerServiceWorker, 1200);
     }
@@ -72,16 +82,29 @@ export function PwaClient() {
   return (
     <div className="fixed inset-x-3 bottom-24 z-50 mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-blue-100 bg-white p-3 shadow-xl md:bottom-6">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 overflow-hidden shadow-sm">
-        <img src="/icon-192x192.png" alt="ClipFlow Logo" className="w-full h-full object-cover" />
+        <img
+          src="/icon-192x192.png"
+          alt="ClipFlow Logo"
+          className="w-full h-full object-cover"
+        />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold text-slate-800">ติดตั้ง ClipFlow</p>
-        <p className="text-[11px] text-slate-500">เปิดงานและแจ้งเตือนได้สะดวกบนมือถือ</p>
+        <p className="text-[11px] text-slate-500">
+          เปิดงานและแจ้งเตือนได้สะดวกบนมือถือ
+        </p>
       </div>
-      <button onClick={install} className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700">
+      <button
+        onClick={install}
+        className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700"
+      >
         ติดตั้ง
       </button>
-      <button onClick={() => setShowInstall(false)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100" aria-label="ปิด">
+      <button
+        onClick={() => setShowInstall(false)}
+        className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"
+        aria-label="ปิด"
+      >
         <X size={16} />
       </button>
     </div>
@@ -91,21 +114,31 @@ export function PwaClient() {
 function base64UrlToBytes(value: string) {
   const padding = "=".repeat((4 - (value.length % 4)) % 4);
   const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
-  return Uint8Array.from(window.atob(base64), (character) => character.charCodeAt(0));
+  return Uint8Array.from(window.atob(base64), (character) =>
+    character.charCodeAt(0),
+  );
 }
 
 async function subscribeToPush() {
-  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window))
+    return false;
   try {
     const registration = await navigator.serviceWorker.ready;
-    const keyResponse = await apiClient.get<string>("/notifications/push/vapid-key");
+    const keyResponse = await apiClient.get<string>(
+      "/notifications/push/vapid-key",
+    );
     if (keyResponse.status !== "success" || !keyResponse.data) return false;
     const existing = await registration.pushManager.getSubscription();
-    const subscription = existing || await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: base64UrlToBytes(keyResponse.data),
-    });
-    const result = await apiClient.post("/notifications/push/subscribe", subscription.toJSON());
+    const subscription =
+      existing ||
+      (await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: base64UrlToBytes(keyResponse.data),
+      }));
+    const result = await apiClient.post(
+      "/notifications/push/subscribe",
+      subscription.toJSON(),
+    );
     return result.status === "success";
   } catch (error) {
     console.error("Push subscription failed", error);
@@ -119,7 +152,12 @@ export function useBrowserNotifications(unreadCount: number | undefined) {
   useEffect(() => {
     if (unreadCount === undefined) return;
 
-    if (previousCount.current !== undefined && unreadCount > previousCount.current && "Notification" in window && Notification.permission === "granted") {
+    if (
+      previousCount.current !== undefined &&
+      unreadCount > previousCount.current &&
+      "Notification" in window &&
+      Notification.permission === "granted"
+    ) {
       const registration = navigator.serviceWorker?.controller;
       if (registration) {
         registration.postMessage({
@@ -148,13 +186,16 @@ export async function requestBrowserNotifications() {
 }
 
 export function NotificationPermissionButton() {
-  const [requestedPermission, setRequestedPermission] = useState<NotificationPermission | "unsupported">("default");
+  const [requestedPermission, setRequestedPermission] = useState<
+    NotificationPermission | "unsupported"
+  >("default");
   const browserPermission = useSyncExternalStore(
     () => () => {},
     () => ("Notification" in window ? Notification.permission : "unsupported"),
     () => "default" as NotificationPermission | "unsupported",
   );
-  const permission = browserPermission === "default" ? requestedPermission : browserPermission;
+  const permission =
+    browserPermission === "default" ? requestedPermission : browserPermission;
 
   if (permission === "granted" || permission === "unsupported") return null;
 

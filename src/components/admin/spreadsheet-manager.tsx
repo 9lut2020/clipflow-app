@@ -9,7 +9,6 @@ import {
   Plus,
   Trash2,
   FileText,
-  X,
   ChevronDown,
   Loader2,
   Layers,
@@ -37,13 +36,14 @@ import {
 } from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Input } from "@/components/ui/input";
+import Image from "next/image";
 
 interface SpreadsheetManagerProps {
-  projectId: string;
-  initialClips: any[];
-  initialEpisodes?: any[];
-  initialVideoSizes?: any[];
-  users: any[];
+  readonly projectId: string;
+  readonly initialClips: any[];
+  readonly initialEpisodes?: any[];
+  readonly initialVideoSizes?: any[];
+  readonly users: any[];
 }
 
 // AssigneeDropdown code here (Unchanged)
@@ -106,8 +106,11 @@ const AssigneeDropdown = ({
           {selectedUser ? (
             <>
               {selectedUser.pictureUrl ? (
-                <img
+                <Image
                   src={selectedUser.pictureUrl}
+                  width={24}
+                  height={24}
+                  alt={selectedUser.displayName}
                   className="w-6 h-6 rounded-full object-cover shadow-sm border border-slate-200 shrink-0"
                 />
               ) : (
@@ -132,8 +135,10 @@ const AssigneeDropdown = ({
         typeof document !== "undefined" &&
         createPortal(
           <>
-            <div
-              className="fixed inset-0 z-[99990]"
+            <button
+              type="button"
+              aria-label="Close"
+              className="fixed inset-0 z-[99990] w-full h-full cursor-default border-none bg-transparent"
               onClick={() => setOpen(false)}
             />
             <div
@@ -173,8 +178,11 @@ const AssigneeDropdown = ({
                   }}
                 >
                   {u.pictureUrl ? (
-                    <img
+                    <Image
                       src={u.pictureUrl}
+                      alt={u.displayName}
+                      width={32}
+                      height={32}
                       className="w-8 h-8 rounded-full object-cover shadow-sm border border-slate-200 shrink-0"
                     />
                   ) : (
@@ -231,16 +239,19 @@ export default function SpreadsheetManager({
   const [isCreatingEpisode, setIsCreatingEpisode] = useState(false);
   const [videoSizes, setVideoSizes] = useState<any[]>(initialVideoSizes);
   const [showVideoSizeModal, setShowVideoSizeModal] = useState(false);
-  const [editingVideoSize, setEditingVideoSize] = useState<any | null>(null);
+  const [editingVideoSize, setEditingVideoSize] = useState<any>(null);
   const [videoSizeName, setVideoSizeName] = useState("");
   const [videoSizeWidth, setVideoSizeWidth] = useState("");
   const [videoSizeHeight, setVideoSizeHeight] = useState("");
   const [isSavingVideoSize, setIsSavingVideoSize] = useState(false);
 
   useEffect(() => {
-    api.get<{ items: any[] }>("/video-sizes?page=1&limit=100").then((res) => {
-      if (res.status === "success") setVideoSizes(res.data?.items || []);
-    }).catch(() => toast.error("Unable to load video sizes"));
+    api
+      .get<{ items: any[] }>("/video-sizes?page=1&limit=100")
+      .then((res) => {
+        if (res.status === "success") setVideoSizes(res.data?.items || []);
+      })
+      .catch(() => toast.error("Unable to load video sizes"));
   }, []);
 
   const resetVideoSizeForm = () => {
@@ -254,19 +265,38 @@ export default function SpreadsheetManager({
     const name = videoSizeName.trim();
     const width = Number(videoSizeWidth);
     const height = Number(videoSizeHeight);
-    if (!name || !Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
+    if (
+      !name ||
+      !Number.isInteger(width) ||
+      !Number.isInteger(height) ||
+      width <= 0 ||
+      height <= 0
+    ) {
       toast.error("Please enter a valid name, width and height");
       return;
     }
     setIsSavingVideoSize(true);
     try {
       const res = editingVideoSize
-        ? await api.patch<any>(`/video-sizes/${editingVideoSize.id}`, { name, width, height })
+        ? await api.patch<any>(`/video-sizes/${editingVideoSize.id}`, {
+            name,
+            width,
+            height,
+          })
         : await api.post<any>("/video-sizes", { name, width, height });
-      if (res.status !== "success") throw new Error(res.message || "Save failed");
-      setVideoSizes((prev) => editingVideoSize ? prev.map((item) => item.id === editingVideoSize.id ? res.data : item) : [...prev, res.data]);
+      if (res.status !== "success")
+        throw new Error(res.message || "Save failed");
+      setVideoSizes((prev) =>
+        editingVideoSize
+          ? prev.map((item) =>
+              item.id === editingVideoSize.id ? res.data : item,
+            )
+          : [...prev, res.data],
+      );
       resetVideoSizeForm();
-      toast.success(editingVideoSize ? "Video size updated" : "Video size added");
+      toast.success(
+        editingVideoSize ? "Video size updated" : "Video size added",
+      );
     } catch (error: any) {
       toast.error(error.message || "Unable to save video size");
     } finally {
@@ -278,9 +308,12 @@ export default function SpreadsheetManager({
     if (!window.confirm(`Delete or deactivate "${item.name}"?`)) return;
     try {
       const res = await api.delete<any>(`/video-sizes/${item.id}`);
-      if (res.status !== "success") throw new Error(res.message || "Delete failed");
+      if (res.status !== "success")
+        throw new Error(res.message || "Delete failed");
       if (res.data?.isActive === false) {
-        setVideoSizes((prev) => prev.map((size) => size.id === item.id ? res.data : size));
+        setVideoSizes((prev) =>
+          prev.map((size) => (size.id === item.id ? res.data : size)),
+        );
         toast.success("Video size deactivated");
       } else {
         setVideoSizes((prev) => prev.filter((size) => size.id !== item.id));
@@ -294,7 +327,7 @@ export default function SpreadsheetManager({
   // Dialog States
   const [rowToDelete, setRowToDelete] = useState<number | null>(null);
   const [isDeletingRow, setIsDeletingRow] = useState(false);
-  const [episodeToDelete, setEpisodeToDelete] = useState<any | null>(null);
+  const [episodeToDelete, setEpisodeToDelete] = useState<any>(null);
   const [isDeletingEpisode, setIsDeletingEpisode] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [showMultiDeleteModal, setShowMultiDeleteModal] = useState(false);
@@ -521,25 +554,25 @@ export default function SpreadsheetManager({
       .filter(Boolean);
     const newClips: any[] = [];
 
-    let currentEpisode =
-      clips.length > 0
-        ? clips[clips.length - 1].episodeNo
-        : episodes.length > 0
-          ? episodes[episodes.length - 1].episodeNo
-          : 1;
+    let currentEpisode = 1;
+    if (clips.length > 0) {
+      currentEpisode = clips.at(-1)?.episodeNo ?? 1;
+    } else if (episodes.length > 0) {
+      currentEpisode = episodes.at(-1)?.episodeNo ?? 1;
+    }
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
 
       // Update current episode if found
-      const epMatch = line.match(/(?:อีพี|EP|ep)[\s\.]*(\d+)/i);
+      const epMatch = /(?:อีพี|EP|ep)[\s.]*(\d+)/i.exec(line);
       if (epMatch) {
-        currentEpisode = parseInt(epMatch[1]);
+        currentEpisode = Number.parseInt(epMatch[1]);
       }
 
       // Detect start of a clip block
       if (
-        line.match(/คลิป\s*\d+/i) ||
+        /คลิป\s*\d+/i.test(line) ||
         line.startsWith("ไฮไลท์") ||
         line.startsWith('"')
       ) {
@@ -548,7 +581,7 @@ export default function SpreadsheetManager({
 
         // If the current line is just a header (like "ไฮไลท์อีพี 6 คลิป 1"), the next line might be the title
         if (
-          (line.match(/คลิป\s*\d+/i) || line.startsWith("ไฮไลท์")) &&
+          (/คลิป\s*\d+/i.test(line) || line.startsWith("ไฮไลท์")) &&
           !line.includes('"')
         ) {
           if (i + 1 < lines.length && lines[i + 1].startsWith('"')) {
@@ -640,13 +673,18 @@ export default function SpreadsheetManager({
             </span>
           </Button>
           <Button
-            onClick={() => { resetVideoSizeForm(); setShowVideoSizeModal(true); }}
+            onClick={() => {
+              resetVideoSizeForm();
+              setShowVideoSizeModal(true);
+            }}
             variant="outline"
             size="sm"
             className="shrink-0 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold border-purple-200 px-2 sm:px-3 h-8 sm:h-9"
           >
             <Ruler size={14} className="shrink-0" />
-            <span className="text-xs sm:text-sm whitespace-nowrap ml-1 sm:ml-1.5">Manage Video Sizes</span>
+            <span className="text-xs sm:text-sm whitespace-nowrap ml-1 sm:ml-1.5">
+              Manage Video Sizes
+            </span>
           </Button>
           {selectedRows.size > 0 && (
             <Button
@@ -874,15 +912,19 @@ export default function SpreadsheetManager({
                     <td className="border-r border-b border-slate-200 p-0">
                       <select
                         value={clip.videoSizeId || ""}
-                        onChange={(e) => handleChange(index, "videoSizeId", e.target.value)}
+                        onChange={(e) =>
+                          handleChange(index, "videoSizeId", e.target.value)
+                        }
                         className="w-full h-full px-2 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-purple-500 transition-all text-xs font-bold cursor-pointer"
                       >
                         <option value="">Select size...</option>
-                        {videoSizes.filter((size) => size.isActive).map((size) => (
-                          <option key={size.id} value={size.id}>
-                            {size.name} ({size.width}x{size.height})
-                          </option>
-                        ))}
+                        {videoSizes
+                          .filter((size) => size.isActive)
+                          .map((size) => (
+                            <option key={size.id} value={size.id}>
+                              {size.name} ({size.width}x{size.height})
+                            </option>
+                          ))}
                       </select>
                     </td>
                     <td className="border-b border-slate-200 p-0 text-center">
@@ -913,42 +955,102 @@ export default function SpreadsheetManager({
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Manage Video Sizes</DialogTitle>
-            <DialogDescription>Global presets shared across all projects.</DialogDescription>
+            <DialogDescription>
+              Global presets shared across all projects.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-2 rounded-xl border border-purple-100 bg-purple-50/60 p-3 sm:grid-cols-[1fr_120px_120px_auto]">
-              <Input value={videoSizeName} onChange={(e) => setVideoSizeName(e.target.value)} placeholder="Name (e.g. Vertical 9:16)" />
-              <Input type="number" value={videoSizeWidth} onChange={(e) => setVideoSizeWidth(e.target.value)} placeholder="Width (px)" />
-              <Input type="number" value={videoSizeHeight} onChange={(e) => setVideoSizeHeight(e.target.value)} placeholder="Height (px)" />
-              <Button type="button" onClick={handleSaveVideoSize} disabled={isSavingVideoSize} className="bg-purple-600 text-white hover:bg-purple-700">
-                {isSavingVideoSize ? <Loader2 size={15} className="mr-1 animate-spin" /> : <Plus size={15} className="mr-1" />}
+              <Input
+                value={videoSizeName}
+                onChange={(e) => setVideoSizeName(e.target.value)}
+                placeholder="Name (e.g. Vertical 9:16)"
+              />
+              <Input
+                type="number"
+                value={videoSizeWidth}
+                onChange={(e) => setVideoSizeWidth(e.target.value)}
+                placeholder="Width (px)"
+              />
+              <Input
+                type="number"
+                value={videoSizeHeight}
+                onChange={(e) => setVideoSizeHeight(e.target.value)}
+                placeholder="Height (px)"
+              />
+              <Button
+                type="button"
+                onClick={handleSaveVideoSize}
+                disabled={isSavingVideoSize}
+                className="bg-purple-600 text-white hover:bg-purple-700"
+              >
+                {isSavingVideoSize ? (
+                  <Loader2 size={15} className="mr-1 animate-spin" />
+                ) : (
+                  <Plus size={15} className="mr-1" />
+                )}
                 {editingVideoSize ? "Update" : "Add"}
               </Button>
             </div>
             <div className="overflow-hidden rounded-xl border border-slate-200">
               <div className="grid grid-cols-[1fr_120px_80px] bg-slate-50 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                <span>Name</span><span>Size</span><span className="text-right">Actions</span>
+                <span>Name</span>
+                <span>Size</span>
+                <span className="text-right">Actions</span>
               </div>
               <div className="max-h-64 divide-y divide-slate-100 overflow-y-auto">
                 {videoSizes.map((size) => (
-                  <div key={size.id} className="grid grid-cols-[1fr_120px_80px] items-center px-3 py-2.5 text-sm">
+                  <div
+                    key={size.id}
+                    className="grid grid-cols-[1fr_120px_80px] items-center px-3 py-2.5 text-sm"
+                  >
                     <div className="min-w-0">
-                      <div className="truncate font-semibold text-slate-700">{size.name}</div>
-                      {!size.isActive && <span className="text-[10px] font-bold text-rose-500">Inactive</span>}
+                      <div className="truncate font-semibold text-slate-700">
+                        {size.name}
+                      </div>
+                      {!size.isActive && (
+                        <span className="text-[10px] font-bold text-rose-500">
+                          Inactive
+                        </span>
+                      )}
                     </div>
-                    <span className="font-mono text-xs text-slate-500">{size.width} × {size.height}</span>
+                    <span className="font-mono text-xs text-slate-500">
+                      {size.width} × {size.height}
+                    </span>
                     <div className="flex justify-end gap-1">
-                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-slate-500 hover:bg-blue-50 hover:text-blue-600" onClick={() => {
-                        setEditingVideoSize(size);
-                        setVideoSizeName(size.name);
-                        setVideoSizeWidth(String(size.width));
-                        setVideoSizeHeight(String(size.height));
-                      }} title="Edit"><Pencil size={13} /></Button>
-                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-rose-500 hover:bg-rose-50 hover:text-rose-600" onClick={() => handleDeleteVideoSize(size)} title="Delete"><Trash2 size={13} /></Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-slate-500 hover:bg-blue-50 hover:text-blue-600"
+                        onClick={() => {
+                          setEditingVideoSize(size);
+                          setVideoSizeName(size.name);
+                          setVideoSizeWidth(String(size.width));
+                          setVideoSizeHeight(String(size.height));
+                        }}
+                        title="Edit"
+                      >
+                        <Pencil size={13} />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+                        onClick={() => handleDeleteVideoSize(size)}
+                        title="Delete"
+                      >
+                        <Trash2 size={13} />
+                      </Button>
                     </div>
                   </div>
                 ))}
-                {videoSizes.length === 0 && <div className="p-6 text-center text-sm text-slate-400">No video sizes yet</div>}
+                {videoSizes.length === 0 && (
+                  <div className="p-6 text-center text-sm text-slate-400">
+                    No video sizes yet
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -969,9 +1071,9 @@ export default function SpreadsheetManager({
             <div className="flex-1 overflow-y-auto py-2 space-y-6 px-1">
               {episodes.length > 0 && (
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700">
+                  <h4 className="text-sm font-bold text-slate-700">
                     ตอนที่มีอยู่
-                  </label>
+                  </h4>
                   <div className="space-y-1.5 max-h-[250px] overflow-y-auto rounded-lg border border-slate-200 p-2 bg-slate-50">
                     {episodes.map((ep) => (
                       <div
@@ -1065,9 +1167,9 @@ export default function SpreadsheetManager({
             <div className="px-4 overflow-y-auto flex-1 space-y-6 pb-4">
               {episodes.length > 0 && (
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700">
+                  <h4 className="text-sm font-bold text-slate-700">
                     ตอนที่มีอยู่
-                  </label>
+                  </h4>
                   <div className="space-y-2 bg-slate-50 rounded-lg p-2 border border-slate-100 max-h-[250px] overflow-y-auto">
                     {episodes.map((ep) => (
                       <div

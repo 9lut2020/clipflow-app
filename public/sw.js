@@ -42,6 +42,7 @@ self.addEventListener("push", (event) => {
 });
 
 self.addEventListener("message", (event) => {
+  if (event.origin !== self.location.origin) return;
   if (event.data?.type !== "SHOW_NOTIFICATION") return;
   event.waitUntil(
     self.registration.showNotification(event.data.title || "ClipFlow", {
