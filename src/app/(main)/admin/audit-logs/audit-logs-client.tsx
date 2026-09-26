@@ -48,6 +48,24 @@ const ACTION_LABELS: Record<string, { label: string; color: string }> = {
   CLIP_SCHEDULED: { label: "ตั้งเวลาโพสต์", color: "bg-amber-100 text-amber-800 border-amber-200" },
   STATUS_CHANGED: { label: "เปลี่ยนสถานะ", color: "bg-slate-100 text-slate-800 border-slate-300" },
   CLIP_DELETED: { label: "ลบคลิป", color: "bg-red-100 text-red-800 border-red-200" },
+  MEMBER_ADDED: { label: "เพิ่มสมาชิก", color: "bg-teal-100 text-teal-800 border-teal-200" },
+  ROLE_CHANGED: { label: "เปลี่ยนสิทธิ์", color: "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200" },
+  USER_UPDATED: { label: "อัปเดตผู้ใช้", color: "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200" },
+};
+
+const getTargetName = (log: AuditLog) => {
+  if (log.meta?.clipName) return log.meta.clipName;
+  if (log.meta?.projectName) return `โปรเจกต์: ${log.meta.projectName}`;
+  if (log.meta?.userName) return `ผู้ใช้: ${log.meta.userName}`;
+  if (log.meta?.userDisplayName) return `ผู้ใช้: ${log.meta.userDisplayName}`;
+  if (log.meta?.targetName) return log.meta.targetName;
+  if (log.meta?.name) return log.meta.name;
+  if (log.meta?.title) return log.meta.title;
+  
+  if (log.action.includes('PROJECT')) return 'โปรเจกต์ (ไม่ระบุชื่อ)';
+  if (log.action.includes('MEMBER') || log.action.includes('ROLE') || log.action.includes('USER')) return 'ผู้ใช้ (ไม่ระบุชื่อ)';
+  
+  return "ไม่ระบุ";
 };
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -247,8 +265,8 @@ export function AuditLogsClient() {
                           </span>
                         </td>
                         <td className="px-5 py-3.5">
-                          <span className="font-medium text-slate-800 line-clamp-1 max-w-[200px]">
-                            {log.meta?.clipName || "ไม่ระบุ"}
+                          <span className="font-medium text-slate-800 line-clamp-1 max-w-[200px]" title={getTargetName(log)}>
+                            {getTargetName(log)}
                           </span>
                         </td>
                         <td className="px-5 py-3.5 text-right text-slate-400">
@@ -393,14 +411,14 @@ export function AuditLogsClient() {
               )}
 
               {/* Target Item */}
-              {selectedLog.entityType === 'clip' && (
+              {selectedLog.entityType && (
                 <div>
                   <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">
-                    เป้าหมาย (Clip)
+                    เป้าหมาย ({selectedLog.entityType || "Entity"})
                   </h4>
                   <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
                     <p className="font-bold text-slate-800 text-sm">
-                      {selectedLog.meta?.clipName}
+                      {getTargetName(selectedLog)}
                     </p>
                     <p className="text-xs text-slate-500 mt-1 font-mono">
                       ID: {selectedLog.entityId}
