@@ -11,6 +11,7 @@ import {
   Plus,
   List,
   CalendarDays,
+  FolderOpen,
 } from "lucide-react";
 
 export interface SidebarMenuItem {
@@ -42,6 +43,7 @@ export function getSidebarMenu(
         { title: "งานของฉัน", href: "/tasks", icon: ClipboardList },
         { title: "ส่งงานด่วน", href: "/submit", icon: Plus },
         { title: "โปรเจกต์ทั้งหมด", href: "/projects", icon: FileVideo },
+        { title: "คลังทรัพยากรส่วนกลาง", href: "/assets", icon: FolderOpen },
       ],
     });
   }
@@ -55,6 +57,7 @@ export function getSidebarMenu(
           { title: "งานของฉัน", href: "/tasks", icon: ClipboardList },
           { title: "ส่งงานด่วน", href: "/submit", icon: Plus },
           { title: "โปรเจกต์ทั้งหมด", href: "/projects", icon: FileVideo },
+          { title: "คลังทรัพยากรส่วนกลาง", href: "/assets", icon: FolderOpen },
         ],
       },
       {
@@ -93,6 +96,7 @@ export function getSidebarMenu(
             ],
           },
           { title: "รายงานวิเคราะห์", href: "/analytics", icon: BarChart3 },
+          { title: "คลังทรัพยากรส่วนกลาง", href: "/assets", icon: FolderOpen },
         ],
       },
       {

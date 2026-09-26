@@ -14,6 +14,9 @@ import {
   Layers,
   Ruler,
   Pencil,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api-client";
@@ -357,6 +360,52 @@ export default function SpreadsheetManager({
       return false;
     return true;
   });
+
+  const [sortField, setSortField] = useState<string>("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  if (sortField) {
+    filteredClips.sort((a, b) => {
+      let valA: any = "";
+      let valB: any = "";
+
+      if (sortField === "name") {
+        valA = (a.name || "").toLowerCase();
+        valB = (b.name || "").toLowerCase();
+      } else if (sortField === "episodeNo") {
+        valA = Number(a.episodeNo || 0);
+        valB = Number(b.episodeNo || 0);
+      } else if (sortField === "ownerId") {
+        const ownerA = users.find(u => u.id === a.ownerId)?.displayName || "";
+        const ownerB = users.find(u => u.id === b.ownerId)?.displayName || "";
+        valA = ownerA.toLowerCase();
+        valB = ownerB.toLowerCase();
+      }
+
+      if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+      if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+  }
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      if (sortOrder === "asc") setSortOrder("desc");
+      else setSortField(""); // Reset sort on 3rd click
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
+
+  const SortIcon = ({ field }: { field: string }) => {
+    if (sortField !== field) return <ArrowUpDown size={12} className="text-blue-300 ml-1 inline" />;
+    return sortOrder === "asc" ? (
+      <ArrowUp size={12} className="text-blue-600 ml-1 inline" />
+    ) : (
+      <ArrowDown size={12} className="text-blue-600 ml-1 inline" />
+    );
+  };
 
   const handleAddRow = () => {
     setClips([
@@ -799,17 +848,26 @@ export default function SpreadsheetManager({
               <th className="px-3 py-2 border-r border-blue-200 font-bold w-[50px] text-center">
                 ลำดับ
               </th>
-              <th className="px-3 py-2 border-r border-blue-200 font-bold text-left min-w-[200px]">
-                ชื่อคลิป
+              <th 
+                className="px-3 py-2 border-r border-blue-200 font-bold text-left min-w-[200px] cursor-pointer hover:bg-blue-200/50 transition-colors"
+                onClick={() => handleSort("name")}
+              >
+                ชื่อคลิป <SortIcon field="name" />
               </th>
               <th className="hidden md:table-cell px-3 py-2 border-r border-blue-200 font-bold text-left min-w-[250px]">
                 รายละเอียด
               </th>
-              <th className="px-3 py-2 border-r border-blue-200 font-bold w-[120px] text-left">
-                ตอน (Episode)
+              <th 
+                className="px-3 py-2 border-r border-blue-200 font-bold w-[120px] text-left cursor-pointer hover:bg-blue-200/50 transition-colors"
+                onClick={() => handleSort("episodeNo")}
+              >
+                ตอน (Episode) <SortIcon field="episodeNo" />
               </th>
-              <th className="px-3 py-2 border-r border-blue-200 font-bold text-left w-[220px]">
-                ผู้รับผิดชอบ
+              <th 
+                className="px-3 py-2 border-r border-blue-200 font-bold text-left w-[220px] cursor-pointer hover:bg-blue-200/50 transition-colors"
+                onClick={() => handleSort("ownerId")}
+              >
+                ผู้รับผิดชอบ <SortIcon field="ownerId" />
               </th>
               <th className="px-3 py-2 border-r border-blue-200 font-bold text-left w-[130px]">
                 Video Size

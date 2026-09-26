@@ -14,6 +14,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -104,6 +107,50 @@ export function AuditLogsClient() {
 
   const handlePrevPage = () => {
     if (page > 1) setPage((p) => p - 1);
+  };
+
+  const [sortField, setSortField] = useState<string>("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  const sortedLogs = logs ? [...logs].sort((a, b) => {
+    let valA: any = "";
+    let valB: any = "";
+
+    if (sortField === "createdAt") {
+      valA = new Date(a.createdAt).getTime();
+      valB = new Date(b.createdAt).getTime();
+    } else if (sortField === "actorName") {
+      valA = (a.actor?.displayName || "").toLowerCase();
+      valB = (b.actor?.displayName || "").toLowerCase();
+    } else if (sortField === "action") {
+      valA = (ACTION_LABELS[a.action]?.label || a.action).toLowerCase();
+      valB = (ACTION_LABELS[b.action]?.label || b.action).toLowerCase();
+    } else if (sortField === "target") {
+      valA = getTargetName(a).toLowerCase();
+      valB = getTargetName(b).toLowerCase();
+    }
+
+    if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+    if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+    return 0;
+  }) : [];
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder(field === "createdAt" ? "desc" : "asc");
+    }
+  };
+
+  const SortIcon = ({ field }: { field: string }) => {
+    if (sortField !== field) return <ArrowUpDown size={12} className="text-slate-300 ml-1 inline" />;
+    return sortOrder === "asc" ? (
+      <ArrowUp size={12} className="text-blue-600 ml-1 inline" />
+    ) : (
+      <ArrowDown size={12} className="text-blue-600 ml-1 inline" />
+    );
   };
 
   return (
@@ -207,23 +254,37 @@ export function AuditLogsClient() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm border-collapse">
-                <thead className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <thead className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider select-none">
                   <tr>
-                    <th className="px-5 py-3 text-slate-400 whitespace-nowrap">
-                      เวลา
+                    <th 
+                      className="px-5 py-3 text-slate-400 whitespace-nowrap cursor-pointer hover:bg-slate-100 transition-colors"
+                      onClick={() => handleSort("createdAt")}
+                    >
+                      เวลา <SortIcon field="createdAt" />
                     </th>
-                    <th className="px-5 py-3 whitespace-nowrap">
-                      ผู้ดำเนินการ
+                    <th 
+                      className="px-5 py-3 whitespace-nowrap cursor-pointer hover:bg-slate-100 transition-colors"
+                      onClick={() => handleSort("actorName")}
+                    >
+                      ผู้ดำเนินการ <SortIcon field="actorName" />
                     </th>
-                    <th className="px-5 py-3 whitespace-nowrap">การกระทำ</th>
-                    <th className="px-5 py-3 whitespace-nowrap">
-                      เป้าหมาย (คลิป)
+                    <th 
+                      className="px-5 py-3 whitespace-nowrap cursor-pointer hover:bg-slate-100 transition-colors"
+                      onClick={() => handleSort("action")}
+                    >
+                      การกระทำ <SortIcon field="action" />
+                    </th>
+                    <th 
+                      className="px-5 py-3 whitespace-nowrap cursor-pointer hover:bg-slate-100 transition-colors"
+                      onClick={() => handleSort("target")}
+                    >
+                      เป้าหมาย <SortIcon field="target" />
                     </th>
                     <th className="px-5 py-3 text-right"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {logs.map((log) => {
+                  {sortedLogs.map((log) => {
                     const actionInfo = ACTION_LABELS[log.action] || {
                       label: log.action,
                       color: "bg-slate-100",

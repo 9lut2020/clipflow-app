@@ -12,6 +12,9 @@ import {
   Clock,
   ExternalLink,
   Layers,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 
 interface DashboardTableProps {
@@ -41,6 +44,51 @@ export default function DashboardTable({ clips, isUser, role }: DashboardTablePr
 
     return matchesSearch && matchesStatus;
   });
+
+  // Sort logic
+  const [sortField, setSortField] = useState<string>("updatedAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  filteredClips.sort((a, b) => {
+    let valA: any = "";
+    let valB: any = "";
+
+    if (sortField === "name") {
+      valA = (a.project?.name + " " + (a.name || a.episode?.name || "")).toLowerCase();
+      valB = (b.project?.name + " " + (b.name || b.episode?.name || "")).toLowerCase();
+    } else if (sortField === "owner") {
+      valA = (a.owner?.displayName || "").toLowerCase();
+      valB = (b.owner?.displayName || "").toLowerCase();
+    } else if (sortField === "updatedAt") {
+      valA = new Date(a.updatedAt || a.submittedAt || a.createdAt || 0).getTime();
+      valB = new Date(b.updatedAt || b.submittedAt || b.createdAt || 0).getTime();
+    } else if (sortField === "status") {
+      valA = a.status;
+      valB = b.status;
+    }
+
+    if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+    if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder(field === "updatedAt" ? "desc" : "asc");
+    }
+  };
+
+  const SortIcon = ({ field }: { field: string }) => {
+    if (sortField !== field) return <ArrowUpDown size={12} className="text-slate-300 ml-1" />;
+    return sortOrder === "asc" ? (
+      <ArrowUp size={12} className="text-blue-600 ml-1" />
+    ) : (
+      <ArrowDown size={12} className="text-blue-600 ml-1" />
+    );
+  };
 
   const UserAvatar = ({
     name,
@@ -150,6 +198,7 @@ export default function DashboardTable({ clips, isUser, role }: DashboardTablePr
               { id: "NEEDS_REVISION", label: "สั่งแก้" },
               { id: "APPROVED", label: "ผ่านอนุมัติ" },
               { id: "PUBLISHED", label: "เผยแพร่แล้ว" },
+              { id: "CANCELLED", label: "ยกเลิก" },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -191,12 +240,42 @@ export default function DashboardTable({ clips, isUser, role }: DashboardTablePr
           </div>
         ) : (
           <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-600 font-bold">
+            <thead className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-600 font-bold select-none">
               <tr>
-                <th className="px-6 py-3.5">โปรเจกต์ & รายชื่อคลิป</th>
-                {!isUser && <th className="px-6 py-3.5">ผู้รับผิดชอบ</th>}
-                <th className="px-6 py-3.5">เวลาอัปเดตล่าสุด</th>
-                <th className="px-6 py-3.5 text-center">สถานะ</th>
+                <th 
+                  className="px-6 py-3.5 cursor-pointer hover:bg-slate-100 transition-colors"
+                  onClick={() => handleSort("name")}
+                >
+                  <div className="flex items-center">
+                    โปรเจกต์ & รายชื่อคลิป <SortIcon field="name" />
+                  </div>
+                </th>
+                {!isUser && (
+                  <th 
+                    className="px-6 py-3.5 cursor-pointer hover:bg-slate-100 transition-colors"
+                    onClick={() => handleSort("owner")}
+                  >
+                    <div className="flex items-center">
+                      ผู้รับผิดชอบ <SortIcon field="owner" />
+                    </div>
+                  </th>
+                )}
+                <th 
+                  className="px-6 py-3.5 cursor-pointer hover:bg-slate-100 transition-colors"
+                  onClick={() => handleSort("updatedAt")}
+                >
+                  <div className="flex items-center">
+                    เวลาอัปเดตล่าสุด <SortIcon field="updatedAt" />
+                  </div>
+                </th>
+                <th 
+                  className="px-6 py-3.5 text-center cursor-pointer hover:bg-slate-100 transition-colors"
+                  onClick={() => handleSort("status")}
+                >
+                  <div className="flex items-center justify-center">
+                    สถานะ <SortIcon field="status" />
+                  </div>
+                </th>
                 <th className="px-6 py-3.5 text-right pr-6">การดำเนินการ</th>
               </tr>
             </thead>

@@ -16,6 +16,9 @@ import {
   AlertCircle,
   Clock,
   Loader2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { format } from "date-fns";
@@ -59,6 +62,50 @@ export function UsersClient({ initialUsers, currentUserId }: UsersClientProps) {
     const matchesRole = roleFilter === "ALL" ? true : user.role === roleFilter;
     return matchesSearch && matchesRole;
   });
+
+  const [sortField, setSortField] = useState<string>("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  filteredUsers.sort((a, b) => {
+    let valA: any = "";
+    let valB: any = "";
+
+    if (sortField === "name") {
+      valA = (a.displayName || "").toLowerCase();
+      valB = (b.displayName || "").toLowerCase();
+    } else if (sortField === "role") {
+      valA = a.role;
+      valB = b.role;
+    } else if (sortField === "lastActiveAt") {
+      valA = new Date(a.lastActiveAt || a.updatedAt || a.createdAt || 0).getTime();
+      valB = new Date(b.lastActiveAt || b.updatedAt || b.createdAt || 0).getTime();
+    } else if (sortField === "status") {
+      valA = a.isActive !== false ? 1 : 0;
+      valB = b.isActive !== false ? 1 : 0;
+    }
+
+    if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+    if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder(field === "lastActiveAt" ? "desc" : "asc");
+    }
+  };
+
+  const SortIcon = ({ field }: { field: string }) => {
+    if (sortField !== field) return <ArrowUpDown size={12} className="text-slate-300 ml-1" />;
+    return sortOrder === "asc" ? (
+      <ArrowUp size={12} className="text-blue-600 ml-1" />
+    ) : (
+      <ArrowDown size={12} className="text-blue-600 ml-1" />
+    );
+  };
 
   // Metrics
   const totalUsers = usersList.length;
@@ -315,12 +362,40 @@ export function UsersClient({ initialUsers, currentUserId }: UsersClientProps) {
         {/* 💻 Desktop Table View (hidden on small screens) */}
         <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-600 font-bold">
+            <thead className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-600 font-bold select-none">
               <tr>
-                <th className="px-5 py-3.5">ผู้ใช้งาน</th>
-                <th className="px-5 py-3.5 text-center">บทบาท</th>
-                <th className="px-5 py-3.5 text-center">สถานะบัญชี</th>
-                <th className="px-5 py-3.5 text-center">เข้าใช้งานล่าสุด</th>
+                <th 
+                  className="px-5 py-3.5 cursor-pointer hover:bg-slate-100 transition-colors"
+                  onClick={() => handleSort("name")}
+                >
+                  <div className="flex items-center">
+                    ผู้ใช้งาน <SortIcon field="name" />
+                  </div>
+                </th>
+                <th 
+                  className="px-5 py-3.5 text-center cursor-pointer hover:bg-slate-100 transition-colors"
+                  onClick={() => handleSort("role")}
+                >
+                  <div className="flex items-center justify-center">
+                    บทบาท <SortIcon field="role" />
+                  </div>
+                </th>
+                <th 
+                  className="px-5 py-3.5 text-center cursor-pointer hover:bg-slate-100 transition-colors"
+                  onClick={() => handleSort("status")}
+                >
+                  <div className="flex items-center justify-center">
+                    สถานะบัญชี <SortIcon field="status" />
+                  </div>
+                </th>
+                <th 
+                  className="px-5 py-3.5 text-center cursor-pointer hover:bg-slate-100 transition-colors"
+                  onClick={() => handleSort("lastActiveAt")}
+                >
+                  <div className="flex items-center justify-center">
+                    เข้าใช้งานล่าสุด <SortIcon field="lastActiveAt" />
+                  </div>
+                </th>
                 <th className="px-5 py-3.5 text-right pr-6">การจัดการ</th>
               </tr>
             </thead>
