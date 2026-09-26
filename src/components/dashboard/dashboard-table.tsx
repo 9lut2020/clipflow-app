@@ -94,6 +94,30 @@ export default function DashboardTable({ clips, isUser, role }: DashboardTablePr
         </span>
       );
     }
+    if (status === "DRAFT") {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-50 text-slate-700 border border-slate-200/80 shadow-2xs">
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+          รอส่งงาน
+        </span>
+      );
+    }
+    if (status === "PUBLISHED") {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs">
+          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+          เผยแพร่แล้ว
+        </span>
+      );
+    }
+    if (status === "CANCELLED") {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-500 border border-gray-200/80 shadow-2xs">
+          <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+          ยกเลิก
+        </span>
+      );
+    }
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/80 shadow-2xs">
         <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
@@ -121,9 +145,11 @@ export default function DashboardTable({ clips, isUser, role }: DashboardTablePr
           <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
             {[
               { id: "ALL", label: "ทั้งหมด" },
+              { id: "DRAFT", label: "รอส่งงาน" },
               { id: "PENDING_REVIEW", label: "รอตรวจ" },
               { id: "NEEDS_REVISION", label: "สั่งแก้" },
               { id: "APPROVED", label: "ผ่านอนุมัติ" },
+              { id: "PUBLISHED", label: "เผยแพร่แล้ว" },
             ].map((tab) => (
               <button
                 key={tab.id}

@@ -9,6 +9,7 @@ import {
   Film,
   AlertCircle,
   Video,
+  Image as ImageIcon,
 } from "lucide-react";
 import { cn } from "@/utils/utils";
 
@@ -58,6 +59,7 @@ export default function VideoEmbed({
   const fileId = getDriveFileId(url);
   const isGoogleDrive = url.includes("drive.google.com") || !!fileId;
   const isDirectVideo = /\.(mp4|webm|ogg|mov)$/i.test(url);
+  const isDirectImage = /\.(png|jpe?g|gif|webp|svg)$/i.test(url);
 
   // Construct iframe embed URL safely
   let embedUrl: string | null = null;
@@ -95,7 +97,16 @@ export default function VideoEmbed({
             : "aspect-[4/5] sm:aspect-[16/10] max-h-[100vh] sm:max-h-[60vh] rounded-lg overflow-hidden",
         )}
       >
-        {isDirectVideo ? (
+        {isDirectImage ? (
+          /* HTML5 Image Viewer for Direct Image Files */
+          <div className="w-full h-full flex items-center justify-center bg-slate-900 p-2">
+            <img
+              src={url}
+              alt="Preview"
+              className="w-full h-full object-contain rounded-md shadow-sm"
+            />
+          </div>
+        ) : isDirectVideo ? (
           /* HTML5 Video Player for Direct Video Files */
           <video
             ref={videoRef}
@@ -177,7 +188,11 @@ export default function VideoEmbed({
       {/* Control & Link Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-100 p-2.5 rounded-xl border border-slate-200/80">
         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 truncate">
-          <Video size={15} className="text-blue-600 shrink-0" />
+          {isDirectImage ? (
+            <ImageIcon size={15} className="text-blue-600 shrink-0" />
+          ) : (
+            <Video size={15} className="text-blue-600 shrink-0" />
+          )}
           <span className="text-slate-500 font-medium text-[11px] sm:text-xs truncate">
             {url.startsWith("http") ? url : `https://${url}`}
           </span>
