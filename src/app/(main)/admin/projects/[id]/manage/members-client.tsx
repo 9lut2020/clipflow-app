@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { apiClient } from "@/lib/api-client";
 import { User } from "@/types/api";
@@ -25,6 +26,7 @@ export default function MembersClient({
   projectId: string;
   allUsers: User[];
 }) {
+  const router = useRouter();
   const { data: membersResponse, mutate } = useSWR<{
     status: string;
     data: User[];
@@ -68,6 +70,7 @@ export default function MembersClient({
       toast.success("เพิ่มสมาชิกสำเร็จ");
       setSelectedUsers([]);
       mutate();
+      router.refresh(); // Refresh Server Components to update SpreadsheetManager users
     } catch (err) {
       toast.error("เกิดข้อผิดพลาดในการเพิ่มสมาชิก");
     } finally {
@@ -88,6 +91,7 @@ export default function MembersClient({
       mutate();
       setMembersToDelete(null);
       setSelectedForDelete([]);
+      router.refresh();
     } catch (err) {
       toast.error("เกิดข้อผิดพลาดในการลบสมาชิก");
     } finally {
