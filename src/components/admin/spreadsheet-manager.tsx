@@ -654,7 +654,7 @@ export default function SpreadsheetManager({
     // End-to-end type safety: validate with the same schema used in Backend
     const validationResult = ClipBatchCreateSchema.safeParse({ clips });
     if (!validationResult.success) {
-      const firstError = validationResult.error.errors[0];
+      const firstError = validationResult.error.issues[0];
       const rowMatch = firstError.path[1];
       
       if (typeof rowMatch === "number") {
