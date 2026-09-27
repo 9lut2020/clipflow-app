@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8787/api";
-const DEFAULT_TIMEOUT_MS = 8000;
+const DEFAULT_TIMEOUT_MS = 15000;
 
 async function request<T>(
   method: string,

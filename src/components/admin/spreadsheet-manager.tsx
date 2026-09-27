@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, memo } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useBatchCreateClips } from "@/features/clips/hooks/use-clips";
-import { ClipBatchCreateSchema } from "@clipflow/validations";
+import { ClipBatchCreateSchema } from "@/lib/api-schemas";
 import {
   Save,
   Plus,
