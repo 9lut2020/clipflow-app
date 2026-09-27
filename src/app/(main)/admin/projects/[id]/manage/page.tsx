@@ -24,21 +24,18 @@ export default async function ProjectManagePage(props: {
     redirect("/projects");
   }
 
-  // These independent reads use the paginated collection contract from the API.
-  const [projectResult, usersResult, membersResult, episodesResult, clipsResult, videoSizesResult] = await Promise.all([
-    apiServer.get<any>(`/projects/${params.id}/manage`).catch(() => ({ data: null })),
-    apiServer.get<PaginatedData<User>>("/users?page=1&limit=100").catch(() => ({ data: null })),
-    apiServer.get<PaginatedData<User>>(`/projects/${params.id}/members?page=1&limit=100`).catch(() => ({ data: null })),
-    apiServer.get<PaginatedData<Episode>>(`/episodes?projectId=${params.id}&page=1&limit=100`).catch(() => ({ data: null })),
-    apiServer.get<PaginatedData<Clip>>(`/projects/${params.id}/clips?page=1&limit=100`).catch(() => ({ data: null })),
-    apiServer.get<PaginatedData<any>>("/video-sizes?page=1&limit=100&isActive=true").catch(() => ({ data: null })),
-  ]);
-  const project: any = projectResult.data;
-  const allUsers = usersResult.data?.items || [];
-  const members = membersResult.data?.items || [];
-  const episodes = episodesResult.data?.items || [];
-  const clips = clipsResult.data?.items || [];
-  const videoSizes = videoSizesResult.data?.items || [];
+  // Fetch all required data for the spreadsheet manager in a single API call
+  const manageResult = await apiServer
+    .get<any>(`/projects/${params.id}/manage`)
+    .catch(() => ({ data: null }));
+
+  const manageData = manageResult.data || {};
+  const project = manageData.project || null;
+  const allUsers = manageData.allUsers || [];
+  const members = manageData.members || [];
+  const episodes = manageData.episodes || [];
+  const clips = manageData.clips || [];
+  const videoSizes = manageData.videoSizes || [];
 
   // Allowed users: Members + Admins
   const memberIds = new Set(members.map((m: any) => m.id));

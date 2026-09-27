@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, memo } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useBatchCreateClips } from "@/features/clips/hooks/use-clips";
+import { ClipBatchCreateSchema } from "@clipflow/validations";
 import {
   Save,
   Plus,
@@ -210,6 +211,112 @@ const AssigneeDropdown = ({
     </div>
   );
 };
+const ClipRow = ({ clip, index, clipNumberInEp, isSelected, onToggleSelect, onChange, onApplyToAllBelow, onRemove, episodes, users, videoSizes }: any) => {
+  const isEven = index % 2 === 0;
+  return (
+    <tr
+      className={`${isEven ? "bg-white" : "bg-slate-50"} hover:bg-blue-50/50 transition-colors group focus-within:relative focus-within:z-50 hover:relative hover:z-40 ${isSelected ? "bg-blue-50/80" : ""}`}
+    >
+      <td className="px-3 py-1.5 border-r border-b border-slate-200 text-center">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={(e) => onToggleSelect(index, e.target.checked)}
+          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 cursor-pointer"
+        />
+      </td>
+      <td className="px-3 py-1.5 border-r border-b border-slate-200 text-center font-medium">
+        <div className="flex flex-col text-[11px] leading-tight">
+          <span className="font-bold text-blue-600">EP.{clip.episodeNo || '?'}</span>
+          <span className="text-slate-400">#{clipNumberInEp}</span>
+        </div>
+      </td>
+      <td className="border-r border-b border-slate-200 p-0">
+        <input
+          type="text"
+          value={clip.name}
+          onChange={(e) => onChange(index, "name", e.target.value)}
+          placeholder="ชื่อคลิป..."
+          className="w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all font-medium text-slate-800"
+        />
+      </td>
+      <td className="hidden md:table-cell border-r border-b border-slate-200 p-0">
+        <input
+          type="text"
+          value={clip.description || ""}
+          onChange={(e) => onChange(index, "description", e.target.value)}
+          placeholder="รายละเอียด (เช่น เวลาเริ่ม-จบ)..."
+          className="w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all text-slate-600 text-sm"
+        />
+      </td>
+      <td className="border-r border-b border-slate-200 p-0 relative">
+        <select
+          value={clip.episodeNo || ""}
+          onChange={(e) => onChange(index, "episodeNo", e.target.value)}
+          className="w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all font-bold text-blue-600 cursor-pointer appearance-none"
+        >
+          <option value="" disabled>
+            เลือกตอน...
+          </option>
+          {episodes.map((ep: any) => (
+            <option key={ep.id} value={ep.episodeNo}>
+              EP. {ep.episodeNo}
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          size={14}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+        />
+      </td>
+      <td className="border-r border-b border-slate-200 p-0">
+        <AssigneeDropdown
+          users={users}
+          value={clip.ownerId || ""}
+          onChange={(val: any) => onChange(index, "ownerId", val)}
+          onApplyToAllBelow={() => onApplyToAllBelow(index, clip.ownerId)}
+        />
+      </td>
+      <td className="border-r border-b border-slate-200 p-0">
+        <select
+          value={clip.videoSizeId || ""}
+          onChange={(e) => onChange(index, "videoSizeId", e.target.value)}
+          className="w-full h-full px-2 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-purple-500 transition-all text-xs font-bold cursor-pointer"
+        >
+          <option value="">Select size...</option>
+          {videoSizes
+            .filter((size: any) => size.isActive)
+            .map((size: any) => (
+              <option key={size.id} value={size.id}>
+                {size.name} ({size.width}x{size.height})
+              </option>
+            ))}
+        </select>
+      </td>
+      <td className="border-b border-slate-200 p-0 text-center">
+        <button
+          onClick={() => onRemove(index)}
+          className="w-full h-full py-2 flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+          title="ลบแถว"
+        >
+          <Trash2 size={16} />
+        </button>
+      </td>
+    </tr>
+  );
+};
+
+const MemoizedClipRow = memo(ClipRow, (prev, next) => {
+  return (
+    prev.clip === next.clip &&
+    prev.index === next.index &&
+    prev.clipNumberInEp === next.clipNumberInEp &&
+    prev.isSelected === next.isSelected &&
+    prev.episodes === next.episodes &&
+    prev.videoSizes === next.videoSizes &&
+    prev.users === next.users
+  );
+});
 
 export default function SpreadsheetManager({
   projectId,
@@ -408,17 +515,21 @@ export default function SpreadsheetManager({
   };
 
   const handleAddRow = () => {
+    const episodeNo = clips.length > 0
+      ? clips[clips.length - 1].episodeNo
+      : episodes.length > 0
+        ? episodes[episodes.length - 1].episodeNo
+        : 1;
+
+    const countInEp = clips.filter(c => c.episodeNo === episodeNo).length + 1;
+    const paddedCount = countInEp.toString().padStart(2, '0');
+
     setClips([
       ...clips,
       {
         id: `new-${Date.now()}`,
-        episodeNo:
-          clips.length > 0
-            ? clips[clips.length - 1].episodeNo
-            : episodes.length > 0
-              ? episodes[episodes.length - 1].episodeNo
-              : 1,
-        name: "",
+        episodeNo,
+        name: `EP${episodeNo}_${paddedCount}`,
         description: "",
         ownerId: "",
         videoSizeId: videoSizes.find((size) => size.isActive)?.id || "",
@@ -540,9 +651,17 @@ export default function SpreadsheetManager({
   };
 
   const handleSave = async () => {
-    const invalidRows = clips.filter((c) => !c.name || !c.episodeNo);
-    if (invalidRows.length > 0) {
-      toast.error("กรุณากรอกชื่อคลิปและตอน (EP) ให้ครบถ้วน");
+    // End-to-end type safety: validate with the same schema used in Backend
+    const validationResult = ClipBatchCreateSchema.safeParse({ clips });
+    if (!validationResult.success) {
+      const firstError = validationResult.error.errors[0];
+      const rowMatch = firstError.path[1];
+      
+      if (typeof rowMatch === "number") {
+        toast.error(`ข้อมูลผิดพลาดในแถวที่ ${rowMatch + 1}: ${firstError.message}`);
+      } else {
+        toast.error(`ข้อมูลไม่ถูกต้อง: ${firstError.message}`);
+      }
       return;
     }
 
@@ -675,6 +794,16 @@ export default function SpreadsheetManager({
     setShowImportModal(false);
     setImportText("");
   };
+
+  // Pre-compute clip numbering per episode based on current order of clips
+  const clipNumbers: Record<string, number> = {};
+  const epCounts: Record<string, number> = {};
+  clips.forEach((clip) => {
+    const ep = clip.episodeNo?.toString() || "0";
+    if (!epCounts[ep]) epCounts[ep] = 0;
+    epCounts[ep]++;
+    clipNumbers[clip.id || ""] = epCounts[ep];
+  });
 
   return (
     <div className="flex flex-col h-full max-h-[70vh] w-full min-w-0 overflow-hidden">
@@ -888,113 +1017,30 @@ export default function SpreadsheetManager({
             ) : (
               filteredClips.map((clip, filteredIndex) => {
                 const index = clips.findIndex((c) => c.id === clip.id);
-                const isEven = index % 2 === 0;
+                // Fallback to array index if id is somehow duplicated or missing
+                const actualIndex = index !== -1 ? index : filteredIndex;
                 return (
-                  <tr
-                    key={clip.id || index}
-                    className={`${isEven ? "bg-white" : "bg-slate-50"} hover:bg-blue-50/50 transition-colors group focus-within:relative focus-within:z-50 hover:relative hover:z-40 ${selectedRows.has(index) ? "bg-blue-50/80" : ""}`}
-                  >
-                    <td className="px-3 py-1.5 border-r border-b border-slate-200 text-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedRows.has(index)}
-                        onChange={(e) => {
-                          const newSet = new Set(selectedRows);
-                          if (e.target.checked) {
-                            newSet.add(index);
-                          } else {
-                            newSet.delete(index);
-                          }
-                          setSelectedRows(newSet);
-                        }}
-                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 cursor-pointer"
-                      />
-                    </td>
-                    <td className="px-3 py-1.5 border-r border-b border-slate-200 text-center text-slate-500 font-medium">
-                      {index + 1}
-                    </td>
-                    <td className="border-r border-b border-slate-200 p-0">
-                      <input
-                        type="text"
-                        value={clip.name}
-                        onChange={(e) =>
-                          handleChange(index, "name", e.target.value)
-                        }
-                        placeholder="ชื่อคลิป..."
-                        className="w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all font-medium text-slate-800"
-                      />
-                    </td>
-                    <td className="hidden md:table-cell border-r border-b border-slate-200 p-0">
-                      <input
-                        type="text"
-                        value={clip.description || ""}
-                        onChange={(e) =>
-                          handleChange(index, "description", e.target.value)
-                        }
-                        placeholder="รายละเอียด (เช่น เวลาเริ่ม-จบ)..."
-                        className="w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all text-slate-600 text-sm"
-                      />
-                    </td>
-                    <td className="border-r border-b border-slate-200 p-0 relative">
-                      <select
-                        value={clip.episodeNo || ""}
-                        onChange={(e) =>
-                          handleChange(index, "episodeNo", e.target.value)
-                        }
-                        className="w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all font-bold text-blue-600 cursor-pointer appearance-none"
-                      >
-                        <option value="" disabled>
-                          เลือกตอน...
-                        </option>
-                        {episodes.map((ep) => (
-                          <option key={ep.id} value={ep.episodeNo}>
-                            EP. {ep.episodeNo}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown
-                        size={14}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                      />
-                    </td>
-                    <td className="border-r border-b border-slate-200 p-0">
-                      <AssigneeDropdown
-                        users={users}
-                        value={clip.ownerId || ""}
-                        onChange={(val) => handleChange(index, "ownerId", val)}
-                        onApplyToAllBelow={() =>
-                          handleApplyToAllBelow(index, clip.ownerId)
-                        }
-                      />
-                    </td>
-                    <td className="border-r border-b border-slate-200 p-0">
-                      <select
-                        value={clip.videoSizeId || ""}
-                        onChange={(e) =>
-                          handleChange(index, "videoSizeId", e.target.value)
-                        }
-                        className="w-full h-full px-2 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-purple-500 transition-all text-xs font-bold cursor-pointer"
-                      >
-                        <option value="">Select size...</option>
-                        {videoSizes
-                          .filter((size) => size.isActive)
-                          .map((size) => (
-                            <option key={size.id} value={size.id}>
-                              {size.name} ({size.width}x{size.height})
-                            </option>
-                          ))}
-                      </select>
-                    </td>
-                    <td className="border-b border-slate-200 p-0 text-center">
-                      <button
-                        onClick={() => handleRemoveRow(index)}
-                        className="w-full h-full py-2 flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors"
-                        title="ลบแถว"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
+                  <MemoizedClipRow
+                    key={clip.id || `clip-${actualIndex}`}
+                    clip={clip}
+                    index={actualIndex}
+                    clipNumberInEp={clipNumbers[clip.id || ""] || 1}
+                    isSelected={selectedRows.has(actualIndex)}
+                    onToggleSelect={(i: number, checked: boolean) => {
+                      setSelectedRows((prev) => {
+                        const newSet = new Set(prev);
+                        if (checked) newSet.add(i);
+                        else newSet.delete(i);
+                        return newSet;
+                      });
+                    }}
+                    onChange={handleChange}
+                    onApplyToAllBelow={handleApplyToAllBelow}
+                    onRemove={handleRemoveRow}
+                    episodes={episodes}
+                    users={users}
+                    videoSizes={videoSizes}
+                  />
                 );
               })
             )}

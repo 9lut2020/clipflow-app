@@ -15,7 +15,7 @@ const fetcher = async <T>(url: string) => {
 
 export function useClips(episodeId?: string, excludeApproved = true) {
   const { data, error, isLoading } = useSWR<ApiResponse<PaginatedData<Clip>>>(
-    episodeId ? `/clips?episodeId=${episodeId}&excludeApproved=${String(excludeApproved)}&page=1&limit=100` : null,
+    episodeId ? `/clips?episodeId=${episodeId}&excludeApproved=${String(excludeApproved)}&page=1&limit=5000` : null,
     fetcher
   );
 
@@ -28,7 +28,7 @@ export function useClips(episodeId?: string, excludeApproved = true) {
 }
 
 export function useAllClips(status?: string, excludeApproved = true) {
-  let url = `/clips?excludeApproved=${String(excludeApproved)}&page=1&limit=100`;
+  let url = `/clips?excludeApproved=${String(excludeApproved)}&page=1&limit=5000`;
   if (status) {
     url += `&status=${status}`;
   }
