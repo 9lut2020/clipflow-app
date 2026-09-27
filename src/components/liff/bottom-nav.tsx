@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, PlusCircle, FileVideo, Menu } from "lucide-react";
+import {
+  LayoutDashboard,
+  PlusCircle,
+  FileVideo,
+  Menu,
+  ClipboardCheck,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 
 interface NavItem {
@@ -16,27 +22,37 @@ export default function BottomNav() {
   const { data: session } = useSession();
   const role = session?.user?.role || "USER";
   const isUser = role === "USER";
+  const isAdmin = role === "ADMIN";
+  const isReviewer = role === "REVIEWER";
 
   const leftNavItems: NavItem[] = [
     { href: "/dashboard", label: "แดชบอร์ด", icon: LayoutDashboard },
-    { href: "/menu", label: "เมนู", icon: Menu },
+    { 
+      href: isAdmin ? "/projects" : "/menu", 
+      label: isAdmin ? "โปรเจกต์" : "เมนู", 
+      icon: isAdmin ? FileVideo : Menu 
+    },
   ];
 
   const centerFloatingItem: NavItem | null = isUser
-    ? {
-        href: "/submit",
-        label: "งานของฉัน",
-        icon: PlusCircle,
-      }
+    ? { href: "/submit", label: "ส่งงานใหม่", icon: PlusCircle }
+    : isReviewer
+    ? { href: "/tasks", label: "งานตรวจ", icon: ClipboardCheck }
+    : isAdmin
+    ? { href: "/admin/projects/create", label: "สร้างโปรเจกต์", icon: PlusCircle }
     : null;
 
   const rightNavItems: NavItem[] = [
     {
-      href: isUser ? "/tasks" : "/projects",
-      label: isUser ? "งานของฉัน" : "โปรเจกต์",
-      icon: FileVideo,
+      href: isUser ? "/tasks" : "/tasks",
+      label: isUser ? "งานของฉัน" : "งานตรวจ",
+      icon: isUser ? FileVideo : ClipboardCheck,
     },
   ];
+
+  if (isAdmin || isReviewer) {
+    rightNavItems.push({ href: "/menu", label: "เมนู", icon: Menu });
+  }
 
   const visibleNavItems = [...leftNavItems];
   if (centerFloatingItem) visibleNavItems.push(centerFloatingItem);
