@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, memo } from "react";
+import React, { useState, useRef, useEffect, memo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useBatchCreateClips } from "@/features/clips/hooks/use-clips";
@@ -211,7 +211,19 @@ const AssigneeDropdown = ({
     </div>
   );
 };
-const ClipRow = ({ clip, index, clipNumberInEp, isSelected, onToggleSelect, onChange, onApplyToAllBelow, onRemove, episodes, users, videoSizes }: any) => {
+const ClipRow = ({
+  clip,
+  index,
+  clipNumberInEp,
+  isSelected,
+  onToggleSelect,
+  onChange,
+  onApplyToAllBelow,
+  onRemove,
+  episodes,
+  users,
+  videoSizes,
+}: any) => {
   const isEven = index % 2 === 0;
   return (
     <tr
@@ -227,7 +239,9 @@ const ClipRow = ({ clip, index, clipNumberInEp, isSelected, onToggleSelect, onCh
       </td>
       <td className="px-3 py-1.5 border-r border-b border-slate-200 text-center font-medium">
         <div className="flex flex-col text-[11px] leading-tight">
-          <span className="font-bold text-blue-600">EP.{clip.episodeNo || '?'}</span>
+          <span className="font-bold text-blue-600">
+            EP.{clip.episodeNo || "?"}
+          </span>
           <span className="text-slate-400">#{clipNumberInEp}</span>
         </div>
       </td>
@@ -483,8 +497,8 @@ export default function SpreadsheetManager({
         valA = Number(a.episodeNo || 0);
         valB = Number(b.episodeNo || 0);
       } else if (sortField === "ownerId") {
-        const ownerA = users.find(u => u.id === a.ownerId)?.displayName || "";
-        const ownerB = users.find(u => u.id === b.ownerId)?.displayName || "";
+        const ownerA = users.find((u) => u.id === a.ownerId)?.displayName || "";
+        const ownerB = users.find((u) => u.id === b.ownerId)?.displayName || "";
         valA = ownerA.toLowerCase();
         valB = ownerB.toLowerCase();
       }
@@ -506,7 +520,8 @@ export default function SpreadsheetManager({
   };
 
   const SortIcon = ({ field }: { field: string }) => {
-    if (sortField !== field) return <ArrowUpDown size={12} className="text-blue-300 ml-1 inline" />;
+    if (sortField !== field)
+      return <ArrowUpDown size={12} className="text-blue-300 ml-1 inline" />;
     return sortOrder === "asc" ? (
       <ArrowUp size={12} className="text-blue-600 ml-1 inline" />
     ) : (
@@ -515,14 +530,15 @@ export default function SpreadsheetManager({
   };
 
   const handleAddRow = () => {
-    const episodeNo = clips.length > 0
-      ? clips[clips.length - 1].episodeNo
-      : episodes.length > 0
-        ? episodes[episodes.length - 1].episodeNo
-        : 1;
+    const episodeNo =
+      clips.length > 0
+        ? clips[clips.length - 1].episodeNo
+        : episodes.length > 0
+          ? episodes[episodes.length - 1].episodeNo
+          : 1;
 
-    const countInEp = clips.filter(c => c.episodeNo === episodeNo).length + 1;
-    const paddedCount = countInEp.toString().padStart(2, '0');
+    const countInEp = clips.filter((c) => c.episodeNo === episodeNo).length + 1;
+    const paddedCount = countInEp.toString().padStart(2, "0");
 
     setClips([
       ...clips,
@@ -627,12 +643,19 @@ export default function SpreadsheetManager({
     }
   };
 
-  const handleChange = (index: number, field: string, value: any) => {
-    const newClips = [...clips];
-    newClips[index][field] =
-      field === "episodeNo" ? parseInt(value) || 0 : value;
-    setClips(newClips);
-  };
+  const handleChange = useCallback(
+    (index: number, field: string, value: any) => {
+      setClips((prevClips) => {
+        const newClips = [...prevClips];
+        newClips[index] = {
+          ...newClips[index],
+          [field]: field === "episodeNo" ? parseInt(value) || 0 : value,
+        };
+        return newClips;
+      });
+    },
+    [],
+  );
 
   const handleApplyToAllBelow = (index: number, userId: string) => {
     setApplyAllConfig({ index, userId });
@@ -656,9 +679,11 @@ export default function SpreadsheetManager({
     if (!validationResult.success) {
       const firstError = validationResult.error.issues[0];
       const rowMatch = firstError.path[1];
-      
+
       if (typeof rowMatch === "number") {
-        toast.error(`ข้อมูลผิดพลาดในแถวที่ ${rowMatch + 1}: ${firstError.message}`);
+        toast.error(
+          `ข้อมูลผิดพลาดในแถวที่ ${rowMatch + 1}: ${firstError.message}`,
+        );
       } else {
         toast.error(`ข้อมูลไม่ถูกต้อง: ${firstError.message}`);
       }
@@ -977,7 +1002,7 @@ export default function SpreadsheetManager({
               <th className="px-3 py-2 border-r border-blue-200 font-bold w-[50px] text-center">
                 ลำดับ
               </th>
-              <th 
+              <th
                 className="px-3 py-2 border-r border-blue-200 font-bold text-left min-w-[200px] cursor-pointer hover:bg-blue-200/50 transition-colors"
                 onClick={() => handleSort("name")}
               >
@@ -986,13 +1011,13 @@ export default function SpreadsheetManager({
               <th className="hidden md:table-cell px-3 py-2 border-r border-blue-200 font-bold text-left min-w-[250px]">
                 รายละเอียด
               </th>
-              <th 
+              <th
                 className="px-3 py-2 border-r border-blue-200 font-bold w-[120px] text-left cursor-pointer hover:bg-blue-200/50 transition-colors"
                 onClick={() => handleSort("episodeNo")}
               >
                 ตอน (Episode) <SortIcon field="episodeNo" />
               </th>
-              <th 
+              <th
                 className="px-3 py-2 border-r border-blue-200 font-bold text-left w-[220px] cursor-pointer hover:bg-blue-200/50 transition-colors"
                 onClick={() => handleSort("ownerId")}
               >
