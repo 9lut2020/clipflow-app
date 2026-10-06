@@ -61,6 +61,9 @@ export default function LoginPage() {
             )}
           </button>
         </div>
+        <a href="/docs" className="block text-center text-sm text-slate-500 hover:text-blue-700">
+          อ่านคู่มือการใช้งาน
+        </a>
         {process.env.NODE_ENV === "development" && (
           <div className="text-center">
             <a

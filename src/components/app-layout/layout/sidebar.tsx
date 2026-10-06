@@ -12,6 +12,7 @@ import {
   User,
   LogOut,
   Loader2,
+  BookOpen,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useAnalytics } from "@/hooks/use-analytics";
@@ -293,6 +294,13 @@ export default function Sidebar({
                           className="flex items-center gap-3 px-4 py-2.5 text-[13.5px] text-slate-700 hover:bg-slate-50 transition-colors"
                         >
                           <User size={16} /> โปรไฟล์
+                        </Link>
+                        <Link
+                          href="/docs"
+                          onClick={() => setBottomMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-[13.5px] text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
+                          <BookOpen size={16} /> คู่มือการใช้งาน
                         </Link>
                         <div className="h-px bg-slate-50 my-1 mx-4"></div>
                         <button
