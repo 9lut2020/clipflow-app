@@ -4,6 +4,11 @@ export interface User {
   id: string;
   lineUserId?: string | null;
   displayName: string;
+  /** Name on the user's LINE profile (kept separate from displayName). */
+  lineDisplayName?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  profileCompletedAt?: string | null;
   pictureUrl: string | null;
   role: "USER" | "REVIEWER" | "ADMIN";
   isActive?: boolean;
@@ -13,7 +18,10 @@ export interface User {
 }
 
 export interface UserProfileUpdateRequest {
-  displayName: string;
+  displayName?: string;
+  phone?: string | null;
+  email?: string | null;
+  completeProfile?: boolean;
 }
 
 export interface Project {

@@ -141,6 +141,8 @@ export const authOptions: NextAuthOptions = {
           if (data.status === "success" && data.data) {
             (user as any).dbId = data.data.id;
             (user as any).role = data.data.role;
+            // Show the name chosen in ClipFlow, not the LINE profile name.
+            if (data.data.displayName) user.name = data.data.displayName;
             return true;
           }
         } catch (error) {

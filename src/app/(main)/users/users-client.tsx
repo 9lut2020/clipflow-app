@@ -56,9 +56,12 @@ export function UsersClient({ initialUsers, currentUserId }: UsersClientProps) {
 
   // Filter users
   const filteredUsers = usersList.filter((user) => {
-    const matchesSearch = user.displayName
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
+    const q = searchQuery.toLowerCase();
+    const matchesSearch =
+      user.displayName.toLowerCase().includes(q) ||
+      (user.lineDisplayName || "").toLowerCase().includes(q) ||
+      (user.phone || "").includes(q) ||
+      (user.email || "").toLowerCase().includes(q);
     const matchesRole = roleFilter === "ALL" ? true : user.role === roleFilter;
     return matchesSearch && matchesRole;
   });
@@ -448,6 +451,7 @@ export function UsersClient({ initialUsers, currentUserId }: UsersClientProps) {
                                 </span>
                               )}
                             </div>
+                            <UserContactLine user={user} />
                           </div>
                         </div>
                       </td>
@@ -563,6 +567,7 @@ export function UsersClient({ initialUsers, currentUserId }: UsersClientProps) {
                             </span>
                           )}
                         </div>
+                        <UserContactLine user={user} />
 
                         {/* Last Active Timestamp on Mobile */}
                         <div className="text-[10px] text-slate-500 font-medium flex items-center gap-1 mt-0.5">
@@ -678,6 +683,7 @@ export function UsersClient({ initialUsers, currentUserId }: UsersClientProps) {
                     </span>
                   )}
                 </div>
+                <UserContactLine user={selectedUser} />
                 <div className="text-xs text-slate-500 mt-0.5">
                   บทบาทปัจจุบัน:{" "}
                   <span className="font-bold text-slate-800">
@@ -798,6 +804,34 @@ export function UsersClient({ initialUsers, currentUserId }: UsersClientProps) {
             </div>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+/** LINE name (to find the person in LINE chats) plus phone/email for admins. */
+function UserContactLine({ user }: { user: User }) {
+  const showLineName = user.lineDisplayName && user.lineDisplayName !== user.displayName;
+  if (!showLineName && !user.phone && !user.email) {
+    return <div className="text-[10px] text-slate-400 mt-0.5">ยังไม่ได้กรอกข้อมูลติดต่อ</div>;
+  }
+  return (
+    <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 flex flex-wrap gap-x-2.5 gap-y-0.5 font-normal">
+      {user.lineDisplayName && (
+        <span className="inline-flex items-center gap-1">
+          <span className="font-bold text-[#06C755]">LINE</span>
+          <span className="truncate max-w-[160px]">{user.lineDisplayName}</span>
+        </span>
+      )}
+      {user.phone && (
+        <a href={`tel:${user.phone}`} className="hover:text-blue-600" onClick={(e) => e.stopPropagation()}>
+          📞 {user.phone}
+        </a>
+      )}
+      {user.email && (
+        <a href={`mailto:${user.email}`} className="hover:text-blue-600 truncate max-w-[200px]" onClick={(e) => e.stopPropagation()}>
+          ✉️ {user.email}
+        </a>
       )}
     </div>
   );

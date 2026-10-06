@@ -13,12 +13,13 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { useProfile } from "@/features/profile/hooks/use-profile";
+import { ProfileForm } from "@/features/profile/components/profile-form";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function ProfileClient({ userId }: { userId: string }) {
-  const { profile, isLoading } = useProfile(userId);
+  const { profile, isLoading, mutate } = useProfile(userId);
 
   if (isLoading) {
     return (
@@ -174,17 +175,13 @@ export function ProfileClient({ userId }: { userId: string }) {
             </h2>
 
             <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    ชื่อที่แสดงในระบบ
-                  </label>
-                  <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 font-medium">
-                    <UserCircle size={18} className="text-slate-400" />
-                    {profile.displayName}
-                  </div>
-                </div>
-              </div>
+              <ProfileForm
+                key={`${profile.id}-${profile.updatedAt ?? ""}`}
+                profile={profile}
+                onSaved={(user) =>
+                  mutate({ status: "success", message: "", data: user } as never, { revalidate: false })
+                }
+              />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">

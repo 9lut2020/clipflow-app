@@ -7,6 +7,7 @@ import Topbar from "@/components/app-layout/layout/topbar";
 import BottomNav from "@/components/liff/bottom-nav";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProfileOnboarding } from "@/features/profile/components/profile-onboarding";
 
 export default function MainLayoutClient({
   children,
@@ -46,6 +47,8 @@ export default function MainLayoutClient({
           {children}
         </main>
         
+        <ProfileOnboarding />
+
         {/* Bottom Navigation for Mobile */}
         <div className="md:hidden">
           <Suspense fallback={null}>

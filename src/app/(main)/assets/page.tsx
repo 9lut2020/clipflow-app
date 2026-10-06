@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function AssetsPage() {
   return (
-    <div className="max-w-[1200px] mx-auto w-full p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="max-w-full mx-auto w-full p-4 sm:p-6 lg:p-8 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
