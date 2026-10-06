@@ -17,6 +17,7 @@ import {
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [waitingForBrowser, setWaitingForBrowser] = useState(false);
+  const [handoffUrl, setHandoffUrl] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/menu";
   const error = searchParams.get("error");
@@ -59,13 +60,20 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       if (isStandalonePwa()) {
-        // LINE approval happens outside the app, so log in through the browser
-        // and hand the session back with a one-time code.
+        // LINE approval happens outside the app, so log in through another
+        // window and hand the session back with a one-time code. An anchor
+        // click is more reliable than window.open in installed apps.
         const code = getOrCreateLoginCode();
-        const url = `${window.location.origin}/login?handoff=${encodeURIComponent(code)}`;
-        window.open(url, "_blank", "noopener");
+        setHandoffUrl(`/login?handoff=${encodeURIComponent(code)}`);
+        const link = document.createElement("a");
+        link.href = `${window.location.origin}/login?handoff=${encodeURIComponent(code)}`;
+        link.target = "_blank";
+        link.rel = "noopener";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
         setWaitingForBrowser(true);
-        // Allow tapping again (same code) if the browser tab was closed.
+        // Allow tapping again (same code) if the other window was closed.
         setIsLoading(false);
         return;
       }
@@ -78,9 +86,11 @@ export default function LoginPage() {
     }
   };
 
-  // Opened from the PWA: start LINE login right away.
+  // Opened for a PWA login: start LINE login right away. This page may itself
+  // be running inside the installed app (phones keep same-site links in the
+  // app), so it must not skip the login when standalone.
   useEffect(() => {
-    if (handoffCode && !isStandalonePwa()) {
+    if (handoffCode) {
       setIsLoading(true);
       signIn("line", { callbackUrl: `/auth/handoff?code=${encodeURIComponent(handoffCode)}` }).catch(() => setIsLoading(false));
     }
@@ -115,6 +125,11 @@ export default function LoginPage() {
             ยืนยันการเข้าสู่ระบบใน LINE ให้เรียบร้อย แล้วกลับมาที่แอปนี้
             <br />
             ระบบจะเข้าสู่ระบบให้อัตโนมัติ
+            {handoffUrl && (
+              <a href={handoffUrl} className="mt-3 block font-semibold text-blue-700 underline">
+                ถ้าหน้า LINE ไม่เปิดขึ้นมา กดที่นี่
+              </a>
+            )}
           </div>
         )}
 

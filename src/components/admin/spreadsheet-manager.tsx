@@ -32,15 +32,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-  DrawerFooter,
-} from "@/components/ui/drawer";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 
@@ -376,7 +367,6 @@ export default function SpreadsheetManager({
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState("");
 
-  const isDesktop = useMediaQuery("(min-width: 768px)");
 
   // Add Episode Modal States
   const [showAddEpisodeModal, setShowAddEpisodeModal] = useState(false);
@@ -1247,7 +1237,6 @@ export default function SpreadsheetManager({
       </Dialog>
 
       {/* Manage Episodes Modal */}
-      {isDesktop ? (
         <Dialog
           open={showAddEpisodeModal}
           onOpenChange={setShowAddEpisodeModal}
@@ -1343,101 +1332,6 @@ export default function SpreadsheetManager({
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      ) : (
-        <Drawer
-          open={showAddEpisodeModal}
-          onOpenChange={setShowAddEpisodeModal}
-        >
-          <DrawerContent className="max-h-[90vh] flex flex-col overflow-hidden">
-            <DrawerHeader className="text-left shrink-0">
-              <DrawerTitle>จัดการตอน (Episodes)</DrawerTitle>
-              <DrawerDescription>เพิ่มหรือลบตอนในโปรเจกต์นี้</DrawerDescription>
-            </DrawerHeader>
-            <div className="px-4 overflow-y-auto flex-1 space-y-6 pb-4">
-              {episodes.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-bold text-slate-700">
-                    ตอนที่มีอยู่
-                  </h4>
-                  <div className="space-y-2 bg-slate-50 rounded-lg p-2 border border-slate-100 max-h-[250px] overflow-y-auto">
-                    {episodes.map((ep) => (
-                      <div
-                        key={ep.id}
-                        className="flex items-center justify-between bg-white p-2.5 rounded-md border border-slate-200 shadow-sm"
-                      >
-                        <span className="text-sm font-bold text-slate-700">
-                          EP. {ep.episodeNo}{" "}
-                          {ep.name ? (
-                            <span className="text-slate-500 font-medium ml-1">
-                              {" "}
-                              - {ep.name}
-                            </span>
-                          ) : (
-                            ""
-                          )}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-50 shrink-0"
-                          onClick={() => setEpisodeToDelete(ep)}
-                          title="ลบตอนนี้"
-                        >
-                          <Trash2 size={14} />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                <label className="text-sm font-bold text-slate-700 flex items-center">
-                  <Plus size={16} className="mr-1 text-blue-600" />
-                  เพิ่มตอนใหม่
-                </label>
-                <div className="space-y-2">
-                  <Input
-                    type="number"
-                    placeholder="หมายเลขตอน (เช่น 1, 2, 3) *"
-                    value={newEpisodeNo}
-                    onChange={(e) =>
-                      setNewEpisodeNo(
-                        e.target.value ? Number(e.target.value) : "",
-                      )
-                    }
-                  />
-                  <Input
-                    placeholder="ชื่อตอน (ไม่บังคับ) เช่น จุดเริ่มต้น..."
-                    value={newEpisodeName}
-                    onChange={(e) => setNewEpisodeName(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-            <DrawerFooter className="shrink-0 border-t border-slate-100">
-              <Button
-                type="button"
-                onClick={handleCreateEpisode}
-                disabled={!newEpisodeNo || isCreatingEpisode}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                {isCreatingEpisode ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : null}
-                บันทึกตอนใหม่
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowAddEpisodeModal(false)}
-              >
-                ปิด
-              </Button>
-            </DrawerFooter>
-          </DrawerContent>
-        </Drawer>
-      )}
 
       {/* Delete Confirmation Modal */}
       <Dialog
@@ -1610,7 +1504,6 @@ export default function SpreadsheetManager({
       </Dialog>
 
       {/* Import Auto Modal */}
-      {isDesktop ? (
         <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
@@ -1662,56 +1555,6 @@ export default function SpreadsheetManager({
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      ) : (
-        <Drawer open={showImportModal} onOpenChange={setShowImportModal}>
-          <DrawerContent>
-            <DrawerHeader className="text-left">
-              <DrawerTitle>วางข้อความอัตโนมัติ (Import)</DrawerTitle>
-              <DrawerDescription>
-                คัดลอกข้อความสรุปคลิปมาวางที่นี่
-                ระบบจะพยายามแยกข้อมูลให้เป็นแถวอัตโนมัติ
-              </DrawerDescription>
-            </DrawerHeader>
-
-            <div className="px-4 py-4 space-y-4">
-              <textarea
-                value={importText}
-                onChange={(e) => setImportText(e.target.value)}
-                className="w-full h-48 p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none bg-slate-50"
-                placeholder='ตัวอย่าง:
-  อีพี 6
-  ไฮไลท์อีพี 6 คลิป 1
-  "จุดเริ่มต้นของความสำเร็จ"
-  🕣 เวลา: 10:05 - 11:30'
-              />
-              <div className="bg-indigo-50 text-indigo-700 p-3 rounded-xl text-xs flex gap-2 items-start">
-                <FileText size={16} className="shrink-0 mt-0.5" />
-                <div>
-                  <strong>คำแนะนำ:</strong>
-                  <ul className="list-disc pl-4 mt-1 space-y-1">
-                    <li>ตรวจจับคำว่า "อีพี X" เป็นหมายเลขตอน</li>
-                    <li>ตรวจจับข้อความใน "คำพูด" เป็นชื่อคลิป</li>
-                    <li>เวลาจะดึงไปใส่ในรายละเอียดอัตโนมัติ</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <DrawerFooter className="pt-2">
-              <Button type="button" onClick={handleImportParse}>
-                นำเข้าข้อมูล
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowImportModal(false)}
-              >
-                ยกเลิก
-              </Button>
-            </DrawerFooter>
-          </DrawerContent>
-        </Drawer>
-      )}
     </div>
   );
 }

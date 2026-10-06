@@ -8,8 +8,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -426,25 +424,15 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
     </div>
   );
 
-  const isDesktop = useMediaQuery("(min-width: 768px)");
-
-  if (isDesktop) {
-    return (
-      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="max-w-2xl bg-white border-0 shadow-2xl rounded-2xl overflow-hidden p-0 gap-0 flex flex-col max-h-[85vh]">
-          <ModalHeader />
-          <ModalContent />
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
+  // Dialog is responsive: centred modal on desktop, swipe-to-close sheet on
+  // phones. Header/body are called as functions (not <Components/>) so their
+  // inputs are not remounted — and lose focus — on every keystroke.
   return (
-    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="bg-slate-100 flex flex-col h-[90vh] max-h-[90vh] outline-none rounded-t-[20px] gap-0">
-        <ModalHeader />
-        <ModalContent />
-      </DrawerContent>
-    </Drawer>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl bg-white border-0 shadow-2xl rounded-2xl overflow-hidden p-0 gap-0 flex flex-col max-h-[85vh]">
+        {ModalHeader()}
+        {ModalContent()}
+      </DialogContent>
+    </Dialog>
   );
 }

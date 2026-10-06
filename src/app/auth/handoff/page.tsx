@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import { getSession } from "@/lib/api-server";
+import { ContinueInApp } from "./continue-in-app";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,8 @@ export default async function LoginHandoffPage({ searchParams }: { searchParams:
             <p className="mt-2 text-sm leading-6 text-slate-600">
               กลับไปที่แอป <b>ClipFlow</b> บนหน้าจอโฮมได้เลย แอปจะเข้าสู่ระบบให้อัตโนมัติ
             </p>
-            <p className="mt-4 text-xs text-slate-400">ปิดหน้านี้ได้</p>
+            <p className="mt-4 text-xs text-slate-400">หรือใช้งานต่อในหน้านี้ได้เลย</p>
+            <ContinueInApp />
           </>
         ) : (
           <>
