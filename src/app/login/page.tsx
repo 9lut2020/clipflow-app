@@ -1,26 +1,90 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
+import {
+  claimLoginCode,
+  clearLoginCode,
+  getOrCreateLoginCode,
+  getPendingLoginCode,
+  isStandalonePwa,
+} from "@/lib/pwa-login";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [waitingForBrowser, setWaitingForBrowser] = useState(false);
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/menu";
   const error = searchParams.get("error");
+  // Set when this page was opened in the browser on behalf of the PWA.
+  const handoffCode = searchParams.get("handoff");
+
+  const finishPwaLogin = useCallback(async () => {
+    const code = getPendingLoginCode();
+    if (!code) return false;
+    const result = await claimLoginCode(code);
+    if (result === "ok") {
+      clearLoginCode();
+      window.location.replace(callbackUrl);
+      return true;
+    }
+    if (result === "failed") {
+      clearLoginCode();
+      setWaitingForBrowser(false);
+      setIsLoading(false);
+    }
+    return false;
+  }, [callbackUrl]);
+
+  // In the PWA: keep checking whether the browser finished LINE login,
+  // immediately when the user switches back to the app and every 2 seconds.
+  useEffect(() => {
+    if (!isStandalonePwa() || !getPendingLoginCode()) return;
+    setWaitingForBrowser(true);
+    finishPwaLogin();
+    const interval = window.setInterval(finishPwaLogin, 2000);
+    const onVisible = () => document.visibilityState === "visible" && finishPwaLogin();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [finishPwaLogin, waitingForBrowser]);
 
   const handleLineLogin = async () => {
     setIsLoading(true);
     try {
-      await signIn("line", { callbackUrl });
+      if (isStandalonePwa()) {
+        // LINE approval happens outside the app, so log in through the browser
+        // and hand the session back with a one-time code.
+        const code = getOrCreateLoginCode();
+        const url = `${window.location.origin}/login?handoff=${encodeURIComponent(code)}`;
+        window.open(url, "_blank", "noopener");
+        setWaitingForBrowser(true);
+        // Allow tapping again (same code) if the browser tab was closed.
+        setIsLoading(false);
+        return;
+      }
+      await signIn("line", {
+        callbackUrl: handoffCode ? `/auth/handoff?code=${encodeURIComponent(handoffCode)}` : callbackUrl,
+      });
     } catch (error) {
       console.error("Login failed:", error);
       setIsLoading(false);
     }
   };
+
+  // Opened from the PWA: start LINE login right away.
+  useEffect(() => {
+    if (handoffCode && !isStandalonePwa()) {
+      setIsLoading(true);
+      signIn("line", { callbackUrl: `/auth/handoff?code=${encodeURIComponent(handoffCode)}` }).catch(() => setIsLoading(false));
+    }
+  }, [handoffCode]);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4 selection:bg-slate-100 selection:text-slate-900">
@@ -45,6 +109,15 @@ export default function LoginPage() {
           </div>
         )}
 
+        {waitingForBrowser && (
+          <div className="w-full rounded-lg border border-blue-100 bg-blue-50 p-4 text-center text-sm leading-6 text-blue-800">
+            <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />
+            ยืนยันการเข้าสู่ระบบใน LINE ให้เรียบร้อย แล้วกลับมาที่แอปนี้
+            <br />
+            ระบบจะเข้าสู่ระบบให้อัตโนมัติ
+          </div>
+        )}
+
         {/* Login Button */}
         <div className="w-full space-y-4 bg-white">
           <button
@@ -61,9 +134,9 @@ export default function LoginPage() {
             )}
           </button>
         </div>
-        <a href="/docs" className="block text-center text-sm text-slate-500 hover:text-blue-700">
+        <Link href="/docs" className="block text-center text-sm text-slate-500 hover:text-blue-700">
           อ่านคู่มือการใช้งาน
-        </a>
+        </Link>
         {process.env.NODE_ENV === "development" && (
           <div className="text-center">
             <a
