@@ -1,5 +1,6 @@
 "use client";
 
+import { AssignmentBalancer, WorkloadStrip } from "@/components/admin/assignment-balancer";
 import React, { useState, useRef, useEffect, memo, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -14,6 +15,7 @@ import {
   Loader2,
   Layers,
   Ruler,
+  Scale,
   Pencil,
   ArrowUpDown,
   ArrowUp,
@@ -474,6 +476,15 @@ export default function SpreadsheetManager({
   const [episodeToDelete, setEpisodeToDelete] = useState<any>(null);
   const [isDeletingEpisode, setIsDeletingEpisode] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const [showBalancer, setShowBalancer] = useState(false);
+  const applyBalancedAssignments = (assignments: Map<number, string>) => {
+    setClips((prev) =>
+      prev.map((clip, index) =>
+        assignments.has(index) ? { ...clip, ownerId: assignments.get(index) || "" } : clip,
+      ),
+    );
+    toast.success(`จัดสรร ${assignments.size} คลิปแล้ว กด “บันทึกทั้งหมด” เพื่อยืนยันและแจ้งเตือนผู้รับงาน`);
+  };
   const [showMultiDeleteModal, setShowMultiDeleteModal] = useState(false);
   const [applyAllConfig, setApplyAllConfig] = useState<{
     index: number;
@@ -904,6 +915,17 @@ export default function SpreadsheetManager({
             </span>
           </Button>
           <Button
+            onClick={() => setShowBalancer(true)}
+            variant="outline"
+            size="sm"
+            className="shrink-0 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold border-amber-200 px-2 sm:px-3 h-8 sm:h-9"
+          >
+            <Scale size={14} className="shrink-0" />
+            <span className="text-xs sm:text-sm whitespace-nowrap ml-1 sm:ml-1.5">
+              จัดสรรงาน
+            </span>
+          </Button>
+          <Button
             onClick={() => {
               resetVideoSizeForm();
               setShowVideoSizeModal(true);
@@ -959,6 +981,16 @@ export default function SpreadsheetManager({
           )}
         </Button>
       </div>
+
+      <WorkloadStrip projectId={projectId} clips={clips} users={users} />
+      <AssignmentBalancer
+        open={showBalancer}
+        onOpenChange={setShowBalancer}
+        projectId={projectId}
+        clips={clips}
+        selectedIndexes={selectedRows}
+        onApply={applyBalancedAssignments}
+      />
 
       {/* Filters */}
       <div className="p-2 sm:p-3 bg-white border-b border-slate-200 flex gap-1 sm:gap-2 items-center hide-scrollbar">

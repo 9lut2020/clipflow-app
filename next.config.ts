@@ -17,6 +17,9 @@ const nextConfig: NextConfig = {
         hostname: "lh3.googleusercontent.com",
         pathname: "/**",
       },
+      // LINE profile pictures (used in user pickers via next/image).
+      { protocol: "https", hostname: "profile.line-scdn.net", pathname: "/**" },
+      { protocol: "https", hostname: "obs.line-scdn.net", pathname: "/**" },
     ],
   },
 };
