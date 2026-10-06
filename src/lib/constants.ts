@@ -2,15 +2,12 @@ import {
   LucideIcon,
   LayoutDashboard,
   FileVideo,
-  Users,
+  Menu,
   Settings,
   ClipboardList,
   BarChart3,
   Bell,
-  ShieldCheck,
   Plus,
-  List,
-  CalendarDays,
   FolderOpen,
   BookOpen,
 } from "lucide-react";
@@ -75,8 +72,9 @@ export function getSidebarMenu(
   if (isAdmin) {
     menus.push(
       {
-        section: "Main",
+        section: "หลัก",
         items: [
+          { title: "หน้าเมนู", href: "/menu", icon: Menu },
           { title: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard },
           { title: "ส่งงานด่วน", href: "/submit", icon: Plus },
           {
@@ -86,7 +84,6 @@ export function getSidebarMenu(
             children: [
               { title: "ตารางงานทั้งหมด", href: "/tasks" },
               { title: "คิวและปฏิทินเผยแพร่", href: "/admin/publish" },
-              { title: "หน้าเมนู", href: "/menu" },
             ],
           },
           {
@@ -103,7 +100,7 @@ export function getSidebarMenu(
         ],
       },
       {
-        section: "System",
+        section: "ระบบ",
         items: [
           { title: "ศูนย์แจ้งเตือน", href: "/notifications", icon: Bell },
           {
@@ -122,8 +119,12 @@ export function getSidebarMenu(
   }
 
   // User guide for every role, at the end of the System section.
-  const guide: SidebarMenuItem = { title: "คู่มือการใช้งาน", href: "/docs", icon: BookOpen };
-  const system = menus.find((menu) => menu.section === "System");
+  const guide: SidebarMenuItem = {
+    title: "คู่มือการใช้งาน",
+    href: "/docs",
+    icon: BookOpen,
+  };
+  const system = menus.find((menu) => menu.section === "System" || menu.section === "ระบบ");
   if (system) system.items.push(guide);
   else menus.push({ section: "System", items: [guide] });
 
