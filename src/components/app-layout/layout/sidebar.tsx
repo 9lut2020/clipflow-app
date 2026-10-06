@@ -190,20 +190,36 @@ export default function Sidebar({
                           <div
                             className={`overflow-hidden transition-all duration-300 ease-in-out ${!isCollapsedState && menuExpanded[item.title] ? "max-h-[300px] opacity-100 mt-1" : "max-h-0 opacity-0"}`}
                           >
-                            <div className="flex flex-col py-1 space-y-1">
-                              {item.children?.map((child, childIdx) => (
-                                <Link
-                                  key={childIdx}
-                                  href={child.href}
-                                  onClick={closeSidebarOnMobile}
-                                  className="flex items-center justify-between pl-10 pr-2 py-1.5 text-[13px] font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-md transition-all duration-200"
-                                >
-                                  <span className="whitespace-nowrap">
-                                    {child.title}
-                                  </span>
-                                </Link>
-                              ))}
-                            </div>
+                            {/* Tree: a guide line under the parent icon with
+                                a rounded branch into each child; the last
+                                child's branch ends the line. */}
+                            <ul className="ml-[19px] py-0.5">
+                              {item.children?.map((child, childIdx) => {
+                                const isLast = childIdx === (item.children?.length ?? 0) - 1;
+                                const childActive = pathname === child.href;
+                                return (
+                                  <li key={childIdx} className="relative pl-4">
+                                    {!isLast && (
+                                      <span aria-hidden className="absolute left-0 top-0 bottom-0 border-l border-slate-300" />
+                                    )}
+                                    <span
+                                      aria-hidden
+                                      className="absolute left-0 top-0 h-1/2 w-3 rounded-bl-[6px] border-b border-l border-slate-300"
+                                    />
+                                    <Link
+                                      href={child.href}
+                                      onClick={closeSidebarOnMobile}
+                                      aria-current={childActive ? "page" : undefined}
+                                      className={`my-0.5 flex items-center rounded-md px-2 py-1.5 text-[13px] font-medium transition-colors duration-200 ${childActive ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`}
+                                    >
+                                      <span className="whitespace-nowrap">
+                                        {child.title}
+                                      </span>
+                                    </Link>
+                                  </li>
+                                );
+                              })}
+                            </ul>
                           </div>
                         </div>
                       );

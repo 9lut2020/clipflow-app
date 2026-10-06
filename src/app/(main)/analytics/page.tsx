@@ -1,30 +1,11 @@
-import { apiServer, getSession } from "@/lib/api-server";
 import { redirect } from "next/navigation";
-import { Clip, Project, User, PaginatedData } from "@/types/api";
+import { getSession } from "@/lib/api-server";
 import { AnalyticsClient } from "./analytics-client";
 
 export default async function AnalyticsPage() {
   const session = await getSession();
+  if (!session?.user) redirect("/login?callbackUrl=%2Fanalytics");
 
-  if (!session) {
-    redirect("/api/auth/signin");
-  }
-
-  // Fetch clips, projects, users
-  const [clipsRes, projectsRes, usersRes, metricsRes] = await Promise.all([
-    // Analytics must remain available even while a secondary collection is
-    // slow or temporarily unavailable. Start with a bounded page; detailed
-    // metrics are loaded independently from the backend aggregate endpoint.
-    apiServer.get<PaginatedData<Clip>>("/clips?page=1&limit=20").catch(() => ({ data: null })),
-    apiServer.get<PaginatedData<Project>>("/projects?page=1&limit=20").catch(() => ({ data: null })),
-    apiServer.get<PaginatedData<User>>("/users?page=1&limit=100").catch(() => ({ data: null })),
-    apiServer.get<PaginatedData<any>>("/analytics/metrics?page=1&limit=100").catch(() => ({ data: null })),
-  ]);
-
-  const clips = clipsRes.data?.items || [];
-  const projects = projectsRes.data?.items || [];
-  const users = usersRes.data?.items || [];
-  const dailyMetrics = metricsRes.data?.items || [];
-
-  return <AnalyticsClient clips={clips} projects={projects} users={users} dailyMetrics={dailyMetrics} />;
+  // Every role can open analytics; the API scopes the numbers to the viewer.
+  return <AnalyticsClient role={session.user.role || "USER"} />;
 }
