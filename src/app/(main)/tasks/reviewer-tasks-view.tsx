@@ -7,11 +7,16 @@ import { FolderKanban, Clock } from "lucide-react";
 
 interface ReviewerTasksViewProps {
   clips: Clip[];
+  isAdmin?: boolean;
 }
 
-export function ReviewerTasksView({ clips }: ReviewerTasksViewProps) {
-  // Inbox: Clips that specifically need review right now
-  const pendingClips = clips.filter((c) => c.status === "PENDING_REVIEW");
+const REVIEW_QUEUE = ["PENDING_REVIEW", "IN_REVIEW", "RESUBMITTED"];
+
+export function ReviewerTasksView({ clips, isAdmin = false }: ReviewerTasksViewProps) {
+  // Inbox: everything waiting on a reviewer, including resubmissions.
+  const pendingClips = clips.filter((c) => REVIEW_QUEUE.includes(c.status));
+  // Admins also track assigned work that has not been submitted yet.
+  const notSubmittedClips = isAdmin ? clips.filter((c) => c.status === "DRAFT") : [];
 
   // Group remaining clips (or all clips except draft/approved) by project
   const projectMap = new Map<
@@ -20,8 +25,8 @@ export function ReviewerTasksView({ clips }: ReviewerTasksViewProps) {
   >();
 
   clips.forEach((clip) => {
-    // Exclude DRAFT clips since reviewers shouldn't care about drafts until submitted.
-    if (clip.status === "DRAFT") return;
+    // Drafts are listed separately (admins) and cancelled clips are hidden.
+    if (clip.status === "DRAFT" || clip.status === "CANCELLED") return;
 
     const projectId = clip.project?.id || "unassigned";
     const projectName = clip.project?.name || "ไม่ได้ระบุโปรเจกต์";
@@ -55,6 +60,21 @@ export function ReviewerTasksView({ clips }: ReviewerTasksViewProps) {
             badgeBg="bg-amber-100 text-amber-700"
             emptyText="ไม่มีงานรอตรวจ"
             defaultOpen={true}
+            isUser={false}
+          />
+        </div>
+      )}
+
+      {isAdmin && notSubmittedClips.length > 0 && (
+        <div className="mb-6">
+          <TaskAccordionSection
+            title="รอส่งงาน"
+            iconType="play"
+            clips={notSubmittedClips}
+            colorClass="text-slate-600"
+            badgeBg="bg-slate-200 text-slate-700"
+            emptyText="ไม่มีงานรอส่ง"
+            defaultOpen={false}
             isUser={false}
           />
         </div>

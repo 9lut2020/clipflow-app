@@ -29,18 +29,24 @@ export default async function TasksPage() {
   const isUser = currentUser.role === "USER";
 
   // Fetch clips (My Tasks for Users, All for Admins/Reviewers)
-  const endpoint = isUser ? `/clips?ownerId=${currentUser.id}&page=1&limit=20` : "/clips?page=1&limit=20";
-  const response = await apiServer.get<PaginatedData<Clip>>(endpoint).catch(() => ({ data: null }));
-  const clipsData = response.data;
-  const clips = clipsData?.items || [];
+  // Load every page (the API caps limit at 100) so no status group is cut off.
+  const base = isUser ? `/clips?ownerId=${currentUser.id}` : "/clips?sortBy=updatedAt";
+  const clips: Clip[] = [];
+  for (let page = 1; page <= 20; page += 1) {
+    const response = await apiServer
+      .get<PaginatedData<Clip>>(`${base}${base.includes("?") ? "&" : "?"}page=${page}&limit=100`)
+      .catch(() => ({ data: null }));
+    clips.push(...(response.data?.items || []));
+    if (!response.data?.pagination?.hasNext) break;
+  }
 
-  // Grouping by status
+  // Every workflow status belongs to exactly one group (CANCELLED is hidden).
   const draftClips = clips.filter((c) => c.status === "DRAFT");
-  const inProgressClips = clips.filter(
-    (c) => c.status === "PENDING_REVIEW" || c.status === "IN_REVIEW",
+  const inProgressClips = clips.filter((c) =>
+    ["PENDING_REVIEW", "IN_REVIEW", "RESUBMITTED"].includes(c.status),
   );
   const revisionClips = clips.filter((c) => c.status === "NEEDS_REVISION");
-  const approvedClips = clips.filter((c) => c.status === "APPROVED");
+  const approvedClips = clips.filter((c) => ["APPROVED", "PUBLISHED"].includes(c.status));
 
   // Metrics
   const totalClips = clips.length;
@@ -111,7 +117,7 @@ export default async function TasksPage() {
       <div
         className={`${size} rounded-full bg-gradient-to-tr from-slate-700 to-slate-500 text-white font-bold flex items-center justify-center shrink-0 border border-slate-200 shadow-xs ${textSize}`}
       >
-        {name[0] || "?"}
+        {name?.[0] || "?"}
       </div>
     );
   };
@@ -256,7 +262,7 @@ export default async function TasksPage() {
 
               {/* Drawer 2: In Progress / Pending Review */}
               <TaskAccordionSection
-                title="กำลังดำเนินการ / รอตรวจ"
+                title="ส่งแล้ว / รอตรวจ"
                 iconType="clock"
                 clips={inProgressClips}
                 colorClass="text-amber-500"
@@ -269,7 +275,7 @@ export default async function TasksPage() {
 
               {/* Drawer 3: Draft / To Do */}
               <TaskAccordionSection
-                title="งานใหม่ / รอดำเนินการ"
+                title="รอส่งงาน"
                 iconType="play"
                 clips={draftClips}
                 colorClass="text-blue-500"
@@ -282,7 +288,7 @@ export default async function TasksPage() {
 
               {/* Drawer 4: Approved */}
               <TaskAccordionSection
-                title="อนุมัติผ่านแล้ว"
+                title="ผ่านอนุมัติ / เผยแพร่แล้ว"
                 iconType="check"
                 clips={approvedClips}
                 colorClass="text-emerald-500"
@@ -294,7 +300,7 @@ export default async function TasksPage() {
               />
             </>
           ) : (
-            <ReviewerTasksView clips={clips} />
+            <ReviewerTasksView clips={clips} isAdmin={currentUser.role === "ADMIN"} />
           )}
         </div>
 

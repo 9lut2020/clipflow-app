@@ -137,18 +137,18 @@ function AssignedSubmitForm({
 
         <div>
           <label className="block text-xs font-semibold text-slate-600 mb-1">
-            Google Drive URL *
+            ลิงก์วิดีโอ (Google Drive หรือ YouTube) *
           </label>
           <input
             type="text"
             required
             value={driveUrl}
             onChange={(e) => setDriveUrl(e.target.value)}
-            placeholder="https://drive.google.com/file/d/..."
+            placeholder="ลิงก์ Google Drive หรือ YouTube"
             className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all font-medium"
           />
           <p className="text-[10px] text-slate-400 mt-1">
-            ตั้งค่าการแชร์เป็น "ทุกคนที่มีลิงก์สามารถดูได้"
+            Drive: ตั้งแชร์เป็น "ทุกคนที่มีลิงก์" · YouTube: ตั้งเป็น "ไม่เป็นสาธารณะ (Unlisted)"
           </p>
         </div>
 
@@ -373,18 +373,18 @@ function FastSubmitForm({ currentUser }: { currentUser: any }) {
 
         <div>
           <label className="block text-xs font-semibold text-slate-600 mb-1">
-            Google Drive URL *
+            ลิงก์วิดีโอ (Google Drive หรือ YouTube) *
           </label>
           <input
             type="text"
             required
             value={driveUrl}
             onChange={(e) => setDriveUrl(e.target.value)}
-            placeholder="https://drive.google.com/file/d/..."
+            placeholder="ลิงก์ Google Drive หรือ YouTube"
             className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all font-medium"
           />
           <p className="text-[10px] text-slate-400 mt-1">
-            ตั้งค่าการแชร์เป็น "ทุกคนที่มีลิงก์สามารถดูได้"
+            Drive: ตั้งแชร์เป็น "ทุกคนที่มีลิงก์" · YouTube: ตั้งเป็น "ไม่เป็นสาธารณะ (Unlisted)"
           </p>
         </div>
 

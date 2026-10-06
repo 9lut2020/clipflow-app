@@ -84,7 +84,7 @@ function InlineSubmitModal({ clip, userId, onClose, mode }: InlineSubmitModalPro
           <form onSubmit={handleSubmit} className="p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                ลิงก์ Google Drive วิดีโอ *
+                ลิงก์วิดีโอ (Google Drive หรือ YouTube) *
               </label>
               <input
                 type="text"
@@ -92,10 +92,10 @@ function InlineSubmitModal({ clip, userId, onClose, mode }: InlineSubmitModalPro
                 required
                 value={driveUrl}
                 onChange={(e) => setDriveUrl(e.target.value)}
-                placeholder="https://drive.google.com/file/d/..."
+                placeholder="ลิงก์ Google Drive หรือ YouTube"
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all font-medium"
               />
-              <p className="text-[10px] text-slate-400 mt-1">ตั้งค่าการแชร์เป็น "ทุกคนที่มีลิงก์สามารถดูได้"</p>
+              <p className="text-[10px] text-slate-400 mt-1">Drive: ตั้งแชร์เป็น "ทุกคนที่มีลิงก์" · YouTube: ตั้งเป็น "ไม่เป็นสาธารณะ (Unlisted)"</p>
             </div>
 
             <div>
@@ -211,7 +211,7 @@ export function TaskAccordionSection({
     }
     return (
       <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-slate-700 to-slate-500 text-white font-bold flex items-center justify-center shrink-0 border border-slate-200 shadow-xs text-[8px]">
-        {name[0] || "?"}
+        {name?.[0] || "?"}
       </div>
     );
   };
@@ -316,7 +316,7 @@ export function TaskAccordionSection({
                         month: "short",
                       })}
                     </span>
-                    {clip.owner && (
+                    {clip.owner?.id && (
                       <div className="flex items-center gap-1.5 border-l border-slate-200 pl-2 sm:pl-3 shrink-0">
                         <UserAvatar
                           name={clip.owner.displayName}

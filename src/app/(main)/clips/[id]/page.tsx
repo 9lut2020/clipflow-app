@@ -23,13 +23,16 @@ export default async function ClipDetailPage(props: {
   let allRevisions: any[] = [];
 
   try {
-    const clipsRes = await apiServer.get<any>(`/clips/${params.id}`);
+    const [clipsRes, revsRes] = await Promise.all([
+      apiServer.get<any>(`/clips/${params.id}`),
+      // Paginated response: { items, pagination }. Latest revision first.
+      apiServer
+        .get<any>(`/clips/${params.id}/revisions?page=1&limit=100&sortBy=revisionNo&sortOrder=desc`)
+        .catch(() => ({ data: null })),
+    ]);
     clip = clipsRes.data;
-
-    const revsRes = await apiServer
-      .get<any>(`/clips/${params.id}/revisions`)
-      .catch(() => ({ data: [] }));
-    allRevisions = Array.isArray(revsRes.data) ? revsRes.data : [];
+    const revisionData = revsRes.data;
+    allRevisions = Array.isArray(revisionData) ? revisionData : revisionData?.items ?? [];
   } catch (err) {
     clip = null;
   }

@@ -187,7 +187,7 @@ export default function ReviewActionCard({
             <div>
               <h2 className="text-lg font-bold text-slate-800">ส่งงานแก้ไข</h2>
               <p className="text-xs text-slate-500 mt-1">
-                วางลิงก์ Google Drive ใหม่ที่แก้ไขแล้ว
+                วางลิงก์วิดีโอใหม่ที่แก้ไขแล้ว (Google Drive หรือ YouTube)
                 เพื่อส่งให้ผู้ตรวจเช็คอีกครั้ง
               </p>
             </div>
@@ -203,7 +203,7 @@ export default function ReviewActionCard({
           <div className="p-4 sm:p-5 lg:p-6 space-y-4 lg:space-y-5 max-h-[40vh] lg:max-h-none overflow-y-auto custom-scrollbar">
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700 hidden lg:block">
-                Google Drive URL ที่แก้ไขแล้ว
+                ลิงก์วิดีโอที่แก้ไขแล้ว
               </label>
               <input
                 id="resubmitUrl"
@@ -240,7 +240,8 @@ export default function ReviewActionCard({
   if (
     !isUser &&
     (clip.status === "PENDING_REVIEW" ||
-      clip.status === "IN_REVIEW")
+      clip.status === "IN_REVIEW" ||
+      clip.status === "RESUBMITTED")
   ) {
     return (
       <>

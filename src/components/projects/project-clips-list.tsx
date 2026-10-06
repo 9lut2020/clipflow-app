@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ChevronDown, Filter, X, FolderX } from "lucide-react";
-import PlatformBadge from "@/components/ui/platform-badge";
 
 interface ProjectClipsListProps {
   project: { id: string; name: string; description?: string };
@@ -395,7 +394,6 @@ export default function ProjectClipsList({
                                 {clip.name}
                               </h3>
                               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5 sm:mt-1">
-                                <PlatformBadge platform={clip.platform} compact className="shrink-0" />
                                 {clip.description && (
                                   <span className="text-[11px] sm:text-xs text-slate-400 truncate max-w-[150px] sm:max-w-[200px]">
                                     {clip.description}

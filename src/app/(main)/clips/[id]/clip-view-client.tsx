@@ -5,13 +5,13 @@ import { createPortal } from "react-dom";
 import VideoEmbed from "@/components/clips/video-embed";
 import ReviewActionCard from "@/components/clips/review-action-card";
 import RevisionTimeline from "@/components/clips/revision-timeline";
-import PlatformBadge from "@/components/ui/platform-badge";
 import { toast } from "sonner";
 import { History, ArrowLeft } from "lucide-react";
 import { cn } from "@/utils/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import ClipStepper from "@/components/clips/clip-stepper";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface ClipViewClientProps {
   clip: any;
@@ -66,13 +66,19 @@ export default function ClipViewClient({
     setSeekTime(seconds);
   };
 
+  const [isReviewSheetOpen, setIsReviewSheetOpen] = useState(false);
+  // Show the pinned mobile review bar only when this viewer can act now.
+  const canAct = isUser
+    ? optimisticStatus === "NEEDS_REVISION"
+    : ["PENDING_REVIEW", "IN_REVIEW", "RESUBMITTED"].includes(optimisticStatus);
+
   const handleReviewComplete = (message: string) => {
     setReviewFeedback(message);
     window.setTimeout(() => setReviewFeedback(null), 4500);
   };
 
   return (
-    <div className="flex flex-col w-full pb-16">
+    <div className={cn("flex flex-col w-full pb-16", canAct && "pb-40 lg:pb-16")}>
       {/* Top Full-Width Header Title Bar - Compact Sleek Typography */}
       <div className="w-full mb-4 sm:mb-5">
         <div className="flex items-center gap-3 bg-white px-4 py-3.5 sm:px-6 sm:py-4 rounded-2xl border border-slate-200/80 shadow-xs">
@@ -152,7 +158,6 @@ export default function ClipViewClient({
               </h2>
 
               <div className="flex items-center gap-2">
-                <PlatformBadge platform={clip.platform} />
                 {optimisticStatus === "APPROVED" && (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                     ✓ ผ่านอนุมัติ
@@ -284,8 +289,9 @@ export default function ClipViewClient({
         </div>
 
         {/* Right Column (1/3 width): Review Action Card -> Revision Timeline (Desktop Only) */}
-        <div className="hidden lg:flex lg:col-span-1 flex-col gap-4 sm:gap-6">
-          {/* Review Action Card */}
+        <div className="hidden lg:block lg:col-span-1 lg:sticky lg:top-4 lg:self-start">
+          {/* Sticky review panel: stays beside the video while scrolling. */}
+          <div className="flex max-h-[calc(100dvh-2rem)] flex-col gap-4 overflow-y-auto overscroll-contain pr-1 sm:gap-6">
           <ReviewActionCard
             key={`desktop-action-${clip.id}-${optimisticStatus}`}
             clip={actionClip}
@@ -298,13 +304,54 @@ export default function ClipViewClient({
           />
           <RevisionTimeline
             revisions={allRevisions}
-            className="sticky top-24"
             onSeekTime={handleSeek}
             currentStatus={optimisticStatus}
             showStatus={!isUser}
           />
+          </div>
         </div>
       </div>
+
+      {/* Mobile: review bar pinned above the bottom navigation. */}
+      {canAct && (
+        <div className="fixed inset-x-3 bottom-[92px] z-40 lg:hidden">
+          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-[0_10px_30px_rgba(0,0,0,0.15)] backdrop-blur-xl">
+            <div className="min-w-0 flex-1 pl-2">
+              <div className="truncate text-[12px] font-bold text-slate-900">{clip.name}</div>
+              <div className="text-[11px] text-slate-500">
+                {isUser ? "ถูกสั่งแก้ไข — ส่งงานใหม่ได้เลย" : `รอตรวจ • ส่งรอบที่ ${latestRevision?.revisionNo ?? 1}`}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsReviewSheetOpen(true)}
+              className={`shrink-0 rounded-xl px-4 py-2.5 text-[13px] font-bold text-white shadow-sm ${isUser ? "bg-rose-600" : "bg-blue-600"}`}
+            >
+              {isUser ? "ส่งงานแก้ไข" : "✍️ ตรวจงาน"}
+            </button>
+          </div>
+        </div>
+      )}
+      <Dialog open={isReviewSheetOpen} onOpenChange={setIsReviewSheetOpen}>
+        <DialogContent className="gap-3">
+          <DialogTitle className="text-base font-bold text-slate-900">
+            {isUser ? "ส่งงานแก้ไข" : "ตรวจงาน"}
+          </DialogTitle>
+          <ReviewActionCard
+            key={`sheet-action-${clip.id}-${optimisticStatus}`}
+            clip={actionClip}
+            isUser={isUser}
+            reviewerId={currentUser?.id || ""}
+            currentTimeFormatted={currentTimeFormatted}
+            onOptimisticUpdate={setOptimisticStatus}
+            onReviewComplete={(message) => {
+              setIsReviewSheetOpen(false);
+              handleReviewComplete(message);
+            }}
+            onLoadingChange={setIsReviewLoading}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

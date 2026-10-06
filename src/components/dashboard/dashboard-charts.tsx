@@ -202,7 +202,7 @@ export function DashboardCharts({ clips, projects, users = [] }: DashboardCharts
       <div
         className={`${size} rounded-full bg-gradient-to-tr from-slate-700 to-slate-500 text-white font-bold flex items-center justify-center shrink-0 border border-slate-200 shadow-xs text-[10px]`}
       >
-        {name[0] || "?"}
+        {name?.[0] || "?"}
       </div>
     );
   };

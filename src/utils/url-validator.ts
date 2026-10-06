@@ -3,7 +3,7 @@
  */
 export function validateVideoUrl(rawUrl: string): { valid: boolean; message?: string } {
   if (!rawUrl || !rawUrl.trim()) {
-    return { valid: false, message: "กรุณากรอกลิงก์วิดีโอ (Google Drive หรือ URL วิดีโอ)" };
+    return { valid: false, message: "กรุณากรอกลิงก์วิดีโอ (Google Drive หรือ YouTube)" };
   }
 
   const trimmed = rawUrl.trim();
@@ -15,7 +15,7 @@ export function validateVideoUrl(rawUrl: string): { valid: boolean; message?: st
   } catch {
     return {
       valid: false,
-      message: "รูปแบบลิงก์ไม่ถูกต้อง กรุณาตรวจสอบลิงก์อีกครั้ง (เช่น https://drive.google.com/file/d/...)",
+      message: "รูปแบบลิงก์ไม่ถูกต้อง (เช่น https://drive.google.com/file/d/... หรือ https://youtu.be/...)",
     };
   }
 
@@ -32,7 +32,7 @@ export function validateVideoUrl(rawUrl: string): { valid: boolean; message?: st
   ) {
     return {
       valid: false,
-      message: "คุณกำลังนำลิงก์หน้าเว็บระบบมาวาง กรุณานำลิงก์ไฟล์วิดีโอจาก Google Drive หรือไฟล์วิดีโอจริงๆ มาวางครับ",
+      message: "คุณกำลังนำลิงก์หน้าเว็บระบบมาวาง กรุณาใช้ลิงก์วิดีโอจาก Google Drive หรือ YouTube",
     };
   }
 

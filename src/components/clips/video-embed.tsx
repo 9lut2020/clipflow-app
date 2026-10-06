@@ -71,10 +71,12 @@ export default function VideoEmbed({
       .replace(/\/edit.*$/, "/preview");
   } else if (url.includes("youtube.com") || url.includes("youtu.be")) {
     const ytMatch = url.match(
-      /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([\w-]{11})/,
+      /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|live\/|watch\?v=|watch\?.+&v=))([\w-]{11})/,
     );
     if (ytMatch && ytMatch[1]) {
-      embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1`;
+      // Pinned timecodes jump the YouTube player via ?start= (Drive cannot seek).
+      const start = seekTime !== undefined && seekTime !== null ? `&start=${Math.floor(seekTime)}&autoplay=1` : "";
+      embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}?rel=0&playsinline=1${start}`;
     }
   }
 
@@ -137,7 +139,7 @@ export default function VideoEmbed({
             </div>
 
             <h3 className="font-bold text-sm sm:text-base text-slate-100 mb-1">
-              วิดีโอต้นฉบับใน Google Drive / ลิงก์ภายนอก
+              วิดีโอต้นฉบับใน Google Drive / YouTube / ลิงก์ภายนอก
             </h3>
             <p className="text-xs text-slate-400 max-w-md mb-4 leading-relaxed">
               คลิกปุ่มด้านล่างเพื่อเปิดรับชมวิดีโอความคมชัดสูงในแอปพลิเคชัน
@@ -150,7 +152,7 @@ export default function VideoEmbed({
               rel="noreferrer"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
             >
-              <ExternalLink size={15} /> เปิดเล่นวิดีโอในแท็บใหม่ / แอป Drive
+              <ExternalLink size={15} /> เปิดวิดีโอในแท็บใหม่
             </a>
           </div>
         )}
