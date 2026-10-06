@@ -12,6 +12,7 @@ import {
   List,
   CalendarDays,
   FolderOpen,
+  BookOpen,
 } from "lucide-react";
 
 export interface SidebarMenuItem {
@@ -117,6 +118,12 @@ export function getSidebarMenu(
       },
     );
   }
+
+  // User guide for every role, at the end of the System section.
+  const guide: SidebarMenuItem = { title: "คู่มือการใช้งาน", href: "/docs", icon: BookOpen };
+  const system = menus.find((menu) => menu.section === "System");
+  if (system) system.items.push(guide);
+  else menus.push({ section: "System", items: [guide] });
 
   return menus;
 }

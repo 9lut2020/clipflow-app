@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   Flame,
+  BookOpen,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import useSWR from "swr";
@@ -132,6 +133,16 @@ export default function MenuPage() {
       color: "group-hover:text-indigo-500 dark:group-hover:text-indigo-400",
       iconBg:
         "group-hover:bg-gradient-to-br group-hover:from-indigo-500 group-hover:to-slate-500",
+    },
+    {
+      id: "07",
+      icon: BookOpen,
+      title: "คู่มือการใช้งาน",
+      desc: "วิธีใช้งานทีละขั้นตอน พร้อมภาพประกอบ",
+      href: "/docs",
+      color: "group-hover:text-emerald-500 dark:group-hover:text-emerald-400",
+      iconBg:
+        "group-hover:bg-gradient-to-br group-hover:from-emerald-500 group-hover:to-teal-500",
     },
   ];
 

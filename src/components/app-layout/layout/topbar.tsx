@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Bell,
+  CircleHelp,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
@@ -142,6 +143,15 @@ export default function Topbar({
 
       <div className="flex items-center gap-2 relative">
         <PwaInstallButton />
+
+        <Link
+          href="/docs"
+          className="p-2 rounded-md hover:bg-gray-100 text-gray-500 transition"
+          title="คู่มือการใช้งาน"
+          aria-label="คู่มือการใช้งาน"
+        >
+          <CircleHelp size={16} />
+        </Link>
         
         <button
           type="button"
