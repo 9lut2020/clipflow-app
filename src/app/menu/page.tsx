@@ -118,7 +118,7 @@ export default function MenuPage() {
       icon: Users,
       title: "จัดการผู้ใช้งาน",
       desc: "ตั้งค่าสิทธิ์และการเข้าถึงสำหรับแอดมิน",
-      href: "/admin/users",
+      href: "/users",
       color: "group-hover:text-blue-500 dark:group-hover:text-blue-400",
       iconBg:
         "group-hover:bg-gradient-to-br group-hover:from-blue-500 group-hover:to-cyan-500",

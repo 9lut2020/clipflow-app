@@ -36,7 +36,6 @@ export const config = {
     "/submit/:path*",
     "/tasks/:path*",
     "/analytics/:path*",
-    "/audit-logs/:path*",
     "/calendar/:path*",
     "/notifications/:path*",
     "/settings/:path*",
