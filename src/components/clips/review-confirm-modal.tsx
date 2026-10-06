@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
 export type ReviewConfirmAction = "APPROVE" | "REJECT" | "RESUBMIT";
 
@@ -60,24 +61,20 @@ export default function ReviewConfirmModal({
   const Icon = meta.icon;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-        onClick={() => !isLoading && onCancel()}
-      />
-      <div className="bg-white rounded-3xl shadow-xl w-full max-w-sm overflow-hidden relative z-10 animate-in zoom-in-95 duration-200">
+    <Dialog open onOpenChange={(open) => !open && !isLoading && onCancel()}>
+      <DialogContent className="max-w-sm gap-0 overflow-hidden p-0 sm:rounded-3xl">
         <div className="p-6 text-center space-y-4">
           <div
             className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center ${meta.iconClass}`}
           >
             <Icon size={32} />
           </div>
-          <h3 className="text-xl font-bold text-slate-800 tracking-tight">
+          <DialogTitle className="text-xl font-bold text-slate-800 tracking-tight leading-normal">
             {meta.title}
-          </h3>
-          <p className="text-sm text-slate-500 leading-relaxed">{meta.desc}</p>
+          </DialogTitle>
+          <DialogDescription className="text-sm text-slate-500 leading-relaxed">{meta.desc}</DialogDescription>
         </div>
-        <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3">
+        <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-slate-50 border-t border-slate-100 flex gap-3">
           <button
             onClick={onCancel}
             disabled={isLoading}
@@ -100,7 +97,7 @@ export default function ReviewConfirmModal({
             )}
           </button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

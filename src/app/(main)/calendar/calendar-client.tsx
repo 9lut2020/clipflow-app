@@ -1299,13 +1299,10 @@ export function CalendarClient() {
 
       {/* 3. Detail Dialog / Modal */}
       {isDetailOpen && selectedClip && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div
-            className="bg-white rounded-xl w-full max-w-md border border-slate-105/80 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <Dialog open onOpenChange={(open) => !open && setIsDetailOpen(false)}>
+          <DialogContent className="max-w-md gap-0 overflow-hidden p-0 sm:rounded-xl">
             {/* Header */}
-            <div className="p-6 bg-slate-50/80 border-b border-slate-100 flex items-start justify-between">
+            <div className="p-6 pr-12 bg-slate-50/80 border-b border-slate-100 flex items-start justify-between">
               <div className="space-y-1">
                 <Badge
                   variant="outline"
@@ -1313,18 +1310,10 @@ export function CalendarClient() {
                 >
                   รายละเอียดคิวงาน
                 </Badge>
-                <h3 className="text-base font-black text-slate-900 leading-snug">
+                <DialogTitle className="text-base font-black text-slate-900 leading-snug">
                   {selectedClip.name}
-                </h3>
+                </DialogTitle>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsDetailOpen(false)}
-                className="h-9 w-9 rounded-xl text-slate-455 hover:bg-slate-200/50 hover:text-slate-655 cursor-pointer transition-all"
-              >
-                <X size={18} className="stroke-[2.5px]" />
-              </Button>
             </div>
 
             {/* Content */}
@@ -1425,8 +1414,8 @@ export function CalendarClient() {
                 )}
               </div>
             </div>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* 4. Auto-Schedule Configuration Dialog */}

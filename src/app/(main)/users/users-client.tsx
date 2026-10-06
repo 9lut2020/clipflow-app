@@ -23,6 +23,7 @@ import {
 import { useSession } from "next-auth/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface UsersClientProps {
   initialUsers: User[];
@@ -642,21 +643,14 @@ export function UsersClient({ initialUsers, currentUserId }: UsersClientProps) {
 
       {/* Edit User Modal with Role AND Active/Disabled Status Toggle */}
       {isModalOpen && selectedUser && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-xl border border-slate-200 space-y-4 sm:space-y-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+        <Dialog open onOpenChange={(open) => !open && setIsModalOpen(false)}>
+          <DialogContent className="max-w-md space-y-4 p-5 sm:space-y-5 sm:p-6">
+            <DialogHeader className="border-b border-slate-100 pb-3">
+              <DialogTitle className="font-bold text-base text-slate-900 flex items-center gap-2">
                 <Edit3 size={18} className="text-blue-600" />
                 แก้ไขสิทธิ์และสถานะผู้ใช้งาน
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
-              >
-                <X size={18} />
-              </button>
-            </div>
+              </DialogTitle>
+            </DialogHeader>
 
             <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200/80">
               {selectedUser.pictureUrl ? (
@@ -802,8 +796,8 @@ export function UsersClient({ initialUsers, currentUserId }: UsersClientProps) {
                 )}
               </button>
             </div>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

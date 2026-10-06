@@ -10,7 +10,6 @@ import {
   Film,
   UploadCloud,
   Loader2,
-  X,
   MessageSquare,
   Send,
   RefreshCcw,
@@ -25,6 +24,7 @@ import { useSubmitRevision } from "@/features/reviews/hooks/use-reviews";
 import { validateVideoUrl } from "@/utils/url-validator";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 // ─── Inline Submit Modal ──────────────────────────────────────────────────────
 
@@ -63,39 +63,25 @@ function InlineSubmitModal({ clip, userId, onClose, mode }: InlineSubmitModalPro
   };
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="fixed inset-x-4 bottom-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-md z-50 animate-in slide-in-from-bottom-4 duration-300">
-        <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md gap-0 overflow-hidden p-0 sm:rounded-3xl">
           {/* Header */}
-          <div className={`flex items-center justify-between px-5 py-4 border-b border-slate-100 ${mode === "resubmit" ? "bg-rose-50/60" : "bg-blue-50/60"}`}>
+          <div className={`flex items-center justify-between px-5 py-4 pr-12 border-b border-slate-100 ${mode === "resubmit" ? "bg-rose-50/60" : "bg-blue-50/60"}`}>
             <div className="flex items-center gap-2.5">
               <div className={`p-1.5 rounded-xl ${mode === "resubmit" ? "bg-rose-100 text-rose-600" : "bg-blue-100 text-blue-600"}`}>
                 {mode === "resubmit" ? <RefreshCcw size={18} /> : <UploadCloud size={18} />}
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-800">
+                <DialogTitle className="text-sm font-bold text-slate-800">
                   {mode === "resubmit" ? "ส่งงานแก้ไข" : "ส่งคลิปตรวจงาน"}
-                </h3>
+                </DialogTitle>
                 <p className="text-[11px] text-slate-500 truncate max-w-[220px]">{clip.name}</p>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
-            >
-              <X size={18} />
-            </button>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          <form onSubmit={handleSubmit} className="p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                 ลิงก์ Google Drive วิดีโอ *
@@ -147,9 +133,8 @@ function InlineSubmitModal({ clip, userId, onClose, mode }: InlineSubmitModalPro
               )}
             </button>
           </form>
-        </div>
-      </div>
-    </>
+      </DialogContent>
+    </Dialog>
   );
 }
 
