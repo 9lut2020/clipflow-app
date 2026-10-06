@@ -33,7 +33,7 @@ const STATUS_MAP: Record<string, { label: string; className: string }> = {
     className: "bg-sky-50 text-sky-700 border-sky-200",
   },
   DRAFT: {
-    label: "ร่าง",
+    label: "รอส่งงาน",
     className: "bg-slate-50 text-slate-600 border-slate-200",
   },
   CANCELLED: {

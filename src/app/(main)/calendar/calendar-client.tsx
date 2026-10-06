@@ -61,7 +61,7 @@ const STATUS_CONFIGS: Record<
     bg: "bg-slate-50/70",
     text: "text-slate-655",
     dot: "bg-slate-400",
-    label: "ร่าง",
+    label: "รอส่งงาน",
     border: "border-slate-200/60",
   },
   PENDING_REVIEW: {

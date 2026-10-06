@@ -72,7 +72,7 @@ const getTargetName = (log: AuditLog) => {
 };
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  DRAFT: { label: "ร่าง", color: "bg-slate-100 text-slate-600" },
+  DRAFT: { label: "รอส่งงาน", color: "bg-slate-100 text-slate-600" },
   PENDING_REVIEW: { label: "รอตรวจ", color: "bg-amber-100 text-amber-700" },
   IN_REVIEW: { label: "กำลังตรวจ", color: "bg-sky-100 text-sky-700" },
   NEEDS_REVISION: { label: "สั่งแก้ไข", color: "bg-rose-100 text-rose-700" },

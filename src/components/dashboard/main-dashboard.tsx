@@ -20,6 +20,7 @@ import {
   Search,
   SearchX,
   Plus,
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -128,7 +129,10 @@ export function MainDashboard({
   );
   const countStatus = (status: string) =>
     stats ? stats.byStatus[status] || 0 : filteredClips.filter((c) => c.status === status).length;
+  const notSubmittedCount = countStatus("DRAFT");
   const pendingCount = countStatus("PENDING_REVIEW");
+  // Reviewers never see clips before submission, so the card is hidden for them.
+  const showNotSubmitted = role !== "REVIEWER";
   const inReviewCount = countStatus("IN_REVIEW");
   const needsRevisionCount = countStatus("NEEDS_REVISION");
   const approvedCount = countStatus("APPROVED");
@@ -289,7 +293,29 @@ export function MainDashboard({
       </div>
 
       {/* ─── 2. 4 MOBILE-FRIENDLY KPI STAT CARDS (2x2 GRID ON MOBILE) ───────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-4">
+      <div className={`grid grid-cols-2 gap-2.5 md:gap-4 ${showNotSubmitted ? "sm:grid-cols-3 lg:grid-cols-5" : "lg:grid-cols-4"}`}>
+        {/* Not Submitted Yet (assigned, waiting for the editor) */}
+        {showNotSubmitted && (
+          <Card className="bg-white border-slate-200/80 shadow-xs">
+            <CardContent className="p-3 md:p-4">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wide truncate">
+                  รอส่งงาน
+                </span>
+                <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+                  <Send size={16} />
+                </div>
+              </div>
+              <div className="text-xl md:text-3xl font-black text-slate-700 tracking-tight">
+                {notSubmittedCount}{" "}
+                <span className="text-[10px] md:text-xs font-normal text-slate-500">
+                  รายการ
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Pending Review Card */}
         <Card className="bg-white border-slate-200/80 shadow-xs">
           <CardContent className="p-3 md:p-4">
@@ -576,6 +602,7 @@ export function MainDashboard({
             <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
               {[
                 { id: "ALL", label: "ทั้งหมด" },
+                ...(showNotSubmitted ? [{ id: "DRAFT", label: "รอส่งงาน" }] : []),
                 { id: "PENDING_REVIEW", label: "รอตรวจ" },
                 { id: "NEEDS_REVISION", label: "สั่งแก้" },
                 { id: "APPROVED", label: "อนุมัติ" },
