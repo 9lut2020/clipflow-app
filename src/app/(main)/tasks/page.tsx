@@ -1,6 +1,4 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { apiServer } from "@/lib/api-server";
+import { apiServer, getSession } from "@/lib/api-server";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clip, PaginatedData } from "@/types/api";
@@ -21,7 +19,7 @@ import { TaskAccordionSection } from "./task-accordion";
 import { ReviewerTasksView } from "./reviewer-tasks-view";
 
 export default async function TasksPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session) {
     redirect("/api/auth/signin");

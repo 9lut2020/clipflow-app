@@ -1,7 +1,5 @@
 export const dynamic = "force-dynamic";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { apiServer } from "@/lib/api-server";
+import { apiServer, getSession } from "@/lib/api-server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Edit, ArrowLeft } from "lucide-react";
@@ -14,7 +12,7 @@ export default async function ProjectManagePage(props: {
   params: Promise<{ id: string }>;
 }) {
   const params = await props.params;
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   const currentUser = session?.user;
 
   if (!currentUser) {

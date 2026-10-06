@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth/next";
+import { getToken } from "next-auth/jwt";
 import { authOptions } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -50,9 +50,16 @@ async function handler(
     const resolvedParams = await params;
     path = resolvedParams.path.join("/");
 
-    let session;
+    // Decode the session JWT directly: getServerSession would also run the
+    // jwt/session callbacks (and occasionally a Worker round trip) on every
+    // proxied call. The Worker re-checks the user against the database anyway.
+    let token;
     try {
-      session = await getServerSession(authOptions);
+      token = await getToken({
+        req,
+        secret: authOptions.secret,
+        secureCookie: Boolean(authOptions.useSecureCookies),
+      });
     } catch (error) {
       console.error("[PROXY SESSION ERROR]", {
         requestId,
@@ -62,7 +69,7 @@ async function handler(
       return jsonError(401, "SESSION_INVALID", "Session is invalid. Please sign in again.", requestId);
     }
 
-    if (!session?.user?.id || !session.user.role) {
+    if (!token?.id || !token.role) {
       return jsonError(401, "UNAUTHORIZED", "Authentication is required.", requestId);
     }
 
@@ -72,10 +79,11 @@ async function handler(
     // Do not forward browser cookies or unrelated headers to the Worker. It only
     // needs a verified identity plus JSON metadata.
     const headers = new Headers({
-      "x-user-id": session.user.id,
-      "x-user-role": session.user.role,
+      "x-user-id": String(token.id),
+      "x-user-role": String(token.role),
       "x-request-id": requestId,
     });
+    if (process.env.INTERNAL_API_SECRET) headers.set("x-internal-secret", process.env.INTERNAL_API_SECRET);
     const contentType = req.headers.get("content-type");
     if (contentType) headers.set("content-type", contentType);
 
@@ -89,7 +97,7 @@ async function handler(
       headers,
       body: bodyData,
       cache: "no-store",
-      signal: AbortSignal.timeout(12_000),
+      signal: AbortSignal.timeout(req.method === "GET" ? 15_000 : 30_000),
     });
 
     const responseHeaders = new Headers(response.headers);

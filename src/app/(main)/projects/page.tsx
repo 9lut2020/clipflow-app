@@ -1,6 +1,4 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { apiServer } from "@/lib/api-server";
+import { apiServer, getSession } from "@/lib/api-server";
 import { PaginatedData, Project } from "@/types/api";
 
 import { Button } from "@/components/ui/button";
@@ -10,7 +8,7 @@ import Image from "next/image";
 import { formatImageUrl } from "@/utils/utils";
 
 export default async function ProjectsPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session) {
     return null;

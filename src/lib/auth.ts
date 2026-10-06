@@ -190,6 +190,7 @@ export const authOptions: NextAuthOptions = {
               headers: {
                 "x-user-id": token.id as string,
                 "x-user-role": (token.role as string) || "USER",
+                "x-internal-secret": process.env.INTERNAL_API_SECRET || "",
               },
               cache: "no-store",
             },
@@ -232,6 +233,9 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   useSecureCookies: isHttps,
-  secret: process.env.NEXTAUTH_SECRET || "fallback_secret_for_development_only",
+  // Never fall back to a known secret in production: anyone could forge a session.
+  secret:
+    process.env.NEXTAUTH_SECRET ||
+    (process.env.NODE_ENV === "production" ? undefined : "fallback_secret_for_development_only"),
   debug: process.env.NODE_ENV === "development",
 };

@@ -1,12 +1,10 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { apiServer } from "@/lib/api-server";
+import { apiServer, getSession } from "@/lib/api-server";
 import { User, PaginatedData } from "@/types/api";
 import { UsersClient } from "./users-client";
 import { redirect } from "next/navigation";
 
 export default async function UsersPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session) {
     redirect("/login");

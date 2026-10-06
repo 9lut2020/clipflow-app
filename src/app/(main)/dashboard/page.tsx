@@ -1,12 +1,10 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { apiServer } from "@/lib/api-server";
+import { apiServer, getSession } from "@/lib/api-server";
 import { Clip, Project, User, PaginatedData } from "@/types/api";
 import { MainDashboard } from "@/components/dashboard/main-dashboard";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session) redirect("/login");
 

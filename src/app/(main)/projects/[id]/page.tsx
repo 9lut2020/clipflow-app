@@ -1,6 +1,4 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { apiServer } from "@/lib/api-server";
+import { apiServer, getSession } from "@/lib/api-server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft, Settings } from "lucide-react";
@@ -12,7 +10,7 @@ export default async function ProjectDetailPage(props: {
   params: Promise<{ id: string }>;
 }) {
   const params = await props.params;
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session) {
     return null;

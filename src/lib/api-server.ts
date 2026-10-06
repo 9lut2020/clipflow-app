@@ -1,6 +1,11 @@
 import { ApiResponse } from "@/types/api";
+import { cache } from "react";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+
+// One session resolution per server render, shared by every apiServer call
+// (pages fire several in parallel).
+export const getSession = cache(() => getServerSession(authOptions));
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8787/api";
 const DEFAULT_TIMEOUT_MS = 15000;
@@ -17,15 +22,18 @@ async function request<T>(
     url += `?${new URLSearchParams(params).toString()}`;
   }
 
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
 
   if (session?.user) {
     headers["x-user-id"] = session.user.id;
     headers["x-user-role"] = session.user.role;
+  }
+  if (process.env.INTERNAL_API_SECRET) {
+    headers["x-internal-secret"] = process.env.INTERNAL_API_SECRET;
   }
 
   // Build Next.js fetch cache options

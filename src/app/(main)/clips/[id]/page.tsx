@@ -5,9 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import ClipStepper from "@/components/clips/clip-stepper";
 import ClipViewClient from "./clip-view-client";
 
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { apiServer } from "@/lib/api-server";
+import { apiServer, getSession } from "@/lib/api-server";
 import { notFound } from "next/navigation";
 
 export default async function ClipDetailPage(props: {
@@ -15,7 +13,7 @@ export default async function ClipDetailPage(props: {
   searchParams: Promise<{ role?: string }>;
 }) {
   const params = await props.params;
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   // Get current user from actual session
   const currentUser = session?.user;

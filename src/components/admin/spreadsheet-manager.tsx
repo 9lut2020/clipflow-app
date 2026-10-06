@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, memo, useCallback } from "react";
+import React, { useState, useRef, useEffect, memo, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useBatchCreateClips } from "@/features/clips/hooks/use-clips";
@@ -332,6 +332,17 @@ const MemoizedClipRow = memo(ClipRow, (prev, next) => {
   );
 });
 
+const rowSignature = (clip: any) =>
+  JSON.stringify([
+    clip.name || "",
+    clip.description || "",
+    Number(clip.episodeNo) || 0,
+    clip.ownerId || "",
+    clip.videoSizeId || "",
+    clip.platform || "",
+    clip.deadline || "",
+  ]);
+
 export default function SpreadsheetManager({
   projectId,
   initialClips,
@@ -347,6 +358,15 @@ export default function SpreadsheetManager({
   useEffect(() => {
     setClips(initialClips);
   }, [JSON.stringify(initialClips)]);
+
+  // Snapshot of the saved rows, used to send only rows that actually changed.
+  const savedRowsById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const clip of initialClips) {
+      if (clip?.id) map.set(String(clip.id), rowSignature(clip));
+    }
+    return map;
+  }, [initialClips]);
 
   useEffect(() => {
     setEpisodes(initialEpisodes);
@@ -599,9 +619,8 @@ export default function SpreadsheetManager({
         .map((index) => clips[index].id)
         .filter((id) => id && !id.toString().startsWith("new-"));
 
-      // Delete saved clips one by one (could be optimized with a batch endpoint later)
-      for (const id of savedIds) {
-        const res = await api.delete(`/clips/${id}`);
+      if (savedIds.length) {
+        const res = await api.post(`/projects/${projectId}/clips/batch-delete`, { ids: savedIds });
         if (res.status !== "success") throw new Error(res.message);
       }
 
@@ -664,12 +683,11 @@ export default function SpreadsheetManager({
   const confirmApplyAll = () => {
     if (!applyAllConfig) return;
     const { index, userId } = applyAllConfig;
-    const newClips = [...clips];
-    const targetUserId = userId;
-    for (let i = index; i < newClips.length; i++) {
-      newClips[i].ownerId = targetUserId;
-    }
-    setClips(newClips);
+    // Copy rows instead of mutating them: the originals are shared with the
+    // saved snapshot used for change detection.
+    setClips((prevClips) =>
+      prevClips.map((clip, i) => (i >= index ? { ...clip, ownerId: userId } : clip)),
+    );
     setApplyAllConfig(null);
   };
 
@@ -690,8 +708,18 @@ export default function SpreadsheetManager({
       return;
     }
 
+    const changedClips = clips.filter((clip) => {
+      const id = String(clip.id || "");
+      if (!id || id.startsWith("new-")) return true;
+      return savedRowsById.get(id) !== rowSignature(clip);
+    });
+    if (!changedClips.length) {
+      toast.info("ไม่มีข้อมูลที่เปลี่ยนแปลง");
+      return;
+    }
+
     try {
-      const result = await batchCreateClips(projectId, clips);
+      const result = await batchCreateClips(projectId, changedClips);
       if (result.status === "success") {
         toast.success("บันทึกข้อมูลเรียบร้อยแล้ว");
         router.refresh();

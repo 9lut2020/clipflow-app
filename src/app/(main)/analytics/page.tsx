@@ -1,12 +1,10 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { apiServer } from "@/lib/api-server";
+import { apiServer, getSession } from "@/lib/api-server";
 import { redirect } from "next/navigation";
 import { Clip, Project, User, PaginatedData } from "@/types/api";
 import { AnalyticsClient } from "./analytics-client";
 
 export default async function AnalyticsPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session) {
     redirect("/api/auth/signin");

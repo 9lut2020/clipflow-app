@@ -62,11 +62,12 @@ export default function MembersClient({
     if (selectedUsers.length === 0) return;
     setIsAdding(true);
     try {
-      await Promise.all(
-        selectedUsers.map((userId) =>
-          apiClient.post(`/projects/${projectId}/members`, { userId }),
-        ),
-      );
+      const res = await apiClient.post(`/projects/${projectId}/members`, {
+        userIds: selectedUsers,
+      });
+      if (res.status !== "success") {
+        throw new Error(res.message || "Failed to add members");
+      }
       toast.success("เพิ่มสมาชิกสำเร็จ");
       setSelectedUsers([]);
       mutate();
@@ -82,11 +83,14 @@ export default function MembersClient({
     if (!membersToDelete || membersToDelete.length === 0) return;
     setIsDeleting(true);
     try {
-      await Promise.all(
+      const results = await Promise.all(
         membersToDelete.map((member) =>
           apiClient.delete(`/projects/${projectId}/members/${member.id}`)
         )
       );
+      if (results.some((res) => res.status !== "success")) {
+        throw new Error("Failed to remove some members");
+      }
       toast.success("ลบสมาชิกสำเร็จ");
       mutate();
       setMembersToDelete(null);

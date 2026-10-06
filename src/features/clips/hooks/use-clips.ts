@@ -2,7 +2,7 @@
 import useSWR, { useSWRConfig } from "swr";
 import { useState } from "react";
 import { apiClient } from "@/lib/api-client";
-import { Clip, ApiResponse, PaginatedData } from "@/types/api";
+import { Clip, PaginatedData } from "@/types/api";
 import { useAnalytics } from "@/hooks/use-analytics";
 
 const fetcher = async <T>(url: string) => {
@@ -13,66 +13,38 @@ const fetcher = async <T>(url: string) => {
   return res;
 };
 
+// The API caps `limit` at 100, so lists that need every clip walk the pages.
+const PAGE_SIZE = 100;
+const MAX_PAGES = 50;
+
+const fetchAllClips = async (url: string): Promise<Clip[]> => {
+  const items: Clip[] = [];
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const res = await fetcher<PaginatedData<Clip>>(`${url}&page=${page}&limit=${PAGE_SIZE}`);
+    items.push(...(res.data?.items || []));
+    if (!res.data?.pagination?.hasNext) break;
+  }
+  return items;
+};
+
 export function useClips(episodeId?: string, excludeApproved = true) {
-  const { data, error, isLoading } = useSWR<ApiResponse<PaginatedData<Clip>>>(
-    episodeId ? `/clips?episodeId=${episodeId}&excludeApproved=${String(excludeApproved)}&page=1&limit=5000` : null,
-    fetcher
+  const { data, error, isLoading } = useSWR<Clip[]>(
+    episodeId ? `/clips?episodeId=${episodeId}&excludeApproved=${String(excludeApproved)}` : null,
+    fetchAllClips
   );
 
-  return { 
-    data: data?.data?.items || [],
-    pagination: data?.data?.pagination,
-    isLoading, 
-    error 
-  };
+  return { data: data || [], isLoading, error };
 }
 
 export function useAllClips(status?: string, excludeApproved = true) {
-  let url = `/clips?excludeApproved=${String(excludeApproved)}&page=1&limit=5000`;
+  let url = `/clips?excludeApproved=${String(excludeApproved)}`;
   if (status) {
     url += `&status=${status}`;
   }
-  
-  const { data, error, isLoading } = useSWR<ApiResponse<PaginatedData<Clip>>>(url, fetcher);
 
-  return { 
-    data: data?.data?.items || [],
-    pagination: data?.data?.pagination,
-    isLoading, 
-    error 
-  };
-}
+  const { data, error, isLoading } = useSWR<Clip[]>(url, fetchAllClips);
 
-export function useCreateClip() {
-  const [isCreating, setIsCreating] = useState(false);
-  const { trackEvent } = useAnalytics();
-
-  const mutateAsync = async (data: {
-    projectId: string;
-    episodeId: string;
-    name: string;
-    description?: string;
-    driveUrl: string;
-    submitNote?: string;
-    ownerId: string;
-  }) => {
-    setIsCreating(true);
-    try {
-      const res = await apiClient.post<any>(`/clips`, data);
-      if (res.status !== "success") throw new Error(res.message || "Failed to create clip");
-      
-      trackEvent({ 
-        eventName: "clip_created", 
-        properties: { projectId: data.projectId, episodeId: data.episodeId, ownerId: data.ownerId } 
-      });
-
-      return res;
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  return { createClip: mutateAsync, isCreating };
+  return { data: data || [], isLoading, error };
 }
 
 export function useBatchCreateClips() {

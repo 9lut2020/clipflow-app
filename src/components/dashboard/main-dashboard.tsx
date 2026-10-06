@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import useSWR from "swr";
+import { apiClient } from "@/lib/api-client";
 import { Clip, Project, User } from "@/types/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
@@ -22,6 +24,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { UserAvatar } from "@/components/ui/user-avatar";
+
+type ClipStats = {
+  byStatus: Record<string, number>;
+  total: number;
+  trend: { date: string; submitted: number; approved: number }[];
+  creators: { id: string; name: string; pictureUrl?: string | null; total: number; approved: number }[];
+};
+
+const fetchStats = async (url: string) => {
+  const res = await apiClient.get<ClipStats>(url);
+  if (res.status !== "success") throw new Error(res.message || "Failed to load stats");
+  return res.data;
+};
 
 interface MainDashboardProps {
   clips: Clip[];
@@ -104,19 +119,23 @@ export function MainDashboard({
     return true;
   });
 
-  // Key Statistics
-  const pendingClips = filteredClips.filter(
-    (c) => c.status === "PENDING_REVIEW",
+  // Key statistics come from the server so they cover every clip, not only
+  // the page loaded into the table. Local counts are a fallback while loading.
+  const { data: stats } = useSWR(
+    `/clips/stats${timeFilter === "all" ? "" : `?days=${timeFilter === "7d" ? 7 : 30}`}`,
+    fetchStats,
+    { revalidateOnFocus: false },
   );
-  const inReviewClips = filteredClips.filter((c) => c.status === "IN_REVIEW");
-  const needsRevisionClips = filteredClips.filter(
-    (c) => c.status === "NEEDS_REVISION",
-  );
-  const approvedClips = filteredClips.filter((c) => c.status === "APPROVED");
+  const countStatus = (status: string) =>
+    stats ? stats.byStatus[status] || 0 : filteredClips.filter((c) => c.status === status).length;
+  const pendingCount = countStatus("PENDING_REVIEW");
+  const inReviewCount = countStatus("IN_REVIEW");
+  const needsRevisionCount = countStatus("NEEDS_REVISION");
+  const approvedCount = countStatus("APPROVED");
 
-  const totalCount = filteredClips.length;
+  const totalCount = stats ? stats.total : filteredClips.length;
   const approvalRate =
-    totalCount > 0 ? Math.round((approvedClips.length / totalCount) * 100) : 0;
+    totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 0;
 
   // Trend Data for SVG Line Chart (7 data points)
   const trendPointsCount = 7;
@@ -125,7 +144,17 @@ export function MainDashboard({
     submitted: number;
     approved: number;
   }[] = [];
-  for (let i = trendPointsCount - 1; i >= 0; i--) {
+  if (stats?.trend?.length) {
+    for (const point of stats.trend) {
+      const [, month, day] = point.date.split("-");
+      trendDataPoints.push({
+        label: `${Number(day)}/${Number(month)}`,
+        submitted: point.submitted,
+        approved: point.approved,
+      });
+    }
+  }
+  for (let i = trendPointsCount - 1; i >= 0 && !stats?.trend?.length; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i * (timeFilter === "30d" ? 4 : 1));
     const dayLabel = `${d.getDate()}/${d.getMonth() + 1}`;
@@ -203,9 +232,9 @@ export function MainDashboard({
     if (c.status === "APPROVED") stat.approved += 1;
   });
 
-  const creatorLeaderboard = Array.from(creatorStatsMap.values()).sort(
-    (a, b) => b.approved - a.approved,
-  );
+  const creatorLeaderboard = stats?.creators?.length
+    ? stats.creators
+    : Array.from(creatorStatsMap.values()).sort((a, b) => b.approved - a.approved);
 
 
 
@@ -273,7 +302,7 @@ export function MainDashboard({
               </div>
             </div>
             <div className="text-xl md:text-3xl font-black text-amber-600 tracking-tight">
-              {pendingClips.length}{" "}
+              {pendingCount}{" "}
               <span className="text-[10px] md:text-xs font-normal text-slate-500">
                 รายการ
               </span>
@@ -293,7 +322,7 @@ export function MainDashboard({
               </div>
             </div>
             <div className="text-xl md:text-3xl font-black text-sky-600 tracking-tight">
-              {inReviewClips.length}{" "}
+              {inReviewCount}{" "}
               <span className="text-[10px] md:text-xs font-normal text-slate-500">
                 รายการ
               </span>
@@ -313,7 +342,7 @@ export function MainDashboard({
               </div>
             </div>
             <div className="text-xl md:text-3xl font-black text-rose-600 tracking-tight">
-              {needsRevisionClips.length}{" "}
+              {needsRevisionCount}{" "}
               <span className="text-[10px] md:text-xs font-normal text-slate-500">
                 รายการ
               </span>
@@ -333,7 +362,7 @@ export function MainDashboard({
               </div>
             </div>
             <div className="text-xl md:text-3xl font-black text-emerald-600 tracking-tight">
-              {approvedClips.length}{" "}
+              {approvedCount}{" "}
               <span className="text-[10px] md:text-xs font-normal text-slate-500">
                 ({approvalRate}%)
               </span>
