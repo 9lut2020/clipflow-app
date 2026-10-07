@@ -132,6 +132,18 @@ export function usePublishScheduleActions() {
       await refresh();
       return data;
     },
+    /** Record that the clip was posted on these platforms (one row each). */
+    markPosted: async (clipId: string, platforms: string[], publishedAt: string, caption?: string) => {
+      const results = await Promise.all(platforms.map((platform) => apiClient.post(`/clips/${clipId}/publish`, { platform, publishedAt, caption })));
+      results.forEach(ensureSuccess);
+      await refresh();
+    },
+    /** Undo a post record that was marked by mistake. */
+    unmarkPosted: async (clipId: string, platform: string) => {
+      const data = ensureSuccess(await apiClient.delete(`/clips/${clipId}/published-posts/${platform}`));
+      await refresh();
+      return data;
+    },
     cancelQueue: async (clipId: string) => {
       const data = ensureSuccess(await apiClient.delete(`/publish-schedules/queue/${clipId}`));
       await refresh();

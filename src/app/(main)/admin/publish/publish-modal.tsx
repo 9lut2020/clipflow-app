@@ -26,6 +26,7 @@ import {
   usePublishClip,
 } from "@/features/clips/hooks/use-publish";
 import { ScheduleEditor } from "@/components/publish/schedule-editor";
+import { buildClipCaption, buildClipTitle } from "@/lib/publish-text";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
 
@@ -87,17 +88,10 @@ export function PublishModal({ clip, isOpen, onClose, initialTab }: PublishModal
       : approvedClipUrl;
   })();
 
-  const generatedCaption = `${clip.name}
-.
-ส่วนหนึ่งจากคลิปเต็ม รายการ ${clip.project?.name || "อัลมะดาริจญ์"} ตอนที่ ${clip.episode?.episodeNo || ""}
-["${clip.episode?.name || ""}"]
-.
-ข้อคิดหนึ่งจากอัลกุรอาน เพื่อการทบทวนและพัฒนาตนเอง
-.
-#${clip.project?.name || "อัลมะดาริจญ์"} #แนวคิดการพัฒนาตนเองจากอัลกุรอาน #อิสลาม #มุสลิม #ข้อคิดอิสลาม #พัฒนาตนเอง #เตือนใจ #tmyda`;
+  const generatedCaption = buildClipCaption(clip);
 
   const [caption, setCaption] = useState(generatedCaption);
-  const clipTitle = `${clip.name} | รายการ ${clip.project?.name || "อัลมะดาริจญ์"} ตอนที่ ${clip.episode?.episodeNo || ""}`;
+  const clipTitle = buildClipTitle(clip);
 
   const postedPlatforms = new Set((publishedPosts || []).map((p: any) => p.platform));
   const remaining = PLATFORMS.filter((p) => !postedPlatforms.has(p.id));
