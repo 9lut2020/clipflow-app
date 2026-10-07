@@ -142,8 +142,8 @@ const DECK_CSS = `
 @keyframes slLeft { from { opacity: 0; transform: translateX(-48px) } to { opacity: 1; transform: none } }
 .sl-pop { opacity: 0; animation: slPop .6s cubic-bezier(.3,1.5,.5,1) forwards; }
 @keyframes slPop { from { opacity: 0; transform: scale(.6) } to { opacity: 1; transform: none } }
-.sl-grow { transform-origin: left center; transform: scaleX(0); animation: slGrow 1.2s cubic-bezier(.2,.7,.2,1) forwards; }
-@keyframes slGrow { to { transform: scaleX(1) } }
+.sl-grow { width: 0; animation: slGrow 1.2s cubic-bezier(.2,.7,.2,1) forwards; }
+@keyframes slGrow { to { width: var(--sl-w, 100%) } }
 .sl-draw { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: slDraw 2.2s ease forwards; }
 @keyframes slDraw { to { stroke-dashoffset: 0 } }
 .sl-pulse { animation: slPulse 1.6s ease-in-out infinite; }
@@ -161,7 +161,7 @@ const DECK_CSS = `
 .sl-back { opacity: 0; animation: slBack 10s linear infinite; }
 @keyframes slBack { 0%,44% { opacity: 0; left: 1060px; top: 600px } 48% { opacity: 1; left: 1060px; top: 600px } 60% { left: 800px; top: 612px; opacity: 1 } 70% { left: 520px; top: 560px; opacity: 1 } 74%,100% { opacity: 0; left: 500px; top: 540px } }
 @media (prefers-reduced-motion: reduce) {
-  .sl-slide, .sl-in, .sl-left, .sl-pop, .sl-grow, .sl-draw, .sl-type { animation: none !important; opacity: 1 !important; transform: none !important; width: auto; stroke-dashoffset: 0 !important; }
+  .sl-slide, .sl-in, .sl-left, .sl-pop, .sl-grow, .sl-draw, .sl-type { animation: none !important; opacity: 1 !important; transform: none !important; width: var(--sl-w, 100%); stroke-dashoffset: 0 !important; }
   .sl-pulse, .sl-float, .sl-node, .sl-dot, .sl-back { animation: none !important; }
 }
 `;
