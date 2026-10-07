@@ -66,6 +66,26 @@ export function usePublishSlots(params?: { projectId?: string; q?: string; dayOf
   return { data: data?.items || [], pagination: data?.pagination, error, isLoading };
 }
 
+export interface PostedDayItem {
+  clipId: string;
+  projectId?: string;
+  date: string;
+  time: string;
+  platforms: string[];
+  clip: any;
+}
+
+/** Recorded posts grouped per clip per day (Bangkok time). */
+export function usePostedByDate(params?: { projectId?: string; from?: string; to?: string }) {
+  const query = new URLSearchParams();
+  if (params?.projectId) query.set("projectId", params.projectId);
+  if (params?.from) query.set("from", params.from);
+  if (params?.to) query.set("to", params.to);
+  const key = params?.from && params?.to ? `/publish-schedules/posted?${query.toString()}` : null;
+  const { data, error, isLoading } = useSWR<PostedDayItem[]>(key, fetcher, { keepPreviousData: true, revalidateOnFocus: false });
+  return { data: data || [], error, isLoading };
+}
+
 export function usePublishQueue(params?: { projectId?: string; from?: string; to?: string }) {
   const query = new URLSearchParams();
   if (params?.projectId) query.set("projectId", params.projectId);

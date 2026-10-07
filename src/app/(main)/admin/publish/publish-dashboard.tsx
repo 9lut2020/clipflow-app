@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { PublishModal, type PublishModalTab } from "./publish-modal";
 import { PublishSlotsModal } from "@/components/publish/publish-slots-modal";
 import { useProjects } from "@/features/projects/hooks/use-projects";
-import { usePublishItems, usePublishQueue, usePublishScheduleActions, usePublishSummary } from "@/features/clips/hooks/use-publish-schedules";
+import { usePostedByDate, usePublishItems, usePublishQueue, usePublishScheduleActions, usePublishSummary } from "@/features/clips/hooks/use-publish-schedules";
 import { apiClient } from "@/lib/api-client";
 import { buildClipCaption, driveDownloadUrl, PUBLISH_PLATFORMS } from "@/lib/publish-text";
 import type { PaginatedData, User } from "@/types/api";
@@ -164,22 +164,111 @@ function PublishRow({ clip, onOpen }: { clip: any; onOpen: (tab?: PublishModalTa
   </article>;
 }
 
+type CalendarEntry = { key: string; date: string; time: string; clip: any; projectId?: string; kind: "posted" | "queued" | "overdue"; platforms: string[] };
+
+const ENTRY_TONE: Record<CalendarEntry["kind"], string> = {
+  posted: "bg-emerald-100 text-emerald-800",
+  queued: "bg-violet-100 text-violet-800",
+  overdue: "bg-rose-100 text-rose-800",
+};
+
+/**
+ * Month view of what went out (recorded posts, back-dated ones included) and
+ * what is still queued. A clip posted on its queue day shows once, as posted.
+ */
 function CalendarView({ onOpen }: { onOpen: (clip: any) => void }) {
   const router = useRouter(); const sp = useSearchParams();
   const today = new Date();
   const todayKey = dateKey(today);
   const raw = sp.get("month"); const initial = raw && /^\d{4}-\d{2}$/.test(raw) ? new Date(`${raw}-01T00:00:00`) : new Date();
   const month = new Date(initial.getFullYear(), initial.getMonth(), 1); const projectId = sp.get("projectId") || "";
-  const { data: queue, isLoading, error } = usePublishQueue({ projectId: projectId || undefined, from: dateKey(month), to: dateKey(new Date(month.getFullYear(), month.getMonth() + 1, 0)) });
+  // Fetch the whole visible grid (6 weeks), not only the month itself.
+  const days = useMemo(() => { const cursor = new Date(month); cursor.setDate(cursor.getDate() - cursor.getDay()); return Array.from({ length: 42 }, (_, i) => { const day = new Date(cursor); day.setDate(cursor.getDate() + i); return day; }); }, [raw]);
+  const range = { projectId: projectId || undefined, from: dateKey(days[0]), to: dateKey(days[days.length - 1]) };
+  const { data: queue, isLoading: queueLoading, error: queueError } = usePublishQueue(range);
+  const { data: posted, isLoading: postedLoading, error: postedError } = usePostedByDate(range);
   const { data: projects } = useProjects({ isActive: true });
   const update = (values: Record<string, string | undefined>) => { const next = new URLSearchParams(sp.toString()); Object.entries(values).forEach(([k, v]) => v ? next.set(k, v) : next.delete(k)); next.set("tab", "calendar"); router.replace(`?${next.toString()}`, { scroll: false }); };
   const move = (delta: number) => { const next = new Date(month.getFullYear(), month.getMonth() + delta, 1); update({ month: `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}` }); };
   const goToday = () => update({ month: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}` });
-  const days = useMemo(() => { const cursor = new Date(month); cursor.setDate(cursor.getDate() - cursor.getDay()); return Array.from({ length: 42 }, (_, i) => { const day = new Date(cursor); day.setDate(cursor.getDate() + i); return day; }); }, [raw]);
-  const byDate = useMemo(() => { const map = new Map<string, typeof queue>(); queue.forEach((item) => map.set(item.publishDate, [...(map.get(item.publishDate) || []), item])); return map; }, [queue]);
-  const tones = useMemo(() => new Map(projects.map((p, i) => [p.id, COLORS[i % COLORS.length]])), [projects]);
-  return <section className="rounded-3xl bg-white p-4 shadow-sm sm:p-6"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="flex items-center gap-2 font-black"><CalendarDays className="h-5 w-5 text-blue-600" /> ปฏิทินคิวเผยแพร่</h2><p className="mt-1 text-xs text-slate-500">ข้อมูลจาก API ครบทุกหน้า · {queue.length} คิวในเดือนนี้</p></div><div className="flex flex-wrap items-center gap-2"><select value={projectId} onChange={(e) => update({ projectId: e.target.value || undefined })} className="h-9 rounded-xl bg-slate-50 px-3 text-xs font-bold outline-none ring-1 ring-inset ring-slate-200"><option value="">ทุกรายการ</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select><Button variant="ghost" size="sm" onClick={goToday} className="bg-blue-50 font-bold text-blue-700 hover:bg-blue-100">วันนี้</Button><Button variant="ghost" size="sm" onClick={() => move(-1)}><ChevronLeft className="h-4 w-4" /></Button><span className="min-w-[130px] text-center text-sm font-black">{month.toLocaleDateString("th-TH", { month: "long", year: "numeric" })}</span><Button variant="ghost" size="sm" onClick={() => move(1)}><ChevronRight className="h-4 w-4" /></Button></div></div>
-    {error ? <div className="mt-4 rounded-2xl bg-rose-50 px-4 py-10 text-center text-sm font-bold text-rose-700">โหลดคิวจาก API ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</div> : <div className="mt-4 overflow-x-auto rounded-2xl bg-slate-100 p-px"><div className="grid min-w-[780px] grid-cols-7 gap-px">{SHORT_DAYS.map((d) => <div key={d} className="bg-slate-50 py-2 text-center text-[10px] font-black text-slate-500">{d}</div>)}{days.map((day) => { const key = dateKey(day); const isToday = key === todayKey; return <div key={key} className={`min-h-[108px] p-1.5 transition-colors ${isToday ? "bg-blue-50 ring-2 ring-inset ring-blue-500" : day.getMonth() === month.getMonth() ? "bg-white" : "bg-slate-50/70"}`}><span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold ${isToday ? "bg-blue-600 text-white" : "text-slate-500"}`}>{day.getDate()}</span><div className="mt-1 space-y-1">{(byDate.get(key) || []).map((item) => { const count = item.clip?.publishedPosts?.length || 0; const tone = count >= 4 ? "bg-emerald-100 text-emerald-800" : count > 0 ? "bg-amber-100 text-amber-800" : tones.get(item.projectId) || COLORS[0]; return <button key={item.id} onClick={() => item.clip && onOpen(item.clip)} className={`block w-full truncate rounded-lg px-1.5 py-1 text-left text-[9px] font-black transition-transform hover:-translate-y-0.5 ${tone}`}>{item.publishTime.slice(0, 5)} {item.clip?.name}</button>; })}</div></div>; })}</div></div>}{isLoading && <div className="flex justify-center gap-2 py-5 text-xs text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /> กำลังโหลดคิว...</div>}</section>;
+
+  const byDate = useMemo(() => {
+    const map = new Map<string, CalendarEntry[]>();
+    const add = (entry: CalendarEntry) => map.set(entry.date, [...(map.get(entry.date) || []), entry]);
+    const postedKeys = new Set(posted.map((item) => `${item.clipId}:${item.date}`));
+    posted.forEach((item) => add({ key: `p-${item.clipId}-${item.date}`, date: item.date, time: item.time, clip: item.clip, projectId: item.projectId, kind: "posted", platforms: item.platforms }));
+    queue.forEach((item) => {
+      if (postedKeys.has(`${item.clipId}:${item.publishDate}`)) return;
+      const done = (item.clip?.publishedPosts?.length || 0) >= 4;
+      if (done) return; // already shown on the day it was posted
+      const overdue = new Date(`${item.publishDate}T${item.publishTime}+07:00`).getTime() < Date.now();
+      add({ key: `q-${item.id}`, date: item.publishDate, time: String(item.publishTime).slice(0, 5), clip: item.clip, projectId: item.projectId, kind: overdue ? "overdue" : "queued", platforms: [] });
+    });
+    map.forEach((list) => list.sort((a, b) => a.time.localeCompare(b.time)));
+    return map;
+  }, [queue, posted]);
+
+  const inMonth = (key: string) => key.startsWith(`${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}`);
+  const monthEntries = [...byDate.entries()].filter(([key]) => inMonth(key)).sort(([a], [b]) => a.localeCompare(b));
+  const postedCount = monthEntries.reduce((sum, [, list]) => sum + list.filter((e) => e.kind === "posted").length, 0);
+  const queuedCount = monthEntries.reduce((sum, [, list]) => sum + list.filter((e) => e.kind !== "posted").length, 0);
+  const isLoading = queueLoading || postedLoading;
+  const error = queueError || postedError;
+
+  const entryLabel = (entry: CalendarEntry) => entry.kind === "posted" ? `${entry.platforms.length}/4` : entry.kind === "overdue" ? "ยังไม่โพสต์" : "คิว";
+
+  return <section className="rounded-3xl bg-white p-4 shadow-sm sm:p-6">
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={() => move(-1)} aria-label="เดือนก่อน"><ChevronLeft className="h-4 w-4" /></Button>
+          <h2 className="min-w-[150px] text-center text-lg font-black text-slate-900">{month.toLocaleDateString("th-TH", { month: "long", year: "numeric" })}</h2>
+          <Button variant="ghost" size="sm" onClick={() => move(1)} aria-label="เดือนถัดไป"><ChevronRight className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={goToday} className="ml-1 bg-blue-50 font-bold text-blue-700 hover:bg-blue-100">วันนี้</Button>
+        </div>
+        <p className="mt-1 pl-2 text-xs text-slate-500">เดือนนี้โพสต์แล้ว {postedCount} คลิป · รอ/ค้างโพสต์ {queuedCount} คิว</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold text-slate-600">
+          <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />โพสต์แล้ว</span>
+          <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-violet-400" />รอคิว</span>
+          <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-rose-400" />เลยเวลา ยังไม่โพสต์</span>
+        </div>
+        <select value={projectId} onChange={(e) => update({ projectId: e.target.value || undefined })} className="h-9 rounded-xl bg-slate-50 px-3 text-xs font-bold outline-none ring-1 ring-inset ring-slate-200"><option value="">ทุกรายการ</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+      </div>
+    </div>
+
+    {error ? <div className="mt-4 rounded-2xl bg-rose-50 px-4 py-10 text-center text-sm font-bold text-rose-700">โหลดปฏิทินไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</div> : <>
+      {/* Desktop / tablet: month grid. */}
+      <div className="mt-4 hidden overflow-hidden rounded-2xl bg-slate-100 p-px md:block"><div className="grid grid-cols-7 gap-px">
+        {SHORT_DAYS.map((d) => <div key={d} className="bg-slate-50 py-2 text-center text-[11px] font-black text-slate-500">{d}</div>)}
+        {days.map((day) => {
+          const key = dateKey(day); const isToday = key === todayKey;
+          return <div key={key} className={`min-h-[112px] p-1.5 ${isToday ? "bg-blue-50 ring-2 ring-inset ring-blue-500" : inMonth(key) ? "bg-white" : "bg-slate-50/70"}`}>
+            <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-bold ${isToday ? "bg-blue-600 text-white" : inMonth(key) ? "text-slate-600" : "text-slate-300"}`}>{day.getDate()}</span>
+            <div className="mt-1 space-y-1">{(byDate.get(key) || []).map((entry) => <button key={entry.key} onClick={() => entry.clip && onOpen(entry.clip)} title={`${entry.time} ${entry.clip?.name || ""}`} className={`block w-full rounded-lg px-1.5 py-1 text-left text-[10px] font-bold leading-tight transition-transform hover:-translate-y-0.5 ${ENTRY_TONE[entry.kind]}`}>
+              <span className="flex items-center justify-between gap-1"><span>{entry.time}</span><span className="opacity-80">{entryLabel(entry)}</span></span>
+              <span className="line-clamp-2">{entry.clip?.name}</span>
+            </button>)}</div>
+          </div>;
+        })}
+      </div></div>
+
+      {/* Phone: agenda list of the month. */}
+      <div className="mt-4 space-y-3 md:hidden">
+        {monthEntries.length === 0 && !isLoading && <p className="rounded-2xl bg-slate-50 py-10 text-center text-sm text-slate-500">เดือนนี้ยังไม่มีโพสต์หรือคิว</p>}
+        {monthEntries.map(([key, list]) => <div key={key}>
+          <p className={`mb-1.5 text-xs font-black ${key === todayKey ? "text-blue-700" : "text-slate-500"}`}>{new Date(`${key}T00:00:00`).toLocaleDateString("th-TH", { weekday: "long", day: "numeric", month: "short" })}{key === todayKey ? " · วันนี้" : ""}</p>
+          <div className="space-y-1.5">{list.map((entry) => <button key={entry.key} onClick={() => entry.clip && onOpen(entry.clip)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left ${ENTRY_TONE[entry.kind]}`}>
+            <span className="text-xs font-black tabular-nums">{entry.time}</span>
+            <span className="min-w-0 flex-1 truncate text-[13px] font-bold">{entry.clip?.name}</span>
+            <span className="shrink-0 text-[11px] font-bold opacity-80">{entryLabel(entry)}</span>
+          </button>)}</div>
+        </div>)}
+      </div>
+    </>}
+    {isLoading && <div className="flex justify-center gap-2 py-5 text-xs text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /> กำลังโหลด...</div>}
+  </section>;
 }
 
 export function PublishDashboard() {
