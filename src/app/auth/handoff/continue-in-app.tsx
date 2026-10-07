@@ -10,6 +10,16 @@ import { clearLoginCode, isStandalonePwa } from "@/lib/pwa-login";
  */
 export function ContinueInApp() {
   useEffect(() => {
+    // Opened as the app's login popup: tell the app, then close this window.
+    if (window.opener && !window.opener.closed) {
+      try {
+        window.opener.postMessage({ type: "clipflow:login-done" }, window.location.origin);
+      } catch {
+        // opener from another origin — fall through to the buttons below
+      }
+      window.close();
+      return;
+    }
     if (isStandalonePwa()) {
       clearLoginCode();
       window.location.replace("/dashboard");

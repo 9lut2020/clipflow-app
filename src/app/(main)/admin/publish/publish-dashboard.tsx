@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { CalendarClock, CalendarDays, ChevronLeft, ChevronRight, Clock3, Download, ExternalLink, Filter, LayoutList, Loader2, Search, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PublishModal } from "./publish-modal";
+import { PublishModal, type PublishModalTab } from "./publish-modal";
 import { PublishSlotsModal } from "@/components/publish/publish-slots-modal";
 import { useProjects } from "@/features/projects/hooks/use-projects";
 import { usePublishItems, usePublishQueue, usePublishSummary } from "@/features/clips/hooks/use-publish-schedules";
@@ -37,13 +37,13 @@ function nextStep(clip: any) {
   };
 }
 
-function PublishRow({ clip, onOpen }: { clip: any; onOpen: () => void }) {
+function PublishRow({ clip, onOpen }: { clip: any; onOpen: (tab?: PublishModalTab) => void }) {
   const source = clip.currentRevision?.driveUrl || clip.driveUrl || "";
   const posted = Math.min(4, clip.publishedPosts?.length || 0);
   const step = nextStep(clip);
   return <article className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs transition-shadow hover:shadow-md">
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <button onClick={onOpen} className="min-w-0 flex-1 text-left">
+      <button onClick={() => onOpen()} className="min-w-0 flex-1 text-left">
         <div className="flex flex-wrap items-center gap-2">
           <span className={`rounded-md px-2 py-0.5 text-[11px] font-bold ${step.badge.tone}`}>{step.badge.text}</span>
           {clip.scheduledPublishAt && <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-slate-600"><CalendarClock className="h-3.5 w-3.5" />{new Date(clip.scheduledPublishAt).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })}</span>}
@@ -58,7 +58,8 @@ function PublishRow({ clip, onOpen }: { clip: any; onOpen: () => void }) {
       <div className="flex shrink-0 items-center gap-2">
         {source && <a href={downloadUrl(source)} target="_blank" rel="noreferrer" title="ดาวน์โหลดคลิป" className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50"><Download className="h-4 w-4" /><span className="sr-only">ดาวน์โหลด</span></a>}
         {source && <a href={source} target="_blank" rel="noreferrer" title="เปิดคลิป" className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50"><ExternalLink className="h-4 w-4" /><span className="sr-only">เปิดคลิป</span></a>}
-        <button onClick={onOpen} className={`h-10 flex-1 rounded-xl px-4 text-[13px] font-bold sm:flex-none ${step.tone}`}>{step.label}</button>
+        {!clip.scheduledPublishAt && posted < 4 && <button onClick={() => onOpen("record")} title="โพสต์ไปแล้วแต่ยังไม่ได้บันทึก" className="h-10 rounded-xl border border-slate-200 px-3 text-[13px] font-bold text-slate-700 hover:bg-slate-50">โพสต์ไปแล้ว</button>}
+        <button onClick={() => onOpen()} className={`h-10 flex-1 rounded-xl px-4 text-[13px] font-bold sm:flex-none ${step.tone}`}>{step.label}</button>
       </div>
     </div>
   </article>;
@@ -89,7 +90,7 @@ export function PublishDashboard() {
   const limit = [20, 50, 100].includes(Number(sp.get("limit"))) ? Number(sp.get("limit")) : 20;
   const [search, setSearch] = useState(sp.get("q") || "");
   const activeExtraFilters = ["ownerId", "from", "to"].filter((key) => sp.get(key)).length;
-  const [moreFilters, setMoreFilters] = useState(activeExtraFilters > 0); const [slotsOpen, setSlotsOpen] = useState(false); const [selectedClip, setSelectedClip] = useState<any>(null);
+  const [moreFilters, setMoreFilters] = useState(activeExtraFilters > 0); const [slotsOpen, setSlotsOpen] = useState(false); const [selectedClip, setSelectedClip] = useState<any>(null); const [modalTab, setModalTab] = useState<PublishModalTab | undefined>();
   const { data: projects } = useProjects({ isActive: true });
   const { data: usersData } = useSWR<PaginatedData<User>>("/users?page=1&limit=100&isActive=true&role=USER&sortBy=displayName&sortOrder=asc", optionsFetcher);
   const { data: summary, isLoading: summaryLoading } = usePublishSummary();
@@ -106,7 +107,7 @@ export function PublishDashboard() {
   return <div className="space-y-5 pb-12">
     <header className="rounded-3xl bg-white p-4 shadow-sm sm:p-6"><div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600"><Share2 className="h-5 w-5" /></span><div><h1 className="text-lg font-black text-slate-900">จัดการการเผยแพร่คลิป</h1><p className="text-xs text-slate-500">จัดคิว ดาวน์โหลด และบันทึกสถานะโพสต์จากหน้าเดียว</p></div></div><div className="flex flex-col gap-2 sm:flex-row"><Button variant="ghost" onClick={() => setSlotsOpen(true)} className="rounded-xl bg-violet-50 font-bold text-violet-700 hover:bg-violet-100"><Clock3 className="mr-2 h-4 w-4" /> จัดการวันประจำรายการ</Button><div className="flex rounded-xl bg-slate-100 p-1"><button onClick={() => update({ tab: "manage" }, false)} className={`rounded-lg px-3 py-2 text-xs font-black ${tab === "manage" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500"}`}><LayoutList className="mr-1 inline h-4 w-4" />จัดการการเผยแพร่</button><button onClick={() => update({ tab: "calendar" }, false)} className={`rounded-lg px-3 py-2 text-xs font-black ${tab === "calendar" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500"}`}><CalendarDays className="mr-1 inline h-4 w-4" />ปฏิทินคิวเผยแพร่</button></div></div></div></header>
 
-    {tab === "calendar" ? <CalendarView onOpen={setSelectedClip} /> : <>
+    {tab === "calendar" ? <CalendarView onOpen={(clip) => { setModalTab(undefined); setSelectedClip(clip); }} /> : <>
       {/* Status tabs: the main way to work through the queue. */}
       <nav className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 hide-scrollbar" aria-label="สถานะการเผยแพร่">
         {([
@@ -138,9 +139,9 @@ export function PublishDashboard() {
         </div>}
       </section>
 
-      <section className="space-y-3">{itemsError ? <div className="rounded-3xl bg-rose-50 py-16 text-center text-sm font-bold text-rose-700 shadow-sm">โหลดรายการจาก API ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</div> : isLoading ? <div className="flex justify-center rounded-3xl bg-white py-20 text-slate-400 shadow-sm"><Loader2 className="h-6 w-6 animate-spin" /></div> : items.length === 0 ? <div className="rounded-3xl bg-white py-20 text-center text-sm text-slate-500 shadow-sm">ไม่พบคลิปตามเงื่อนไข</div> : items.map((clip) => <PublishRow key={clip.id} clip={clip} onOpen={() => setSelectedClip(clip)} />)}</section>
+      <section className="space-y-3">{itemsError ? <div className="rounded-3xl bg-rose-50 py-16 text-center text-sm font-bold text-rose-700 shadow-sm">โหลดรายการจาก API ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</div> : isLoading ? <div className="flex justify-center rounded-3xl bg-white py-20 text-slate-400 shadow-sm"><Loader2 className="h-6 w-6 animate-spin" /></div> : items.length === 0 ? <div className="rounded-3xl bg-white py-20 text-center text-sm text-slate-500 shadow-sm">ไม่พบคลิปตามเงื่อนไข</div> : items.map((clip) => <PublishRow key={clip.id} clip={clip} onOpen={(nextTab) => { setModalTab(nextTab); setSelectedClip(clip); }} />)}</section>
       {pagination && <div className="flex flex-col gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between"><span className="text-xs text-slate-500">ทั้งหมด {pagination.total} รายการ · หน้า {pagination.page}/{totalPages}</span><div className="flex flex-wrap items-center gap-2"><select value={limit} onChange={(e) => update({ limit: e.target.value })} className="h-9 rounded-lg bg-slate-50 px-2 text-xs outline-none ring-1 ring-inset ring-slate-200"><option value="20">20 / หน้า</option><option value="50">50 / หน้า</option><option value="100">100 / หน้า</option></select><Button variant="ghost" size="sm" disabled={!pagination.hasPrevious} onClick={() => update({ page: String(page - 1) }, false)}><ChevronLeft className="h-4 w-4" /></Button>{pageNumbers.map((pageNumber) => <button key={pageNumber} onClick={() => update({ page: String(pageNumber) }, false)} className={`h-9 min-w-9 rounded-lg px-2 text-xs font-black ${pageNumber === page ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>{pageNumber}</button>)}<Button variant="ghost" size="sm" disabled={!pagination.hasNext} onClick={() => update({ page: String(page + 1) }, false)}><ChevronRight className="h-4 w-4" /></Button></div></div>}
     </>}
-    <PublishSlotsModal open={slotsOpen} onOpenChange={setSlotsOpen} />{selectedClip && <PublishModal clip={selectedClip} isOpen={!!selectedClip} onClose={() => setSelectedClip(null)} />}
+    <PublishSlotsModal open={slotsOpen} onOpenChange={setSlotsOpen} />{selectedClip && <PublishModal key={selectedClip.id} clip={selectedClip} initialTab={modalTab} isOpen={!!selectedClip} onClose={() => setSelectedClip(null)} />}
   </div>;
 }

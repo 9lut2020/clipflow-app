@@ -1,33 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Copy,
   CheckCircle2,
   ExternalLink,
-  Globe,
-  LayoutTemplate,
   History,
   Loader2,
-  FileText,
   Download,
+  CalendarClock,
+  CalendarCheck2,
+  ChevronDown,
+  Check,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   usePublishRecords,
   usePublishClip,
@@ -36,10 +29,13 @@ import { ScheduleEditor } from "@/components/publish/schedule-editor";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
 
+export type PublishModalTab = "record" | "schedule";
+
 interface PublishModalProps {
   clip: any;
   isOpen: boolean;
   onClose: () => void;
+  initialTab?: PublishModalTab;
 }
 
 const PLATFORMS = [
@@ -49,11 +45,35 @@ const PLATFORMS = [
   { id: "INSTAGRAM_REELS", label: "Instagram Reels" },
 ];
 
-export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
+function toLocalInput(date: Date) {
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/** Quick picks for "when was it posted" — the common case is today or a day or two ago. */
+function quickDates(scheduledAt: Date | null) {
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const picks = [
+    { label: "ตอนนี้", value: now },
+    { label: "เมื่อวาน", value: yesterday },
+  ];
+  if (scheduledAt && scheduledAt.getTime() < now.getTime()) picks.unshift({ label: "ตามเวลาที่ตั้งคิวไว้", value: scheduledAt });
+  return picks;
+}
+
+export function PublishModal({ clip, isOpen, onClose, initialTab }: PublishModalProps) {
+  const scheduledAt = clip.scheduledPublishAt ? new Date(clip.scheduledPublishAt) : null;
+  const defaultTab: PublishModalTab = initialTab || (scheduledAt ? "record" : "schedule");
+  const [tab, setTab] = useState<PublishModalTab>(defaultTab);
   const [copied, setCopied] = useState(false);
   const [copiedTitle, setCopiedTitle] = useState(false);
-  const [platforms, setPlatforms] = useState<string[]>([]);
+  const [showCaption, setShowCaption] = useState(false);
+  // null = untouched: every platform not yet recorded is ticked.
+  const [picked, setPicked] = useState<string[] | null>(null);
   const [url, setUrl] = useState("");
+  const [postedAt, setPostedAt] = useState(() => toLocalInput(scheduledAt && scheduledAt.getTime() < Date.now() ? scheduledAt : new Date()));
 
   const { data: publishedPosts, isLoading: isLoadingRecords } =
     usePublishRecords(clip.id);
@@ -67,32 +87,6 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
       : approvedClipUrl;
   })();
 
-  // Auto-select missing platforms once data is loaded
-  useEffect(() => {
-    if (!isOpen) {
-      setPlatforms([]);
-      setUrl("");
-      setCaption(generatedCaption);
-      return;
-    }
-
-    if (isOpen && !isLoadingRecords && publishedPosts) {
-      const postedPlatforms = publishedPosts.map((p: any) => p.platform);
-      const remainingPlatforms = PLATFORMS.filter(
-        (p) => !postedPlatforms.includes(p.id),
-      ).map((p) => p.id);
-
-      setPlatforms((prev) => {
-        const isSame =
-          prev.length === remainingPlatforms.length &&
-          prev.every((p) => remainingPlatforms.includes(p));
-        return isSame ? prev : remainingPlatforms;
-      });
-    }
-
-  }, [isOpen, publishedPosts, isLoadingRecords]);
-
-  // Generate caption
   const generatedCaption = `${clip.name}
 .
 ส่วนหนึ่งจากคลิปเต็ม รายการ ${clip.project?.name || "อัลมะดาริจญ์"} ตอนที่ ${clip.episode?.episodeNo || ""}
@@ -105,20 +99,22 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
   const [caption, setCaption] = useState(generatedCaption);
   const clipTitle = `${clip.name} | รายการ ${clip.project?.name || "อัลมะดาริจญ์"} ตอนที่ ${clip.episode?.episodeNo || ""}`;
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(caption);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const postedPlatforms = new Set((publishedPosts || []).map((p: any) => p.platform));
+  const remaining = PLATFORMS.filter((p) => !postedPlatforms.has(p.id));
+
+  const platforms = (picked ?? remaining.map((p) => p.id)).filter((id) => !postedPlatforms.has(id));
+
+  const copy = async (text: string, done: (value: boolean) => void) => {
+    await navigator.clipboard.writeText(text);
+    done(true);
+    setTimeout(() => done(false), 2000);
   };
 
-  const handleCopyTitle = async () => {
-    await navigator.clipboard.writeText(clipTitle);
-    setCopiedTitle(true);
-    setTimeout(() => setCopiedTitle(false), 2000);
-  };
+  const postedDate = postedAt ? new Date(postedAt) : null;
+  const isFuture = postedDate ? postedDate.getTime() > Date.now() + 60_000 : false;
 
   const handlePublish = async () => {
-    if (platforms.length === 0) return;
+    if (platforms.length === 0 || !postedDate || isFuture) return;
     try {
       await Promise.all(
         platforms.map((platform) =>
@@ -126,312 +122,210 @@ export function PublishModal({ clip, isOpen, onClose }: PublishModalProps) {
             clipId: clip.id,
             platform,
             caption,
-            url,
+            url: url || undefined,
+            publishedAt: postedDate.toISOString(),
           }),
         ),
       );
+      toast.success(`บันทึกแล้ว ${platforms.length} แพลตฟอร์ม`);
       setUrl("");
-      setPlatforms([]);
-    } catch (err) {
-      console.error(err);
+      setPicked(null);
+    } catch (err: any) {
+      toast.error(err?.message || "บันทึกไม่สำเร็จ");
     }
   };
 
   const togglePlatform = (id: string) => {
-    setPlatforms((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
-    );
+    setPicked(platforms.includes(id) ? platforms.filter((p) => p !== id) : [...platforms, id]);
   };
 
-  const ModalHeader = () => (
-    <div className="bg-slate-50 border-b border-slate-100 p-6 flex flex-col gap-1 relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-8 text-slate-100 rotate-12 scale-150 pointer-events-none opacity-50">
-        <LayoutTemplate size={120} />
+  const header = (
+    <div className="border-b border-slate-100 bg-slate-50 px-5 pb-4 pt-5 sm:px-6">
+      <DialogTitle className="m-0 line-clamp-2 p-0 text-lg font-bold text-slate-900">
+        {clip.name}
+      </DialogTitle>
+      <DialogDescription className="mt-1 text-xs font-medium text-slate-500">
+        {clip.project?.name} · EP {clip.episode?.episodeNo || "-"} · โพสต์แล้ว {postedPlatforms.size}/4
+        {scheduledAt && ` · คิว ${scheduledAt.toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })}`}
+      </DialogDescription>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {approvedClipUrl ? (
+          <>
+            <a href={downloadUrl} target="_blank" rel="noreferrer" download className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700">
+              <Download className="h-3.5 w-3.5" /> ดาวน์โหลด
+            </a>
+            <a href={approvedClipUrl} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50">
+              <ExternalLink className="h-3.5 w-3.5" /> เปิดคลิป
+            </a>
+          </>
+        ) : (
+          <span className="text-xs font-semibold text-rose-500">ยังไม่มีลิงก์คลิปที่ผ่านการตรวจ</span>
+        )}
+        <button type="button" onClick={() => copy(clipTitle, setCopiedTitle)} className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-bold ${copiedTitle ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}>
+          {copiedTitle ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />} {copiedTitle ? "คัดลอกแล้ว" : "คัดลอกชื่อ"}
+        </button>
+        <button type="button" onClick={() => copy(caption, setCopied)} className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-bold ${copied ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}>
+          {copied ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />} {copied ? "คัดลอกแล้ว" : "คัดลอกแคปชั่น"}
+        </button>
       </div>
-      <div className="relative">
-        <DialogTitle className="text-xl font-bold text-slate-900 flex items-center gap-2 m-0 p-0">
-          <Globe className="w-5 h-5 text-blue-600" />
-          จัดการการเผยแพร่
-        </DialogTitle>
-        <DialogDescription className="text-slate-500 font-medium mt-1.5 line-clamp-1">
-          {clip.name}
-        </DialogDescription>
-        <div className="relative mt-4 flex flex-wrap items-center gap-2">
-          {approvedClipUrl ? (
-            <>
-              <a
-                href={approvedClipUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-3 text-xs font-bold text-blue-700 shadow-xs transition-colors hover:bg-blue-50"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                เปิดคลิปที่ผ่านการตรวจ
-              </a>
-              <a
-                href={downloadUrl}
-                target="_blank"
-                rel="noreferrer"
-                download
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white shadow-xs transition-colors hover:bg-emerald-700"
-              >
-                <Download className="h-3.5 w-3.5" />
-                ดาวน์โหลดคลิป
-              </a>
-            </>
-          ) : (
-            <span className="text-xs font-semibold text-rose-500">
-              ยังไม่มีลิงก์คลิปที่ผ่านการตรวจ
-            </span>
-          )}
-        </div>
-      </div>
+      <button type="button" onClick={() => setShowCaption((v) => !v)} className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-slate-800">
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showCaption ? "rotate-180" : ""}`} /> {showCaption ? "ซ่อนแคปชั่น" : "ดู / แก้แคปชั่น"}
+      </button>
+      {showCaption && (
+        <textarea
+          value={caption}
+          onChange={(e) => setCaption(e.target.value)}
+          className="mt-2 min-h-[160px] w-full resize-y rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+        />
+      )}
     </div>
   );
 
-  const ModalContent = () => (
-    <div className="w-full flex-1 flex flex-col min-h-0">
-      <div className="p-4 md:p-6 flex-1 overflow-y-auto custom-scrollbar bg-white">
-        <div className="space-y-6">
-          <div className="space-y-3 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <label className="text-sm font-bold text-slate-700">
-                ไตเติ้ลชื่อคลิป
-              </label>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopyTitle}
-                className={`h-8 shrink-0 rounded-lg px-3 text-xs font-bold transition-all ${
-                  copiedTitle
-                    ? "bg-green-100 text-green-700 hover:bg-green-200"
-                    : "bg-white text-indigo-700 hover:bg-indigo-100"
-                }`}
-              >
-                {copiedTitle ? (
-                  <>
-                    <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> คัดลอกแล้ว
-                  </>
-                ) : (
-                  <>
-                    <Copy className="mr-1.5 h-3.5 w-3.5" /> คัดลอกไตเติ้ล
-                  </>
-                )}
-              </Button>
-            </div>
-            <div className="rounded-xl border border-indigo-100 bg-white px-3.5 py-3 text-sm font-semibold leading-relaxed text-slate-800">
-              {clipTitle}
+  const tabs = (
+    <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
+      {([
+        { id: "record", label: "บันทึกว่าโพสต์แล้ว", icon: CalendarCheck2 },
+        { id: "schedule", label: "ตั้งคิวโพสต์", icon: CalendarClock },
+      ] as const).map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          onClick={() => setTab(item.id)}
+          className={`flex h-10 items-center justify-center gap-1.5 rounded-lg text-[13px] font-bold transition-colors ${tab === item.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+        >
+          <item.icon className="h-4 w-4" /> {item.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  const recordPanel = (
+    <section className="space-y-4">
+      {remaining.length === 0 && !isLoadingRecords ? (
+        <div className="rounded-xl bg-emerald-50 px-4 py-6 text-center text-sm font-bold text-emerald-700">
+          <CheckCircle2 className="mx-auto mb-1 h-6 w-6" /> โพสต์ครบทั้ง 4 แพลตฟอร์มแล้ว
+        </div>
+      ) : (
+        <>
+          <div>
+            <p className="mb-2 text-xs font-bold text-slate-600">1. โพสต์ลงที่ไหนบ้าง</p>
+            <div className="grid grid-cols-2 gap-2">
+              {PLATFORMS.map((p) => {
+                const isPosted = postedPlatforms.has(p.id);
+                const isOn = platforms.includes(p.id);
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    disabled={isPosted}
+                    onClick={() => togglePlatform(p.id)}
+                    aria-pressed={isOn}
+                    className={`flex h-12 items-center gap-2.5 rounded-xl border px-3 text-left text-sm font-semibold transition-colors ${
+                      isPosted
+                        ? "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-400"
+                        : isOn
+                          ? "border-blue-300 bg-blue-50 text-blue-900"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-blue-300"
+                    }`}
+                  >
+                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${isPosted ? "border-emerald-500 bg-emerald-500 text-white" : isOn ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300"}`}>
+                      {(isPosted || isOn) && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[13px] leading-tight">{p.label}</span>
+                      {isPosted && <span className="-mt-0.5 block text-[10px] font-bold text-emerald-600">โพสต์แล้ว</span>}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          <ScheduleEditor clip={clip} />
-
-          <div className="space-y-3 relative group">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-bold text-slate-700">
-                แคปชั่น (Caption)
-              </label>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopy}
-                className={`h-8 px-3 rounded-lg text-xs font-bold transition-all ${
-                  copied
-                    ? "bg-green-50 text-green-700 hover:bg-green-100"
-                    : "bg-blue-50 text-blue-700 hover:bg-blue-100"
-                }`}
-              >
-                {copied ? (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> คัดลอกแล้ว
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5 mr-1.5" /> คัดลอกข้อความ
-                  </>
-                )}
-              </Button>
+          <div>
+            <p className="mb-2 text-xs font-bold text-slate-600">2. โพสต์เมื่อไหร่ <span className="font-medium text-slate-400">(ย้อนหลังได้)</span></p>
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {quickDates(scheduledAt).map((pick) => {
+                const value = toLocalInput(pick.value);
+                return (
+                  <button key={pick.label} type="button" onClick={() => setPostedAt(value)} className={`h-8 rounded-full border px-3 text-xs font-bold ${postedAt === value ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
+                    {pick.label}
+                  </button>
+                );
+              })}
             </div>
-            <textarea
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              className="w-full min-h-[200px] p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+            <input
+              type="datetime-local"
+              value={postedAt}
+              max={toLocalInput(new Date())}
+              onChange={(e) => setPostedAt(e.target.value)}
+              className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            />
+            {isFuture && <p className="mt-1 text-xs font-semibold text-rose-600">เวลาอยู่ในอนาคต ถ้ายังไม่ได้โพสต์ให้ใช้แท็บ “ตั้งคิวโพสต์”</p>}
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-bold text-slate-600">3. ลิงก์โพสต์ <span className="font-medium text-slate-400">(ไม่ใส่ก็ได้)</span></p>
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://..."
+              inputMode="url"
+              className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
 
-          <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-5">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
-                <Globe className="w-3.5 h-3.5" />
+          <Button
+            onClick={handlePublish}
+            disabled={platforms.length === 0 || isPublishing || !postedDate || isFuture}
+            className="h-12 w-full rounded-xl bg-blue-600 text-sm font-bold text-white hover:bg-blue-700"
+          >
+            {isPublishing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+            บันทึกว่าโพสต์แล้ว{platforms.length > 0 ? ` (${platforms.length})` : ""}
+          </Button>
+        </>
+      )}
+    </section>
+  );
+
+  const history = (
+    <section>
+      <h3 className="mb-2 flex items-center gap-2 text-sm font-black text-slate-800"><History className="h-4 w-4 text-blue-600" /> ประวัติการโพสต์</h3>
+      {isLoadingRecords ? (
+        <div className="flex justify-center p-6"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
+      ) : publishedPosts?.length === 0 ? (
+        <p className="rounded-xl bg-slate-50 p-4 text-center text-xs text-slate-500">ยังไม่มีประวัติการโพสต์</p>
+      ) : (
+        <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+          {publishedPosts?.map((post: any) => (
+            <li key={post.id} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-800">{PLATFORMS.find((p) => p.id === post.platform)?.label || post.platform}</p>
+                <p className="text-[11px] text-slate-500">{format(new Date(post.publishedAt), "d MMM yyyy, HH:mm", { locale: th })}</p>
               </div>
-              <h3 className="font-bold text-slate-800 text-sm">
-                บันทึกประวัติการเผยแพร่
-              </h3>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-3">
-                <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
-                  แพลตฟอร์ม (เลือกได้หลายช่องทาง) *
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {PLATFORMS.map((p) => {
-                    const isPosted = publishedPosts?.some(
-                      (post: any) => post.platform === p.id,
-                    );
-
-                    return (
-                      <label
-                        key={p.id}
-                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                          isPosted
-                            ? "bg-slate-50 border-slate-200 cursor-not-allowed opacity-75"
-                            : platforms.includes(p.id)
-                              ? "bg-blue-50 border-blue-200 cursor-pointer"
-                              : "bg-white border-slate-200 hover:border-blue-300 cursor-pointer"
-                        }`}
-                      >
-                        <div
-                          className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                            isPosted
-                              ? "bg-green-500 border-green-500 text-white"
-                              : platforms.includes(p.id)
-                                ? "bg-blue-600 border-blue-600 text-white"
-                                : "border-slate-300"
-                          }`}
-                        >
-                          {(platforms.includes(p.id) || isPosted) && (
-                            <svg
-                              className="w-3.5 h-3.5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={isPosted ? 4 : 3}
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
-                          )}
-                        </div>
-                        <input
-                          type="checkbox"
-                          className="hidden"
-                          checked={platforms.includes(p.id) || isPosted}
-                          disabled={isPosted}
-                          onChange={() => {
-                            if (!isPosted) togglePlatform(p.id);
-                          }}
-                        />
-                        <div className="flex flex-col">
-                          <span
-                            className={`text-sm font-medium ${isPosted ? "text-slate-500" : platforms.includes(p.id) ? "text-blue-900" : "text-slate-700"}`}
-                          >
-                            {p.label}
-                          </span>
-                          {isPosted && (
-                            <span className="text-[10px] text-green-600 font-bold -mt-0.5">
-                              โพสต์แล้ว
-                            </span>
-                          )}
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <Button
-                onClick={handlePublish}
-                disabled={platforms.length === 0 || isPublishing}
-                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm px-6 font-bold w-full sm:w-auto"
-              >
-                {isPublishing ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                )}
-                บันทึกการโพสต์
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6">
-          <h3 className="mb-3 flex items-center gap-2 text-sm font-black text-slate-800"><History className="h-4 w-4 text-blue-600" /> ประวัติการโพสต์</h3>
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            {isLoadingRecords ? (
-              <div className="p-8 flex justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
-              </div>
-            ) : publishedPosts?.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 text-sm">
-                ยังไม่มีประวัติการโพสต์สำหรับคลิปนี้
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {publishedPosts?.map((post: any) => (
-                  <div
-                    key={post.id}
-                    className="p-4 hover:bg-slate-50 transition-colors"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2 gap-1 sm:gap-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-slate-800">
-                          {PLATFORMS.find((p) => p.id === post.platform)
-                            ?.label || post.platform}
-                        </span>
-                        <span className="text-xs text-slate-500">
-                          • โดย {post.publishedBy || "ระบบ"}
-                        </span>
-                      </div>
-                      <span className="text-xs text-slate-400">
-                        {format(
-                          new Date(post.publishedAt),
-                          "d MMM yyyy, HH:mm",
-                          { locale: th },
-                        )}
-                      </span>
-                    </div>
-
-                    {post.url && (
-                      <a
-                        href={post.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline mb-2"
-                      >
-                        <ExternalLink className="w-3 h-3" /> เปิดดูโพสต์
-                      </a>
-                    )}
-
-                    {post.caption && (
-                      <div className="mt-2 text-xs text-slate-600 bg-slate-100 p-2.5 rounded-lg whitespace-pre-wrap line-clamp-3">
-                        {post.caption}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+              {post.url && (
+                <a href={post.url} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-blue-600 hover:underline">
+                  <ExternalLink className="h-3 w-3" /> เปิดโพสต์
+                </a>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 
   // Dialog is responsive: centred modal on desktop, swipe-to-close sheet on
-  // phones. Header/body are called as functions (not <Components/>) so their
-  // inputs are not remounted — and lose focus — on every keystroke.
+  // phones. The pieces are plain elements (not inner components) so their
+  // inputs keep focus while typing.
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl bg-white border-0 shadow-2xl rounded-2xl overflow-hidden p-0 gap-0 flex flex-col max-h-[85vh]">
-        {ModalHeader()}
-        {ModalContent()}
+      <DialogContent className="flex max-h-[90vh] max-w-xl flex-col gap-0 overflow-hidden rounded-2xl border-0 bg-white p-0 shadow-2xl">
+        {header}
+        <div className="flex-1 space-y-5 overflow-y-auto p-5 sm:p-6">
+          {tabs}
+          {tab === "record" ? recordPanel : <ScheduleEditor clip={clip} />}
+          {history}
+        </div>
       </DialogContent>
     </Dialog>
   );

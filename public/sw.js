@@ -1,4 +1,4 @@
-const CACHE_NAME = "clipflow-shell-v1";
+const CACHE_NAME = "clipflow-shell-v2";
 const APP_SHELL = ["/", "/dashboard", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

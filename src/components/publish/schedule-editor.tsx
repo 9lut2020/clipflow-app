@@ -15,13 +15,15 @@ function toLocalInput(value?: string | null) {
 
 export function ScheduleEditor({ clip, onSaved }: { clip: any; onSaved?: () => void }) {
   const actions = usePublishScheduleActions();
-  const { data: slots } = usePublishSlots({ projectId: clip.project?.id, isActive: true, limit: 20 });
+  const { data: slots, isLoading: slotsLoading } = usePublishSlots({ projectId: clip.project?.id, isActive: true, limit: 20 });
   const [value, setValue] = useState(toLocalInput(clip.scheduledPublishAt));
   const [slotId, setSlotId] = useState<string | null>(clip.publishSchedule?.slotId || null);
   const [note, setNote] = useState(clip.publishSchedule?.note || "");
   const [hasSavedSchedule, setHasSavedSchedule] = useState(Boolean(clip.scheduledPublishAt));
   const [isBusy, setIsBusy] = useState(false);
   const [conflict, setConflict] = useState<any | null>(null);
+  // "slot" = next free weekly slot of the project; "custom" = any date/time, past included.
+  const [mode, setMode] = useState<"slot" | "custom">(clip.scheduledPublishAt && !clip.publishSchedule?.slotId ? "custom" : "slot");
 
   useEffect(() => {
     setValue(toLocalInput(clip.scheduledPublishAt));
@@ -31,12 +33,18 @@ export function ScheduleEditor({ clip, onSaved }: { clip: any; onSaved?: () => v
     setConflict(null);
   }, [clip.id, clip.scheduledPublishAt, clip.publishSchedule?.slotId, clip.publishSchedule?.note]);
 
+  // A project without weekly slots can only be scheduled by picking a date.
+  useEffect(() => {
+    if (!slotsLoading && slots.length === 0) setMode("custom");
+  }, [slotsLoading, slots.length]);
+
   const suggest = async () => {
     setIsBusy(true);
     try {
       const result = await actions.suggest(clip.id);
       setValue(toLocalInput(result.scheduledAt));
       setSlotId(result.slot.id);
+      setMode("slot");
       toast.success(`แนะนำ ${new Date(result.scheduledAt).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })}`);
     } catch (error: any) {
       toast.error(error.message);
@@ -46,13 +54,14 @@ export function ScheduleEditor({ clip, onSaved }: { clip: any; onSaved?: () => v
   };
 
   const save = async (allowSameDay = false) => {
-    if (!slotId) return toast.error("Please select a project publishing slot");
+    if (mode === "slot" && !slotId) return toast.error("เลือกรอบโพสต์ของรายการก่อน");
+    if (mode === "custom" && !value) return toast.error("เลือกวันและเวลาก่อน");
     setIsBusy(true);
     setConflict(null);
     try {
       const saved = await actions.saveQueue(clip.id, {
         scheduledAt: value ? new Date(value).toISOString() : new Date().toISOString(),
-        slotId,
+        slotId: mode === "slot" ? slotId : null,
         allowSameDay,
         note,
       });
@@ -102,15 +111,30 @@ export function ScheduleEditor({ clip, onSaved }: { clip: any; onSaved?: () => v
         </Button>
       </div>
 
+      <div className="grid grid-cols-2 gap-1 rounded-lg bg-white/80 p-1">
+        {([{ id: "slot", label: "ตามรอบของรายการ" }, { id: "custom", label: "เลือกวันเวลาเอง" }] as const).map((item) => (
+          <button key={item.id} type="button" onClick={() => { setMode(item.id); setConflict(null); }} className={`h-8 rounded-md text-xs font-bold transition-colors ${mode === item.id ? "bg-violet-600 text-white" : "text-slate-600 hover:bg-violet-50"}`}>{item.label}</button>
+        ))}
+      </div>
+
       <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-        <select value={slotId || ""} onChange={(event) => { setSlotId(event.target.value || null); setConflict(null); }} className="h-10 rounded-lg border border-violet-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20">
-          <option value="">Select an active project slot</option>
-          {slots.map((slot) => <option key={slot.id} value={slot.id}>{["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][slot.dayOfWeek]} {String(slot.publishTime).slice(0, 5)}</option>)}
-        </select>
-        <Button type="button" onClick={() => save(false)} disabled={isBusy || !slotId} className="h-10 rounded-lg bg-violet-600 px-5 text-xs font-bold text-white hover:bg-violet-700">
+        {mode === "slot" ? (
+          <select value={slotId || ""} onChange={(event) => { setSlotId(event.target.value || null); setConflict(null); }} className="h-10 rounded-lg border border-violet-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20">
+            <option value="">{slots.length ? "เลือกรอบโพสต์" : "รายการนี้ยังไม่มีรอบโพสต์ — ใช้ “เลือกวันเวลาเอง”"}</option>
+            {slots.map((slot) => <option key={slot.id} value={slot.id}>ทุกวัน{["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"][slot.dayOfWeek]} {String(slot.publishTime).slice(0, 5)} น.</option>)}
+          </select>
+        ) : (
+          <input type="datetime-local" value={value} onChange={(event) => { setValue(event.target.value); setConflict(null); }} className="h-10 rounded-lg border border-violet-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20" />
+        )}
+        <Button type="button" onClick={() => save(false)} disabled={isBusy || (mode === "slot" ? !slotId : !value)} className="h-10 rounded-lg bg-violet-600 px-5 text-xs font-bold text-white hover:bg-violet-700">
           {isBusy && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />} บันทึกคิว
         </Button>
       </div>
+      {mode === "slot" ? (
+        <p className="-mt-1 text-[11px] text-slate-500">ระบบจะหาวันว่างถัดไปของรอบที่เลือกให้อัตโนมัติ</p>
+      ) : value && new Date(value).getTime() < Date.now() ? (
+        <p className="-mt-1 text-[11px] font-semibold text-amber-700">วันเวลานี้ผ่านไปแล้ว ระบบจะบันทึกเป็นคิวย้อนหลัง (เช่น โพสต์ไปแล้วแต่ลืมตั้ง)</p>
+      ) : null}
 
       <input value={note} onChange={(event) => setNote(event.target.value)} placeholder="หมายเหตุคิว (ถ้ามี)" className="h-9 w-full rounded-lg border border-violet-100 bg-white px-3 text-xs text-slate-700 outline-none focus:border-violet-400" />
 

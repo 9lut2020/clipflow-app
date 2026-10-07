@@ -44,7 +44,8 @@ export default function LoginPage() {
   // In the PWA: keep checking whether the browser finished LINE login,
   // immediately when the user switches back to the app and every 2 seconds.
   useEffect(() => {
-    if (!isStandalonePwa() || !getPendingLoginCode()) return;
+    // The login window itself (handoff param) never claims; only the app does.
+    if (handoffCode || !isStandalonePwa() || !getPendingLoginCode()) return;
     setWaitingForBrowser(true);
     finishPwaLogin();
     const interval = window.setInterval(finishPwaLogin, 2000);
@@ -54,24 +55,43 @@ export default function LoginPage() {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [finishPwaLogin, waitingForBrowser]);
+  }, [finishPwaLogin, waitingForBrowser, handoffCode]);
+
+  // The login window posts this when LINE login is done, then closes itself.
+  useEffect(() => {
+    const onMessage = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin || event.data?.type !== "clipflow:login-done") return;
+      const ok = await finishPwaLogin();
+      // Desktop popups share cookies with the app, so the session may already be here.
+      if (!ok) window.location.replace(callbackUrl);
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [finishPwaLogin, callbackUrl]);
 
   const handleLineLogin = async () => {
     setIsLoading(true);
     try {
       if (isStandalonePwa()) {
-        // LINE approval happens outside the app, so log in through another
-        // window and hand the session back with a one-time code. An anchor
-        // click is more reliable than window.open in installed apps.
+        // Like "Sign in with Google": LINE login runs in a popup window (a
+        // browser sheet on phones), which hands the session back to the app
+        // with a one-time code and closes. Opened synchronously in the click
+        // so it is not blocked.
         const code = getOrCreateLoginCode();
-        setHandoffUrl(`/login?handoff=${encodeURIComponent(code)}`);
-        const link = document.createElement("a");
-        link.href = `${window.location.origin}/login?handoff=${encodeURIComponent(code)}`;
-        link.target = "_blank";
-        link.rel = "noopener";
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+        const target = `${window.location.origin}/login?handoff=${encodeURIComponent(code)}`;
+        setHandoffUrl(target);
+        const width = Math.min(480, window.screen.availWidth);
+        const height = Math.min(760, window.screen.availHeight);
+        const left = Math.max(0, window.screenX + (window.outerWidth - width) / 2);
+        const top = Math.max(0, window.screenY + (window.outerHeight - height) / 2);
+        const popup = window.open(target, "clipflow-line-login", `popup=yes,width=${width},height=${height},left=${left},top=${top}`);
+        if (!popup) {
+          // Popup blocked: log in in this window instead; /auth/handoff
+          // brings the app back to the dashboard afterwards.
+          window.location.assign(target);
+          return;
+        }
+        popup.focus();
         setWaitingForBrowser(true);
         // Allow tapping again (same code) if the other window was closed.
         setIsLoading(false);
@@ -122,12 +142,12 @@ export default function LoginPage() {
         {waitingForBrowser && (
           <div className="w-full rounded-lg border border-blue-100 bg-blue-50 p-4 text-center text-sm leading-6 text-blue-800">
             <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />
-            ยืนยันการเข้าสู่ระบบใน LINE ให้เรียบร้อย แล้วกลับมาที่แอปนี้
+            กำลังเข้าสู่ระบบด้วย LINE ในหน้าต่างใหม่
             <br />
-            ระบบจะเข้าสู่ระบบให้อัตโนมัติ
+            ยืนยันให้เรียบร้อย แอปจะเข้าสู่ระบบให้อัตโนมัติ
             {handoffUrl && (
               <a href={handoffUrl} className="mt-3 block font-semibold text-blue-700 underline">
-                ถ้าหน้า LINE ไม่เปิดขึ้นมา กดที่นี่
+                ถ้าหน้าต่าง LINE ไม่ขึ้นมา กดที่นี่
               </a>
             )}
           </div>

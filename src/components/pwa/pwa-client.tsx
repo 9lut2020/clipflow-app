@@ -56,8 +56,10 @@ export function PwaClient() {
     let timeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
     const registerServiceWorker = () => {
       navigator.serviceWorker
-        .register("/sw.js")
-        .then(async () => {
+        .register("/sw.js", { updateViaCache: "none" })
+        .then(async (registration) => {
+          // Installed apps stay open for days; check for a new version on launch.
+          registration.update().catch(() => {});
           if (
             "Notification" in window &&
             Notification.permission === "granted"
