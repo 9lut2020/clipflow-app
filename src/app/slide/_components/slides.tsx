@@ -1193,7 +1193,7 @@ function Help() {
         </span>
       </A>
       <A d={0.9}>
-        <p className="text-[28px] text-[#8FA3C7]">clipflow-tmyda.vercel.app</p>
+        <p className="text-[28px] text-[#8FA3C7]">clipflow.fityatulhaq.org</p>
       </A>
     </div>
   );
