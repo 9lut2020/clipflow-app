@@ -30,68 +30,49 @@ const optionsFetcher = async (url: string) => {
 function clipState(clip: any) {
   const posted = new Set<string>((clip.publishedPosts || []).map((p: any) => p.platform).filter(Boolean));
   const scheduledAt = clip.scheduledPublishAt ? new Date(clip.scheduledPublishAt) : null;
-  const overdue = Boolean(scheduledAt && scheduledAt.getTime() < Date.now());
-  if (posted.size >= 4) return { posted, scheduledAt, overdue, badge: { text: "โพสต์ครบแล้ว", tone: "bg-emerald-50 text-emerald-700" } };
-  if (posted.size > 0) return { posted, scheduledAt, overdue, badge: { text: `โพสต์แล้ว ${posted.size}/4`, tone: "bg-amber-50 text-amber-700" } };
-  if (!scheduledAt) return { posted, scheduledAt, overdue, badge: { text: "ยังไม่จัดคิว", tone: "bg-slate-100 text-slate-600" } };
-  return { posted, scheduledAt, overdue, badge: overdue ? { text: "ถึงเวลาโพสต์แล้ว", tone: "bg-rose-50 text-rose-700" } : { text: "รอโพสต์ตามคิว", tone: "bg-violet-50 text-violet-700" } };
+  const done = posted.size >= 4;
+  const overdue = Boolean(!done && scheduledAt && scheduledAt.getTime() < Date.now());
+  return { posted, scheduledAt, done, overdue };
 }
 
 /**
- * One clip = one card. The whole daily job happens here: download, copy the
- * caption, then tap each platform once it is posted. The modal is only for
- * extras (back-dating, links, history, picking a date).
+ * One clip = one card, one main button. Download → copy caption → post →
+ * press "โพสต์ครบแล้ว". Anything unusual (only some platforms, a past date,
+ * a queue date, the post link) lives behind "รายละเอียด".
  */
 function PublishRow({ clip, onOpen }: { clip: any; onOpen: (tab?: PublishModalTab) => void }) {
   const actions = usePublishScheduleActions();
   const source = clip.currentRevision?.driveUrl || clip.driveUrl || "";
-  const { posted, scheduledAt, overdue, badge } = clipState(clip);
-  const [busy, setBusy] = useState<string | null>(null);
+  const { posted, scheduledAt, done, overdue } = clipState(clip);
+  const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const remaining = PUBLISH_PLATFORMS.filter((p) => !posted.has(p.id)).map((p) => p.id);
-  // A queue time that has passed is the best guess for when it went out.
-  const postedAt = () => (scheduledAt && overdue ? scheduledAt : new Date()).toISOString();
 
-  const mark = async (platforms: string[], key: string) => {
-    setBusy(key);
+  const markAll = async () => {
+    setBusy(true);
+    // A queue time that has passed is the best guess for when it went out.
+    const when = (overdue && scheduledAt ? scheduledAt : new Date()).toISOString();
+    const marked = [...remaining];
     try {
-      const when = postedAt();
-      await actions.markPosted(clip.id, platforms, when, buildClipCaption(clip));
-      toast.success(platforms.length > 1 ? `บันทึกโพสต์ครบ ${platforms.length} ช่องทาง` : `บันทึก ${PUBLISH_PLATFORMS.find((p) => p.id === platforms[0])?.label} แล้ว`, {
-        description: `เวลาโพสต์ ${formatWhen(when)} · แก้เวลาได้ที่ "เพิ่มเติม"`,
+      await actions.markPosted(clip.id, marked, when, buildClipCaption(clip));
+      toast.success("บันทึกแล้ว: โพสต์ครบทุกช่องทาง", {
+        description: `${clip.name} · ย้ายไปแท็บ "โพสต์แล้ว"`,
+        action: {
+          label: "เลิกทำ",
+          onClick: async () => {
+            try {
+              for (const platform of marked) await actions.unmarkPosted(clip.id, platform);
+              toast.success("เลิกทำแล้ว");
+            } catch (error: any) {
+              toast.error(error.message || "เลิกทำไม่สำเร็จ");
+            }
+          },
+        },
       });
     } catch (error: any) {
       toast.error(error.message || "บันทึกไม่สำเร็จ");
     } finally {
-      setBusy(null);
-    }
-  };
-
-  const unmark = async (platform: string) => {
-    const label = PUBLISH_PLATFORMS.find((p) => p.id === platform)?.label;
-    if (!window.confirm(`ยกเลิกสถานะ "โพสต์แล้ว" ของ ${label}?`)) return;
-    setBusy(platform);
-    try {
-      await actions.unmarkPosted(clip.id, platform);
-      toast.success(`ยกเลิก ${label} แล้ว`);
-    } catch (error: any) {
-      toast.error(error.message || "ยกเลิกไม่สำเร็จ");
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const queueNext = async () => {
-    setBusy("queue");
-    try {
-      const suggestion = await actions.suggest(clip.id);
-      await actions.saveQueue(clip.id, { scheduledAt: suggestion.scheduledAt, slotId: suggestion.slot.id });
-      toast.success(`ลงคิว ${formatWhen(suggestion.scheduledAt)}`);
-    } catch {
-      // No weekly slot or no free day: let the admin pick a date.
-      onOpen("schedule");
-    } finally {
-      setBusy(null);
+      setBusy(false);
     }
   };
 
@@ -101,65 +82,53 @@ function PublishRow({ clip, onOpen }: { clip: any; onOpen: (tab?: PublishModalTa
     setTimeout(() => setCopied(false), 1800);
   };
 
-  const urgent = overdue && posted.size < 4;
-
-  return <article className={`rounded-2xl border bg-white p-4 shadow-xs ${urgent ? "border-rose-200" : "border-slate-200/80"}`}>
+  return <article className={`rounded-2xl border bg-white p-4 shadow-xs ${overdue ? "border-rose-200" : done ? "border-emerald-200" : "border-slate-200/80"}`}>
     <div className="flex items-start justify-between gap-3">
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={`rounded-md px-2 py-0.5 text-[11px] font-bold ${badge.tone}`}>{badge.text}</span>
-          {scheduledAt ? (
-            <button onClick={() => onOpen("schedule")} className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12px] font-semibold hover:bg-slate-100 ${urgent ? "text-rose-700" : "text-slate-600"}`} title="เปลี่ยนวันโพสต์">
-              <CalendarClock className="h-3.5 w-3.5" />{formatWhen(scheduledAt)}
-            </button>
-          ) : posted.size < 4 && (
-            <span className="flex items-center gap-1">
-              <button onClick={queueNext} disabled={busy === "queue"} className="inline-flex h-7 items-center gap-1 rounded-lg bg-blue-600 px-2.5 text-[12px] font-bold text-white hover:bg-blue-700 disabled:opacity-60">
-                {busy === "queue" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />} ลงคิวถัดไป
-              </button>
-              <button onClick={() => onOpen("schedule")} className="h-7 rounded-lg px-2 text-[12px] font-bold text-blue-700 hover:bg-blue-50">เลือกวัน</button>
+      <button onClick={() => onOpen()} className="min-w-0 flex-1 text-left">
+        <h3 className="line-clamp-2 font-bold leading-snug text-slate-900 hover:text-blue-700">{clip.name}</h3>
+        <p className="mt-0.5 truncate text-xs text-slate-500">{clip.project?.name} · EP {clip.episode?.episodeNo || "-"} · {clip.owner?.displayName || "ไม่ระบุคนตัดต่อ"}</p>
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] font-semibold">
+          {done ? (
+            <span className="inline-flex items-center gap-1 text-emerald-700"><CheckCheck className="h-3.5 w-3.5" /> โพสต์ครบทุกช่องทางแล้ว</span>
+          ) : posted.size > 0 ? (
+            <span className="text-amber-700">โพสต์แล้ว {posted.size}/4 ช่องทาง</span>
+          ) : (
+            <span className="text-slate-500">ยังไม่ได้โพสต์</span>
+          )}
+          {scheduledAt && !done && (
+            <span className={`inline-flex items-center gap-1 ${overdue ? "text-rose-700" : "text-slate-500"}`}>
+              <CalendarClock className="h-3.5 w-3.5" />{overdue ? "ถึงเวลาแล้ว · " : "คิว "}{formatWhen(scheduledAt)}
             </span>
           )}
         </div>
-        <h3 className="mt-1.5 line-clamp-2 font-bold leading-snug text-slate-900">{clip.name}</h3>
-        <p className="mt-0.5 truncate text-xs text-slate-500">{clip.project?.name} · EP {clip.episode?.episodeNo || "-"} · {clip.owner?.displayName || "ไม่ระบุคนตัดต่อ"}</p>
-      </div>
-      <button onClick={() => onOpen()} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-xl border border-slate-200 px-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50" title="ย้อนเวลาโพสต์ ใส่ลิงก์ ดูประวัติ">
-        <MoreHorizontal className="h-4 w-4" /><span className="hidden sm:inline">เพิ่มเติม</span>
-      </button>
-    </div>
-
-    {/* Step 1: get the file and the text. */}
-    <div className="mt-3 flex flex-wrap gap-2">
-      {source ? <>
-        <a href={downloadUrl(source)} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700"><Download className="h-3.5 w-3.5" /> ดาวน์โหลด</a>
-        <a href={source} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50"><ExternalLink className="h-3.5 w-3.5" /> เปิดคลิป</a>
-      </> : <span className="inline-flex h-9 items-center text-xs font-semibold text-rose-500">ยังไม่มีไฟล์ที่ผ่านการตรวจ</span>}
-      <button onClick={copyCaption} className={`inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold ${copied ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"}`}>
-        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />} {copied ? "คัดลอกแล้ว" : "คัดลอกแคปชั่น"}
-      </button>
-    </div>
-
-    {/* Step 2: tick each platform once it is live. */}
-    <div className="mt-3 rounded-xl bg-slate-50 p-2">
-      <div className="mb-1.5 flex items-center justify-between gap-2 px-1">
-        <p className="text-[11px] font-bold text-slate-500">{posted.size >= 4 ? "โพสต์ครบทุกช่องทางแล้ว" : "โพสต์เสร็จแล้ว แตะช่องทางนั้นได้เลย"}</p>
-        {remaining.length > 1 && <button onClick={() => mark(remaining, "all")} disabled={!!busy} className="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold text-blue-700 hover:bg-blue-100 disabled:opacity-50">
-          {busy === "all" ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />} ครบทุกช่องทาง
-        </button>}
-      </div>
-      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-        {PUBLISH_PLATFORMS.map((p) => {
-          const done = posted.has(p.id);
-          return <button key={p.id} onClick={() => done ? unmark(p.id) : mark([p.id], p.id)} disabled={!!busy} aria-pressed={done} title={done ? "แตะเพื่อยกเลิก" : "แตะเมื่อโพสต์แล้ว"}
-            className={`group flex h-11 items-center gap-2 rounded-lg border px-2.5 text-left text-[13px] font-bold transition-colors disabled:cursor-wait ${done ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"}`}>
-            <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${done ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-300 group-hover:border-blue-400"}`}>
-              {busy === p.id || (busy === "all" && !done) ? <Loader2 className="h-3 w-3 animate-spin text-slate-500" /> : done ? <><Check className="h-3 w-3 group-hover:hidden" strokeWidth={3} /><X className="hidden h-3 w-3 group-hover:block" strokeWidth={3} /></> : null}
+        {/* Which platforms already have it — read-only, details in the modal. */}
+        <div className="mt-2 flex flex-wrap gap-1">
+          {PUBLISH_PLATFORMS.map((p) => (
+            <span key={p.id} className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold ${posted.has(p.id) ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-400"}`}>
+              {posted.has(p.id) && <Check className="h-3 w-3" strokeWidth={3} />}{p.short}
             </span>
-            {p.short}
-          </button>;
-        })}
-      </div>
+          ))}
+        </div>
+      </button>
+    </div>
+
+    <div className="mt-3 flex flex-wrap items-center gap-2">
+      {source ? (
+        <a href={downloadUrl(source)} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50"><Download className="h-4 w-4" /> ดาวน์โหลด</a>
+      ) : (
+        <span className="text-xs font-semibold text-rose-500">ยังไม่มีไฟล์ที่ผ่านการตรวจ</span>
+      )}
+      <button onClick={copyCaption} className={`inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold ${copied ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"}`}>
+        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />} {copied ? "คัดลอกแล้ว" : "คัดลอกแคปชั่น"}
+      </button>
+      <button onClick={() => onOpen()} className="inline-flex h-10 items-center gap-1 rounded-xl px-2.5 text-xs font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-800">
+        <MoreHorizontal className="h-4 w-4" /> รายละเอียด
+      </button>
+      {!done && (
+        <button onClick={markAll} disabled={busy} className={`ml-auto inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl px-4 text-sm font-bold text-white disabled:opacity-60 sm:flex-none ${overdue ? "bg-rose-600 hover:bg-rose-700" : "bg-emerald-600 hover:bg-emerald-700"}`}>
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCheck className="h-4 w-4" />} โพสต์ครบแล้ว
+        </button>
+      )}
     </div>
   </article>;
 }
@@ -275,6 +244,7 @@ export function PublishDashboard() {
   const router = useRouter(); const sp = useSearchParams();
   const tab: TabId = sp.get("tab") === "calendar" ? "calendar" : "manage";
   const page = Math.max(1, Number(sp.get("page") || 1));
+  const view = sp.get("view") === "done" ? "done" : sp.get("view") === "all" ? "all" : "todo";
   const limit = [20, 50, 100].includes(Number(sp.get("limit"))) ? Number(sp.get("limit")) : 20;
   const [search, setSearch] = useState(sp.get("q") || "");
   const activeExtraFilters = ["ownerId", "from", "to"].filter((key) => sp.get(key)).length;
@@ -285,10 +255,10 @@ export function PublishDashboard() {
   const { data: projects } = useProjects({ isActive: true });
   const { data: usersData } = useSWR<PaginatedData<User>>("/users?page=1&limit=100&isActive=true&role=USER&sortBy=displayName&sortOrder=asc", optionsFetcher);
   const { data: summary, isLoading: summaryLoading } = usePublishSummary();
-  const { items, pagination, isLoading, error: itemsError } = usePublishItems({ page, limit, q: sp.get("q") || undefined, projectId: sp.get("projectId") || undefined, ownerId: sp.get("ownerId") || undefined, scheduleState: sp.get("scheduleState") || undefined, postingState: sp.get("postingState") || undefined, from: sp.get("from") || undefined, to: sp.get("to") || undefined, sortBy: "scheduledAt", sortOrder: "asc" });
+  const { items, pagination, isLoading, error: itemsError } = usePublishItems({ page, limit, q: sp.get("q") || undefined, projectId: sp.get("projectId") || undefined, ownerId: sp.get("ownerId") || undefined, postingState: view === "all" ? undefined : view === "done" ? "completed" : "incomplete", from: sp.get("from") || undefined, to: sp.get("to") || undefined, sortBy: "scheduledAt", sortOrder: "asc" });
   const update = (values: Record<string, string | undefined>, reset = true) => { const next = new URLSearchParams(sp.toString()); Object.entries(values).forEach(([k, v]) => v ? next.set(k, v) : next.delete(k)); if (reset) next.set("page", "1"); router.replace(`?${next.toString()}`, { scroll: false }); };
   useEffect(() => { const timer = setTimeout(() => { if (search !== (sp.get("q") || "")) update({ q: search || undefined }); }, 350); return () => clearTimeout(timer); }, [search]);
-  const showStatus = (key: string) => key === "all" ? update({ scheduleState: undefined, postingState: undefined }) : key === "partial" || key === "completed" ? update({ postingState: key, scheduleState: undefined }) : update({ scheduleState: key, postingState: undefined });
+  const showStatus = (key: string) => update({ view: key === "todo" ? undefined : key });
   const reset = () => { setSearch(""); router.replace("?tab=manage"); };
   const selectToday = () => { const today = dateKey(new Date()); update({ from: today, to: today }); };
   const openClip = (clip: any, nextTab?: PublishModalTab) => { setModalTab(nextTab); setSelectedClip(clip); };
@@ -297,20 +267,17 @@ export function PublishDashboard() {
   const pageNumbers = Array.from({ length: Math.min(5, totalPages) }, (_, index) => pageStart + index);
 
   const statuses = [
-    { key: "all", label: "ทั้งหมด", count: undefined, hint: "" },
-    { key: "overdue", label: "ถึงเวลาโพสต์", count: summary?.overdue, hint: "เลยเวลาคิวแล้ว ยังไม่ได้บันทึกว่าโพสต์" },
-    { key: "unscheduled", label: "ยังไม่จัดคิว", count: summary?.unscheduled, hint: "ผ่านการตรวจแล้ว แต่ยังไม่มีวันโพสต์" },
-    { key: "scheduled", label: "รอคิว", count: summary?.scheduled, hint: "มีวันโพสต์แล้ว" },
-    { key: "partial", label: "โพสต์ไม่ครบ", count: summary?.partial, hint: "โพสต์ไปแล้วบางช่องทาง" },
-    { key: "completed", label: "ครบแล้ว", count: summary?.completed, hint: "โพสต์ครบ 4 ช่องทาง" },
+    { key: "todo", label: "รอโพสต์", count: summary?.pending, hint: "ผ่านการตรวจแล้ว ยังโพสต์ไม่ครบ 4 ช่องทาง" },
+    { key: "done", label: "โพสต์แล้ว", count: summary?.completed, hint: "โพสต์ครบ 4 ช่องทาง" },
+    { key: "all", label: "ทั้งหมด", count: summary?.total, hint: "" },
   ];
-  const activeStatus = sp.get("scheduleState") || sp.get("postingState") || "all";
+  const activeStatus = view;
 
   return <div className="space-y-4 pb-12">
     <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <h1 className="text-xl font-black text-slate-900">เผยแพร่คลิป</h1>
-        <p className="mt-0.5 text-[13px] text-slate-500">ดาวน์โหลด → คัดลอกแคปชั่น → โพสต์ → แตะช่องทางที่โพสต์แล้ว</p>
+        <p className="mt-0.5 text-[13px] text-slate-500">ดาวน์โหลด → คัดลอกแคปชั่น → โพสต์ → กด “โพสต์ครบแล้ว”</p>
       </div>
       <div className="flex items-center gap-2">
         <div className="flex rounded-xl bg-slate-100 p-1">
@@ -346,7 +313,7 @@ export function PublishDashboard() {
         <div className="grid grid-cols-2 gap-2"><Button variant="ghost" onClick={selectToday} className="h-10 rounded-xl bg-blue-50 font-bold text-blue-700 hover:bg-blue-100">คิววันนี้</Button><Button variant="ghost" onClick={reset} className="h-10 rounded-xl bg-slate-100 font-bold text-slate-600 hover:bg-slate-200">ล้างทั้งหมด</Button></div>
       </section>}
 
-      <section className="space-y-3">{itemsError ? <div className="rounded-3xl bg-rose-50 py-16 text-center text-sm font-bold text-rose-700">โหลดรายการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</div> : isLoading ? <div className="flex justify-center rounded-3xl bg-white py-20 text-slate-400"><Loader2 className="h-6 w-6 animate-spin" /></div> : items.length === 0 ? <div className="rounded-3xl bg-white py-16 text-center text-sm text-slate-500">{activeStatus === "overdue" ? "ไม่มีคลิปค้างโพสต์ 🎉" : "ไม่พบคลิปตามเงื่อนไข"}</div> : items.map((clip) => <PublishRow key={clip.id} clip={clip} onOpen={(nextTab) => openClip(clip, nextTab)} />)}</section>
+      <section className="space-y-3">{itemsError ? <div className="rounded-3xl bg-rose-50 py-16 text-center text-sm font-bold text-rose-700">โหลดรายการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</div> : isLoading ? <div className="flex justify-center rounded-3xl bg-white py-20 text-slate-400"><Loader2 className="h-6 w-6 animate-spin" /></div> : items.length === 0 ? <div className="rounded-3xl bg-white py-16 text-center text-sm text-slate-500">{activeStatus === "todo" ? "ไม่มีคลิปค้างโพสต์ 🎉" : "ไม่พบคลิปตามเงื่อนไข"}</div> : items.map((clip) => <PublishRow key={clip.id} clip={clip} onOpen={(nextTab) => openClip(clip, nextTab)} />)}</section>
       {pagination && totalPages > 1 && <div className="flex flex-col gap-3 rounded-2xl bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"><span className="text-xs text-slate-500">ทั้งหมด {pagination.total} รายการ · หน้า {pagination.page}/{totalPages}</span><div className="flex flex-wrap items-center gap-2"><select value={limit} onChange={(e) => update({ limit: e.target.value })} className="h-9 rounded-lg bg-slate-50 px-2 text-xs outline-none ring-1 ring-inset ring-slate-200"><option value="20">20 / หน้า</option><option value="50">50 / หน้า</option><option value="100">100 / หน้า</option></select><Button variant="ghost" size="sm" disabled={!pagination.hasPrevious} onClick={() => update({ page: String(page - 1) }, false)}><ChevronLeft className="h-4 w-4" /></Button>{pageNumbers.map((pageNumber) => <button key={pageNumber} onClick={() => update({ page: String(pageNumber) }, false)} className={`h-9 min-w-9 rounded-lg px-2 text-xs font-black ${pageNumber === page ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>{pageNumber}</button>)}<Button variant="ghost" size="sm" disabled={!pagination.hasNext} onClick={() => update({ page: String(page + 1) }, false)}><ChevronRight className="h-4 w-4" /></Button></div></div>}
     </>}
     <PublishSlotsModal open={slotsOpen} onOpenChange={setSlotsOpen} />{selectedClip && <PublishModal key={selectedClip.id} clip={selectedClip} initialTab={modalTab} isOpen={!!selectedClip} onClose={() => setSelectedClip(null)} />}

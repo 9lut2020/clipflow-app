@@ -35,7 +35,7 @@ const fetcher = async <T,>(url: string): Promise<T> => {
   return response.data as T;
 };
 
-export interface PublishSummary { unscheduled: number; scheduled: number; overdue: number; partial: number; completed: number }
+export interface PublishSummary { unscheduled: number; scheduled: number; overdue: number; partial: number; completed: number; pending: number; total: number }
 
 export function usePublishSummary() {
   const { data, error, isLoading, mutate } = useSWR<PublishSummary>("/publish-schedules/summary", fetcher, {

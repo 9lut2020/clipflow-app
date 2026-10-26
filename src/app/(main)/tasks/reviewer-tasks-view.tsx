@@ -5,7 +5,7 @@ import { Clip } from "@/types/api";
 import { TaskAccordionSection } from "./task-accordion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Share2 } from "lucide-react";
-import { clipStage, type ClipStage } from "@/lib/clip-status";
+import { clipStageOf, type ClipStage } from "@/lib/clip-status";
 
 interface ReviewerTasksViewProps {
   clips: Clip[];
@@ -18,13 +18,14 @@ interface ReviewerTasksViewProps {
  * hidden. Finished stages start collapsed so the open work stays on top.
  */
 export function ReviewerTasksView({ clips, isAdmin = false }: ReviewerTasksViewProps) {
-  const byStage = (stage: ClipStage) => clips.filter((c) => clipStage(c.status) === stage);
+  const byStage = (stage: ClipStage) => clips.filter((c) => clipStageOf(c as any) === stage);
   const review = byStage("review");
   const fix = byStage("fix");
+  const unassigned = byStage("unassigned");
   const todo = byStage("todo");
   const ready = byStage("ready");
   const published = byStage("published");
-  const nothing = review.length + fix.length + todo.length + ready.length + published.length === 0;
+  const nothing = unassigned.length + review.length + fix.length + todo.length + ready.length + published.length === 0;
 
   return (
     <div className="space-y-1">
@@ -49,6 +50,19 @@ export function ReviewerTasksView({ clips, isAdmin = false }: ReviewerTasksViewP
         defaultOpen={true}
         isUser={false}
       />
+
+      {isAdmin && (
+        <TaskAccordionSection
+          title="รอมอบหมาย (ยังไม่มีคนตัดต่อ)"
+          iconType="alert"
+          clips={unassigned}
+          colorClass="text-violet-500"
+          badgeBg="bg-violet-100 text-violet-700"
+          emptyText=""
+          defaultOpen={true}
+          isUser={false}
+        />
+      )}
 
       {isAdmin && (
         <TaskAccordionSection

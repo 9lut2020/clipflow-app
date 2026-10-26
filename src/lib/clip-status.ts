@@ -2,15 +2,19 @@
  * Single source of truth for clip statuses: the label every page shows and
  * the stage of the pipeline it belongs to.
  *
- *   รอส่งงาน → รอตรวจ ⇄ ต้องแก้ไข → ผ่านแล้ว รอโพสต์ → เผยแพร่แล้ว
+ *   รอมอบหมาย → รอส่งงาน → รอตรวจ ⇄ ต้องแก้ไข → ผ่านแล้ว รอโพสต์ → เผยแพร่แล้ว
+ *
+ * "รอมอบหมาย" is not a DB status: it is a DRAFT clip with no owner yet, so
+ * code that has the clip should use clipStageOf / clipMetaOf.
  *
  * Pages filter and group by stage, never by raw status, so a new raw status
  * (e.g. RESUBMITTED) can never fall into the wrong bucket again.
  */
 
-export type ClipStage = "todo" | "review" | "fix" | "ready" | "published" | "cancelled";
+export type ClipStage = "unassigned" | "todo" | "review" | "fix" | "ready" | "published" | "cancelled";
 
 export const CLIP_STAGES: { id: ClipStage; label: string; hint: string }[] = [
+  { id: "unassigned", label: "รอมอบหมาย", hint: "ยังไม่มีคนตัดต่อรับงาน" },
   { id: "todo", label: "รอส่งงาน", hint: "มอบหมายแล้ว ยังไม่ส่งคลิป" },
   { id: "review", label: "รอตรวจ", hint: "ส่งแล้ว รอผู้ตรวจ" },
   { id: "fix", label: "ต้องแก้ไข", hint: "ผู้ตรวจสั่งแก้ รอส่งใหม่" },
@@ -32,6 +36,23 @@ const STATUS_META: Record<string, StatusMeta> = {
   CANCELLED: { label: "ยกเลิก", stage: "cancelled", badge: "bg-gray-100 text-gray-500 border-gray-200", dot: "bg-gray-400" },
 };
 
+const UNASSIGNED_META: StatusMeta = { label: "รอมอบหมาย", stage: "unassigned", badge: "bg-violet-50 text-violet-700 border-violet-200 border-dashed", dot: "bg-violet-400" };
+
+type ClipLike = { status?: string | null; ownerId?: string | null; owner?: { id?: string | null } | null };
+
+/** Whether a clip has an editor; list rows carry `owner`, detail rows `ownerId`. */
+export const hasOwner = (clip: ClipLike) => Boolean(clip.owner?.id || clip.ownerId);
+
+/** Like clipStatusMeta, but a DRAFT nobody owns yet reads "รอมอบหมาย". */
+export function clipMetaOf(clip: ClipLike): StatusMeta {
+  const meta = clipStatusMeta(clip.status);
+  return meta.stage === "todo" && !hasOwner(clip) ? UNASSIGNED_META : meta;
+}
+
+export function clipStageOf(clip: ClipLike): ClipStage {
+  return clipMetaOf(clip).stage;
+}
+
 export function clipStatusMeta(status?: string | null): StatusMeta {
   return STATUS_META[status || ""] || STATUS_META.DRAFT;
 }
@@ -48,7 +69,7 @@ export function statusesOfStage(stage: ClipStage): string[] {
 /** The editor still has to act (submit or fix). */
 export const isEditorWork = (status?: string | null) => ["todo", "fix"].includes(clipStage(status));
 /** Still moving through production (not yet passed review). */
-export const isInProduction = (status?: string | null) => ["todo", "review", "fix"].includes(clipStage(status));
+export const isInProduction = (status?: string | null) => ["unassigned", "todo", "review", "fix"].includes(clipStage(status));
 /** Passed review — approved or already published. */
 export const isPassed = (status?: string | null) => ["ready", "published"].includes(clipStage(status));
 

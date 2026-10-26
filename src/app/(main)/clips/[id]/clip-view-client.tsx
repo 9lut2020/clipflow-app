@@ -105,7 +105,7 @@ export default function ClipViewClient({
 
       {/* Stepper Status Bar */}
       <div className="mb-5 sm:mb-6">
-        <ClipStepper status={optimisticStatus} />
+        <ClipStepper status={optimisticStatus} assigned={Boolean(clip.ownerId || clip.owner?.id)} />
       </div>
 
       {reviewFeedback && (
@@ -159,7 +159,7 @@ export default function ClipViewClient({
               </h2>
 
               <div className="flex items-center gap-2">
-                <StatusBadge status={optimisticStatus} />
+                <StatusBadge status={optimisticStatus} assigned={Boolean(clip.ownerId || clip.owner?.id)} />
               </div>
             </div>
 

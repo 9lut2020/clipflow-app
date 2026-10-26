@@ -63,7 +63,8 @@ export function usePublishClip() {
       if (res.status !== "success") throw new Error(res.message);
       
       mutate(`/clips/${clipId}/published-posts`);
-      mutate((key: any) => typeof key === 'string' && key.startsWith('/clips'));
+      // The publish page lists and counts live under /publish-schedules.
+      mutate((key: any) => typeof key === 'string' && (key.startsWith('/clips') || key.startsWith('/publish-schedules')));
       return res.data;
     } finally {
       setIsPublishing(false);

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { CLIP_STAGES, clipStage } from "@/lib/clip-status";
+import { CLIP_STAGES, clipStageOf, hasOwner } from "@/lib/clip-status";
 import { format } from "date-fns";
 import Link from "next/link";
 import {
@@ -42,7 +42,7 @@ export default function DashboardTable({ clips, isUser, role }: DashboardTablePr
       ownerName.toLowerCase().includes(searchLower);
 
     const matchesStatus =
-      statusFilter === "ALL" ? true : clipStage(clip.status) === statusFilter;
+      statusFilter === "ALL" ? true : clipStageOf(clip as any) === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -276,7 +276,7 @@ export default function DashboardTable({ clips, isUser, role }: DashboardTablePr
 
                     {/* Status Badge */}
                     <td className="px-6 py-4 text-center">
-                      <StatusBadge status={clip.status} postedCount={(clip as any).publishedPosts?.length} />
+                      <StatusBadge status={clip.status} assigned={hasOwner(clip as any)} postedCount={(clip as any).publishedPosts?.length} />
                     </td>
 
                     {/* Actions */}
@@ -330,7 +330,7 @@ export default function DashboardTable({ clips, isUser, role }: DashboardTablePr
                       {clip.name || episode?.name || "คลิปไม่มีชื่อ"}
                     </h3>
                   </div>
-                  <StatusBadge status={clip.status} postedCount={(clip as any).publishedPosts?.length} />
+                  <StatusBadge status={clip.status} assigned={hasOwner(clip as any)} postedCount={(clip as any).publishedPosts?.length} />
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-slate-600 pt-1">

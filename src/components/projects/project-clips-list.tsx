@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { ChevronDown, Filter, X, FolderX } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { clipStage, clipStatusMeta, type ClipStage } from "@/lib/clip-status";
+import { clipStageOf, clipStatusMeta, hasOwner, type ClipStage } from "@/lib/clip-status";
 
 interface ProjectClipsListProps {
   project: { id: string; name: string; description?: string };
@@ -20,10 +20,10 @@ type ListView = "working" | "ready" | "published" | "all";
 // Tabs follow the pipeline: still in production → passed, waiting to be
 // posted → published. Cancelled clips only appear under "ทั้งหมด".
 const VIEWS: { id: ListView; label: string; stages: ClipStage[] }[] = [
-  { id: "working", label: "กำลังทำ / รอตรวจ", stages: ["todo", "review", "fix"] },
+  { id: "working", label: "กำลังทำ / รอตรวจ", stages: ["unassigned", "todo", "review", "fix"] },
   { id: "ready", label: "ผ่านแล้ว รอโพสต์", stages: ["ready"] },
   { id: "published", label: "เผยแพร่แล้ว", stages: ["published"] },
-  { id: "all", label: "ทั้งหมด", stages: ["todo", "review", "fix", "ready", "published", "cancelled"] },
+  { id: "all", label: "ทั้งหมด", stages: ["unassigned", "todo", "review", "fix", "ready", "published", "cancelled"] },
 ];
 
 export default function ProjectClipsList({
@@ -85,7 +85,7 @@ export default function ProjectClipsList({
 
         // View tab
         const stages = VIEWS.find((v) => v.id === view)!.stages;
-        epClips = epClips.filter((c) => stages.includes(clipStage(c.status)));
+        epClips = epClips.filter((c) => stages.includes(clipStageOf(c)));
 
         // Filters
         if (selectedOwners.length > 0) {
@@ -121,7 +121,7 @@ export default function ProjectClipsList({
         <div className="-mx-1 flex gap-1 overflow-x-auto px-1 hide-scrollbar">
           <div className="flex shrink-0 rounded-xl bg-slate-100 p-1">
             {VIEWS.map((v) => {
-              const count = baseClips.filter((c) => v.stages.includes(clipStage(c.status))).length;
+              const count = baseClips.filter((c) => v.stages.includes(clipStageOf(c))).length;
               return (
                 <button
                   key={v.id}
@@ -399,7 +399,7 @@ export default function ProjectClipsList({
                           </div>
 
                           <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                            <StatusBadge status={clip.status} postedCount={clip.publishedPosts?.length} className="text-[10px] sm:text-xs" />
+                            <StatusBadge status={clip.status} assigned={hasOwner(clip)} postedCount={clip.publishedPosts?.length} className="text-[10px] sm:text-xs" />
                           </div>
                         </CardContent>
                       </Card>

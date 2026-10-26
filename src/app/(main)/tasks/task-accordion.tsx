@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Clip } from "@/types/api";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { hasOwner } from "@/lib/clip-status";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import PlatformBadge from "@/components/ui/platform-badge";
@@ -304,7 +305,7 @@ export function TaskAccordionSection({
                       {clip.project?.name || "Project"} • EP.
                       {clip.episode?.episodeNo || "?"}
                     </span>
-                    <StatusBadge status={clip.status} postedCount={(clip as any).publishedPosts?.length} className="!px-2 !py-0 text-[10px]" />
+                    <StatusBadge status={clip.status} assigned={hasOwner(clip as any)} postedCount={(clip as any).publishedPosts?.length} className="!px-2 !py-0 text-[10px]" />
                   </div>
                   <Link href={`/clips/${clip.id}`}>
                     <h3 className="font-bold text-xs sm:text-sm text-slate-800 hover:text-blue-600 transition-colors truncate">

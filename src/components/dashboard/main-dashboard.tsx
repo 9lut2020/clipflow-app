@@ -24,11 +24,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { clipStage, isPassed } from "@/lib/clip-status";
+import { isPassed, clipStageOf, hasOwner } from "@/lib/clip-status";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
 type ClipStats = {
   byStatus: Record<string, number>;
+  unassigned?: number;
   total: number;
   trend: { date: string; submitted: number; approved: number }[];
   creators: { id: string; name: string; pictureUrl?: string | null; total: number; approved: number }[];
@@ -103,7 +104,7 @@ export function MainDashboard({
     }
 
     // Status filter
-    if (statusFilter !== "ALL" && clipStage(c.status) !== statusFilter) {
+    if (statusFilter !== "ALL" && clipStageOf(c as any) !== statusFilter) {
       return false;
     }
 
@@ -130,7 +131,9 @@ export function MainDashboard({
   );
   const countStatus = (status: string) =>
     stats ? stats.byStatus[status] || 0 : filteredClips.filter((c) => c.status === status).length;
-  const notSubmittedCount = countStatus("DRAFT");
+  // Drafts with no editor yet are "รอมอบหมาย", the rest "รอส่งงาน".
+  const unassignedCount = stats ? stats.unassigned || 0 : filteredClips.filter((c) => clipStageOf(c as any) === "unassigned").length;
+  const notSubmittedCount = Math.max(0, countStatus("DRAFT") - unassignedCount);
   const pendingCount = countStatus("PENDING_REVIEW") + countStatus("RESUBMITTED");
   // Reviewers never see clips before submission, so the card is hidden for them.
   const showNotSubmitted = role !== "REVIEWER";
@@ -312,7 +315,7 @@ export function MainDashboard({
               <div className="text-xl md:text-3xl font-black text-slate-700 tracking-tight">
                 {notSubmittedCount}{" "}
                 <span className="text-[10px] md:text-xs font-normal text-slate-500">
-                  รายการ
+                  รายการ{unassignedCount > 0 ? ` · รอมอบหมาย ${unassignedCount}` : ""}
                 </span>
               </div>
             </CardContent>
@@ -605,7 +608,7 @@ export function MainDashboard({
             <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
               {[
                 { id: "ALL", label: "ทั้งหมด" },
-                ...(showNotSubmitted ? [{ id: "todo", label: "รอส่งงาน" }] : []),
+                ...(showNotSubmitted ? [{ id: "unassigned", label: "รอมอบหมาย" }, { id: "todo", label: "รอส่งงาน" }] : []),
                 { id: "review", label: "รอตรวจ" },
                 { id: "fix", label: "ต้องแก้ไข" },
                 { id: "ready", label: "ผ่านแล้ว รอโพสต์" },
@@ -727,7 +730,7 @@ export function MainDashboard({
                           </td>
 
                           <td className="px-5 py-3.5 text-center">
-                            <StatusBadge status={clip.status} postedCount={(clip as any).publishedPosts?.length} />
+                            <StatusBadge status={clip.status} assigned={hasOwner(clip as any)} postedCount={(clip as any).publishedPosts?.length} />
                           </td>
 
                           <td className="px-5 py-3.5 text-right pr-6">
@@ -773,7 +776,7 @@ export function MainDashboard({
                             {clip.name || episode?.name || "คลิปไม่มีชื่อ"}
                           </h3>
                         </div>
-                        <StatusBadge status={clip.status} postedCount={(clip as any).publishedPosts?.length} />
+                        <StatusBadge status={clip.status} assigned={hasOwner(clip as any)} postedCount={(clip as any).publishedPosts?.length} />
                       </div>
 
                       <div className="flex items-center justify-between text-xs text-slate-600 pt-1 border-t border-slate-100">

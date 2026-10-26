@@ -6,6 +6,8 @@ import { clipStage } from "@/lib/clip-status";
 
 interface ClipStepperProps {
   status: string;
+  /** False for a draft nobody has been given yet ("รอมอบหมาย"). */
+  assigned?: boolean;
   className?: string;
 }
 
@@ -16,7 +18,7 @@ type StepState = "complete" | "current" | "error" | "upcoming";
  * Driven by the clip's stage, so every status (RESUBMITTED, PUBLISHED, …)
  * lands on the right step.
  */
-export default function ClipStepper({ status, className }: ClipStepperProps) {
+export default function ClipStepper({ status, assigned = true, className }: ClipStepperProps) {
   const stage = clipStage(status);
 
   if (stage === "cancelled") {
@@ -28,12 +30,12 @@ export default function ClipStepper({ status, className }: ClipStepperProps) {
   }
 
   // How many steps are fully done.
-  const done = { todo: 0, review: 1, fix: 1, ready: 3, published: 4 }[stage];
+  const done = { unassigned: 0, todo: 0, review: 1, fix: 1, ready: 3, published: 4 }[stage];
 
   const steps: { name: string; description: string; state: StepState; icon: typeof Check }[] = [
     {
-      name: "ส่งงาน",
-      description: stage === "todo" ? "รอคนตัดต่อส่งคลิป" : "ส่งคลิปแล้ว",
+      name: stage === "todo" && !assigned ? "รอมอบหมาย" : "ส่งงาน",
+      description: stage === "todo" ? (assigned ? "รอคนตัดต่อส่งคลิป" : "ยังไม่มีคนตัดต่อ") : "ส่งคลิปแล้ว",
       state: done >= 1 ? "complete" : "current",
       icon: done >= 1 ? Check : UploadCloud,
     },
