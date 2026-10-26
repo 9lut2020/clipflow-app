@@ -7,7 +7,7 @@ import { Loader2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 
-type Member = { id: string; displayName: string; pictureUrl?: string | null; role?: string };
+type Member = { id: string; displayName: string; pictureUrl?: string | null; role?: string; projectRole?: string };
 
 /**
  * Shown to admins on a clip that nobody has been given yet ("รอมอบหมาย"):
@@ -23,7 +23,8 @@ export function AssignOwnerCard({ clipId, projectId, onAssigned }: { clipId: str
     async (url: string) => {
       const res = await apiClient.get<{ items: Member[] }>(url);
       if (res.status !== "success") throw new Error(res.message);
-      return res.data?.items || [];
+      // Reviewers of this project only review; assign to its editors.
+      return (res.data?.items || []).filter((m) => m.projectRole !== "REVIEWER");
     },
   );
 

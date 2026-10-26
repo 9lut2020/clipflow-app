@@ -41,6 +41,10 @@ export const ClipBatchCreateSchema = z.object({
       videoSizeId: z.string().uuid().optional().nullable().or(z.literal("")),
       createdBy: z.string().optional(),
       deadline: z.string().optional().nullable(),
+      kind: z.enum(["CLIP", "POSTER"]).optional(),
+      question: z.string().optional().nullable(),
+      sourceUrl: z.string().optional().nullable(),
+      customFields: z.record(z.string(), z.string()).optional(),
     })
   ).min(1, "At least one clip is required"),
 });

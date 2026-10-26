@@ -35,6 +35,17 @@ export default function MembersClient({
     return { status: res.status, data: res.data?.items || [] };
   });
 
+  const changeProjectRole = async (userId: string, role: string) => {
+    const res = await apiClient.patch(`/projects/${projectId}/members/${userId}`, { role });
+    if (res.status !== "success") {
+      toast.error(res.message || "เปลี่ยนบทบาทไม่สำเร็จ");
+      return;
+    }
+    toast.success(role === "REVIEWER" ? "ตั้งเป็นผู้ตรวจของโปรเจกต์นี้แล้ว" : "ตั้งเป็นคนตัดต่อของโปรเจกต์นี้แล้ว");
+    mutate();
+    router.refresh();
+  };
+
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [isAdding, setIsAdding] = useState(false);
 
@@ -231,9 +242,16 @@ export default function MembersClient({
                     <p className="font-bold text-sm text-slate-800 truncate">
                       {member.displayName}
                     </p>
-                    <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider bg-slate-100 px-1.5 py-0.5 rounded inline-block mt-0.5">
-                      {member.role}
-                    </p>
+                    {/* Job in this project: editors get assignments, reviewers get its review alerts. */}
+                    <select
+                      value={(member as any).projectRole || "EDITOR"}
+                      onChange={(e) => changeProjectRole(member.id, e.target.value)}
+                      className={`mt-0.5 rounded-md border px-1.5 py-0.5 text-[11px] font-bold outline-none ${(member as any).projectRole === "REVIEWER" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-blue-200 bg-blue-50 text-blue-800"}`}
+                      title="บทบาทในโปรเจกต์นี้"
+                    >
+                      <option value="EDITOR">คนตัดต่อ</option>
+                      <option value="REVIEWER">ผู้ตรวจ</option>
+                    </select>
                   </div>
                 </div>
                 <button

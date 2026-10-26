@@ -42,6 +42,7 @@ function InlineSubmitModal({ clip, userId, onClose, mode }: InlineSubmitModalPro
   const [note, setNote] = useState("");
   const router = useRouter();
   const { submitRevision, isSubmitting } = useSubmitRevision();
+  const isPoster = (clip as any).kind === "POSTER";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +76,7 @@ function InlineSubmitModal({ clip, userId, onClose, mode }: InlineSubmitModalPro
               </div>
               <div>
                 <DialogTitle className="text-sm font-bold text-slate-800">
-                  {mode === "resubmit" ? "ส่งงานแก้ไข" : "ส่งคลิปตรวจงาน"}
+                  {mode === "resubmit" ? "ส่งงานแก้ไข" : isPoster ? "ส่งโปสเตอร์ตรวจงาน" : "ส่งคลิปตรวจงาน"}
                 </DialogTitle>
                 <p className="text-[11px] text-slate-500 truncate max-w-[220px]">{clip.name}</p>
               </div>
@@ -86,7 +87,7 @@ function InlineSubmitModal({ clip, userId, onClose, mode }: InlineSubmitModalPro
           <form onSubmit={handleSubmit} className="p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                ลิงก์วิดีโอ (Google Drive หรือ YouTube) *
+                {isPoster ? "ลิงก์รูปโปสเตอร์ (Google Drive หรือลิงก์รูป) *" : "ลิงก์วิดีโอ (Google Drive หรือ YouTube) *"}
               </label>
               <input
                 type="text"
@@ -305,6 +306,7 @@ export function TaskAccordionSection({
                       {clip.project?.name || "Project"} • EP.
                       {clip.episode?.episodeNo || "?"}
                     </span>
+                    {(clip as any).kind === "POSTER" && <span className="shrink-0 rounded bg-pink-50 px-1.5 text-[10px] font-bold text-pink-700">โปสเตอร์</span>}
                     <StatusBadge status={clip.status} assigned={hasOwner(clip as any)} postedCount={(clip as any).publishedPosts?.length} className="!px-2 !py-0 text-[10px]" />
                   </div>
                   <Link href={`/clips/${clip.id}`}>

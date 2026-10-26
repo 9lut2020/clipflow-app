@@ -36,8 +36,8 @@ export default async function ProjectManagePage(props: {
   const clips = manageData.clips || [];
   const videoSizes = manageData.videoSizes || [];
 
-  // Allowed users: Members + Admins
-  const memberIds = new Set(members.map((m: any) => m.id));
+  // Allowed assignees: this project's editors (reviewers only review) + admins.
+  const memberIds = new Set(members.filter((m: any) => m.projectRole !== "REVIEWER").map((m: any) => m.id));
   const allowedUsers = allUsers.filter(
     (u: any) => memberIds.has(u.id) || u.role === "ADMIN",
   );
@@ -59,6 +59,10 @@ export default async function ProjectManagePage(props: {
     ownerId: clip.owner?.id || clip.ownerId || "",
     videoSizeId: (clip as any).videoSizeId || (clip as any).videoSize?.id || "",
     status: clip.status,
+    kind: (clip as any).kind || "CLIP",
+    question: (clip as any).question || "",
+    sourceUrl: (clip as any).sourceUrl || "",
+    customFields: (clip as any).customFields || {},
   }));
 
   return (
@@ -105,6 +109,7 @@ export default async function ProjectManagePage(props: {
           initialEpisodes={episodes}
           initialVideoSizes={videoSizes}
           users={allowedUsers}
+          initialCustomColumns={project.customColumns || []}
         />
       </div>
     </div>

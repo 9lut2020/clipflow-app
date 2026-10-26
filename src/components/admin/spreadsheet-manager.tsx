@@ -23,9 +23,13 @@ import {
   Ban,
   RotateCcw,
   Lock,
+  Link2,
+  Columns3,
+  ExternalLink,
 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { clipEditLock } from "@/lib/clip-status";
+import { CustomColumnsDialog, type CustomColumn } from "@/components/admin/custom-columns-dialog";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -46,6 +50,7 @@ interface SpreadsheetManagerProps {
   readonly initialEpisodes?: any[];
   readonly initialVideoSizes?: any[];
   readonly users: any[];
+  readonly initialCustomColumns?: CustomColumn[];
 }
 
 // AssigneeDropdown code here (Unchanged)
@@ -226,6 +231,8 @@ const ClipRow = ({
   episodes,
   users,
   videoSizes,
+  customColumns = [],
+  showQuestion = false,
 }: any) => {
   const isEven = index % 2 === 0;
   const isSaved = Boolean(clip.id && !String(clip.id).startsWith("new-"));
@@ -272,6 +279,78 @@ const ClipRow = ({
           className={`w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all text-slate-600 text-sm ${lockedCell}`}
         />
       </td>
+      <td className="border-r border-b border-slate-200 p-0">
+        <select
+          value={clip.kind || "CLIP"}
+          disabled={frozen}
+          onChange={(e) => onChange(index, "kind", e.target.value)}
+          className={`w-full h-full px-2 py-2 bg-transparent outline-none text-xs font-bold cursor-pointer ${clip.kind === "POSTER" ? "text-pink-700" : "text-slate-700"}`}
+        >
+          <option value="CLIP">คลิป</option>
+          <option value="POSTER">โปสเตอร์</option>
+        </select>
+      </td>
+      {showQuestion && (
+        <td className="border-r border-b border-slate-200 p-0">
+          {clip.kind === "POSTER" ? (
+            <input
+              type="text"
+              value={clip.question || ""}
+              readOnly={frozen}
+              onChange={(e) => onChange(index, "question", e.target.value)}
+              placeholder="คำถามบนโปสเตอร์..."
+              className={`w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all text-sm ${lockedCell}`}
+            />
+          ) : (
+            <span className="block px-3 text-xs text-slate-300">—</span>
+          )}
+        </td>
+      )}
+      <td className="border-r border-b border-slate-200 p-0">
+        <div className="flex h-full items-center">
+          <input
+            type="url"
+            value={clip.sourceUrl || ""}
+            readOnly={frozen}
+            onChange={(e) => onChange(index, "sourceUrl", e.target.value)}
+            placeholder={episodes.find((ep: any) => ep.episodeNo === Number(clip.episodeNo))?.sourceUrl ? "ใช้ลิงก์ของตอน" : "ลิงก์ไฟล์ต้นฉบับ..."}
+            className={`w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all text-sm min-w-0 text-blue-700 ${lockedCell}`}
+          />
+          {clip.sourceUrl && (
+            <a href={clip.sourceUrl} target="_blank" rel="noreferrer" className="shrink-0 px-2 text-slate-400 hover:text-blue-600" title="เปิดลิงก์">
+              <ExternalLink size={13} />
+            </a>
+          )}
+        </div>
+      </td>
+      {customColumns.map((column: CustomColumn) => {
+        const value = clip.customFields?.[column.key] || "";
+        const setValue = (next: string) => onChange(index, "customFields", { ...(clip.customFields || {}), [column.key]: next });
+        return (
+          <td key={column.key} className="border-r border-b border-slate-200 p-0">
+            {column.type === "select" ? (
+              <select value={value} disabled={frozen} onChange={(e) => setValue(e.target.value)} className="w-full h-full px-2 py-2 bg-transparent outline-none text-xs font-semibold cursor-pointer">
+                <option value="">—</option>
+                {(column.options || []).map((option) => <option key={option} value={option}>{option}</option>)}
+              </select>
+            ) : (
+              <div className="flex h-full items-center">
+                <input
+                  type={column.type === "link" ? "url" : "text"}
+                  value={value}
+                  readOnly={frozen}
+                  onChange={(e) => setValue(e.target.value)}
+                  placeholder={column.label}
+                  className={`w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all text-sm min-w-0 ${column.type === "link" ? "text-blue-700" : "text-slate-700"} ${lockedCell}`}
+                />
+                {column.type === "link" && value && (
+                  <a href={value} target="_blank" rel="noreferrer" className="shrink-0 px-2 text-slate-400 hover:text-blue-600" title="เปิดลิงก์"><ExternalLink size={13} /></a>
+                )}
+              </div>
+            )}
+          </td>
+        );
+      })}
       <td className="border-r border-b border-slate-200 p-0 relative">
         <select
           value={clip.episodeNo || ""}
@@ -360,7 +439,9 @@ const MemoizedClipRow = memo(ClipRow, (prev, next) => {
     prev.isSelected === next.isSelected &&
     prev.episodes === next.episodes &&
     prev.videoSizes === next.videoSizes &&
-    prev.users === next.users
+    prev.users === next.users &&
+    prev.customColumns === next.customColumns &&
+    prev.showQuestion === next.showQuestion
   );
 });
 
@@ -373,6 +454,10 @@ const rowSignature = (clip: any) =>
     clip.videoSizeId || "",
     clip.platform || "",
     clip.deadline || "",
+    clip.kind || "CLIP",
+    clip.question || "",
+    clip.sourceUrl || "",
+    JSON.stringify(clip.customFields || {}),
   ]);
 
 export default function SpreadsheetManager({
@@ -381,6 +466,7 @@ export default function SpreadsheetManager({
   initialEpisodes = [],
   initialVideoSizes = [],
   users,
+  initialCustomColumns = [],
 }: SpreadsheetManagerProps) {
   const router = useRouter();
   const { batchCreateClips, isSaving } = useBatchCreateClips();
@@ -610,6 +696,8 @@ export default function SpreadsheetManager({
         ownerId: "",
         videoSizeId: videoSizes.find((size) => size.isActive)?.id || "",
         status: "DRAFT",
+        kind: "CLIP",
+        customFields: {},
       },
     ]);
   };
@@ -803,6 +891,7 @@ export default function SpreadsheetManager({
       const res = await api.post(`/projects/${projectId}/episodes`, {
         episodeNo: Number(newEpisodeNo),
         name: newEpisodeName || undefined,
+        sourceUrl: newEpisodeSource.trim() || undefined,
       });
       if (res.status === "success") {
         toast.success("เพิ่มตอนเรียบร้อยแล้ว");
@@ -812,6 +901,7 @@ export default function SpreadsheetManager({
         setShowAddEpisodeModal(false);
         setNewEpisodeNo("");
         setNewEpisodeName("");
+        setNewEpisodeSource("");
         router.refresh();
       } else {
         toast.error(res.message || "เกิดข้อผิดพลาด");
@@ -823,18 +913,24 @@ export default function SpreadsheetManager({
     }
   };
 
+  const [customColumns, setCustomColumns] = useState<CustomColumn[]>(initialCustomColumns);
+  const [showColumnsModal, setShowColumnsModal] = useState(false);
+  const showQuestion = clips.some((clip) => clip.kind === "POSTER");
+
   const [editingEpisodeId, setEditingEpisodeId] = useState<string | null>(null);
   const [editingEpisodeName, setEditingEpisodeName] = useState("");
+  const [editingEpisodeSource, setEditingEpisodeSource] = useState("");
+  const [newEpisodeSource, setNewEpisodeSource] = useState("");
   const [isRenamingEpisode, setIsRenamingEpisode] = useState(false);
 
   const handleRenameEpisode = async (ep: any) => {
     setIsRenamingEpisode(true);
     try {
-      const res = await api.patch<any>(`/episodes/${ep.id}`, { name: editingEpisodeName.trim() || null });
+      const res = await api.patch<any>(`/episodes/${ep.id}`, { name: editingEpisodeName.trim() || null, sourceUrl: editingEpisodeSource.trim() || null });
       if (res.status !== "success") throw new Error(res.message);
-      setEpisodes((prev) => prev.map((item) => (item.id === ep.id ? { ...item, name: res.data.name } : item)));
+      setEpisodes((prev) => prev.map((item) => (item.id === ep.id ? { ...item, name: res.data.name, sourceUrl: res.data.sourceUrl } : item)));
       setEditingEpisodeId(null);
-      toast.success(`แก้ชื่อ EP. ${ep.episodeNo} แล้ว`);
+      toast.success(`บันทึก EP. ${ep.episodeNo} แล้ว`);
       router.refresh();
     } catch (err: any) {
       toast.error(err?.message || "แก้ไขชื่อตอนไม่สำเร็จ");
@@ -910,6 +1006,8 @@ export default function SpreadsheetManager({
           description: timeNote,
           ownerId: "",
           status: "DRAFT",
+          kind: "CLIP",
+          customFields: {},
         });
       }
     }
@@ -1003,6 +1101,17 @@ export default function SpreadsheetManager({
             <Ruler size={14} className="shrink-0" />
             <span className="text-xs sm:text-sm whitespace-nowrap ml-1 sm:ml-1.5">
               Manage Video Sizes
+            </span>
+          </Button>
+          <Button
+            onClick={() => setShowColumnsModal(true)}
+            variant="outline"
+            size="sm"
+            className="shrink-0 bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold border-teal-200 px-2 sm:px-3 h-8 sm:h-9"
+          >
+            <Columns3 size={14} className="shrink-0" />
+            <span className="text-xs sm:text-sm whitespace-nowrap ml-1 sm:ml-1.5">
+              คอลัมน์เพิ่มเติม{customColumns.length ? ` (${customColumns.length})` : ""}
             </span>
           </Button>
           {selectedRows.size > 0 && (
@@ -1137,6 +1246,14 @@ export default function SpreadsheetManager({
               <th className="hidden md:table-cell px-3 py-2 border-r border-blue-200 font-bold text-left min-w-[250px]">
                 รายละเอียด
               </th>
+              <th className="px-3 py-2 border-r border-blue-200 font-bold text-left w-[100px]">ประเภท</th>
+              {showQuestion && <th className="px-3 py-2 border-r border-blue-200 font-bold text-left min-w-[200px]">คำถาม (โปสเตอร์)</th>}
+              <th className="px-3 py-2 border-r border-blue-200 font-bold text-left min-w-[200px]">
+                <span className="inline-flex items-center gap-1"><Link2 size={13} /> ลิงก์ต้นฉบับ</span>
+              </th>
+              {customColumns.map((column) => (
+                <th key={column.key} className="px-3 py-2 border-r border-blue-200 font-bold text-left min-w-[160px]">{column.label}</th>
+              ))}
               <th
                 className="px-3 py-2 border-r border-blue-200 font-bold w-[120px] text-left cursor-pointer hover:bg-blue-200/50 transition-colors"
                 onClick={() => handleSort("episodeNo")}
@@ -1162,7 +1279,7 @@ export default function SpreadsheetManager({
             {clips.length === 0 ? (
               <tr>
                 <td
-                  colSpan={9}
+                  colSpan={11 + customColumns.length + (showQuestion ? 1 : 0)}
                   className="p-8 text-center text-slate-400 bg-white"
                 >
                   ยังไม่มีข้อมูลคลิป กดปุ่ม "เพิ่มแถว" เพื่อเริ่มสร้าง
@@ -1195,6 +1312,8 @@ export default function SpreadsheetManager({
                     episodes={episodes}
                     users={users}
                     videoSizes={videoSizes}
+                    customColumns={customColumns}
+                    showQuestion={showQuestion}
                   />
                 );
               })
@@ -1317,6 +1436,13 @@ export default function SpreadsheetManager({
       </Dialog>
 
       {/* Manage Episodes Modal */}
+        <CustomColumnsDialog
+          projectId={projectId}
+          open={showColumnsModal}
+          onOpenChange={setShowColumnsModal}
+          columns={customColumns}
+          onSaved={setCustomColumns}
+        />
         <Dialog
           open={showAddEpisodeModal}
           onOpenChange={setShowAddEpisodeModal}
@@ -1340,7 +1466,7 @@ export default function SpreadsheetManager({
                       >
                         {editingEpisodeId === ep.id ? (
                           <form
-                            className="flex min-w-0 flex-1 items-center gap-1.5"
+                            className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5"
                             onSubmit={(e) => { e.preventDefault(); handleRenameEpisode(ep); }}
                           >
                             <span className="shrink-0 text-sm font-bold text-slate-700">EP. {ep.episodeNo}</span>
@@ -1351,6 +1477,12 @@ export default function SpreadsheetManager({
                               onKeyDown={(e) => e.key === "Escape" && setEditingEpisodeId(null)}
                               placeholder="ชื่อตอน"
                               className="h-8 min-w-0 flex-1 text-sm"
+                            />
+                            <Input
+                              value={editingEpisodeSource}
+                              onChange={(e) => setEditingEpisodeSource(e.target.value)}
+                              placeholder="ลิงก์ไฟล์ต้นฉบับของตอน (ถ้ามี)"
+                              className="h-8 w-full text-sm"
                             />
                             <Button type="submit" size="sm" disabled={isRenamingEpisode} className="h-8 shrink-0 bg-blue-600 px-2.5 text-xs text-white hover:bg-blue-700">
                               {isRenamingEpisode ? <Loader2 size={14} className="animate-spin" /> : "บันทึก"}
@@ -1368,6 +1500,11 @@ export default function SpreadsheetManager({
                           ) : (
                             <span className="ml-1 font-medium text-slate-400">(ยังไม่มีชื่อ)</span>
                           )}
+                          {ep.sourceUrl && (
+                            <a href={ep.sourceUrl} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center gap-0.5 text-[11px] font-semibold text-blue-600 hover:underline">
+                              <Link2 size={12} /> ต้นฉบับ
+                            </a>
+                          )}
                         </span>
                         )}
                         {editingEpisodeId !== ep.id && (
@@ -1375,8 +1512,8 @@ export default function SpreadsheetManager({
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 shrink-0 text-slate-500 hover:bg-blue-50 hover:text-blue-600"
-                          onClick={() => { setEditingEpisodeId(ep.id); setEditingEpisodeName(ep.name || ""); }}
-                          title="แก้ไขชื่อตอน"
+                          onClick={() => { setEditingEpisodeId(ep.id); setEditingEpisodeName(ep.name || ""); setEditingEpisodeSource(ep.sourceUrl || ""); }}
+                          title="แก้ไขชื่อตอน / ลิงก์ต้นฉบับ"
                         >
                           <Pencil size={14} />
                         </Button>
@@ -1419,6 +1556,12 @@ export default function SpreadsheetManager({
                     placeholder="ชื่อตอน (ไม่บังคับ) เช่น จุดเริ่มต้น..."
                     value={newEpisodeName}
                     onChange={(e) => setNewEpisodeName(e.target.value)}
+                    className="border-slate-300 focus:border-blue-500"
+                  />
+                  <Input
+                    placeholder="ลิงก์ไฟล์ต้นฉบับของตอน (ไม่บังคับ) ให้คนตัดต่อดาวน์โหลด"
+                    value={newEpisodeSource}
+                    onChange={(e) => setNewEpisodeSource(e.target.value)}
                     className="border-slate-300 focus:border-blue-500"
                   />
                 </div>

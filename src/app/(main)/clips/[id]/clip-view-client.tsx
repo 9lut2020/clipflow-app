@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { WorkBriefCard } from "@/components/clips/work-brief-card";
 import { AssignOwnerCard } from "@/components/clips/assign-owner-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { createPortal } from "react-dom";
@@ -110,6 +111,8 @@ export default function ClipViewClient({
       <div className="mb-5 sm:mb-6">
         <ClipStepper status={optimisticStatus} assigned={Boolean(assignedOwner)} />
       </div>
+
+      <WorkBriefCard clip={clip} />
 
       {currentUser?.role === "ADMIN" && !assignedOwner && optimisticStatus === "DRAFT" && clip.project?.id && (
         <AssignOwnerCard clipId={clip.id} projectId={clip.project.id} onAssigned={(owner) => setAssignedOwner(owner.id)} />
