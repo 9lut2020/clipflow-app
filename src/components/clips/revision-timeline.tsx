@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { clipStatusMeta } from "@/lib/clip-status";
+import { clipMetaOf } from "@/lib/clip-status";
 import { format } from "date-fns";
 import {
   MessageSquare,
@@ -42,6 +42,8 @@ interface RevisionTimelineProps {
   onSeekTime?: (seconds: number) => void;
   onSelectRevisionUrl?: (url: string) => void;
   currentStatus?: string;
+  /** False when the clip has no editor yet, so a draft reads "รอมอบหมาย". */
+  assigned?: boolean;
   showStatus?: boolean;
 }
 
@@ -51,13 +53,14 @@ export default function RevisionTimeline({
   onSeekTime,
   onSelectRevisionUrl,
   currentStatus,
+  assigned = true,
   showStatus = false,
 }: RevisionTimelineProps) {
   const [selectedRevUrl, setSelectedRevUrl] = useState<string | null>(null);
 
   // Label and colours from lib/clip-status; the description says what happens next.
   const STATUS_NEXT: Record<string, string> = {
-    DRAFT: "รอคนตัดต่อส่งคลิป",
+    DRAFT: assigned ? "รอคนตัดต่อส่งคลิป" : "ยังไม่มีคนตัดต่อ รอแอดมินมอบหมาย",
     PENDING_REVIEW: "พร้อมให้ผู้ตรวจทาน",
     IN_REVIEW: "กำลังอยู่ระหว่างการตรวจทาน",
     RESUBMITTED: "ส่งงานแก้ไขแล้ว รอตรวจอีกครั้ง",
@@ -66,7 +69,7 @@ export default function RevisionTimeline({
     PUBLISHED: "โพสต์ลงแพลตฟอร์มแล้ว",
     CANCELLED: "คลิปนี้ถูกยกเลิก",
   };
-  const meta = clipStatusMeta(currentStatus);
+  const meta = clipMetaOf({ status: currentStatus, ownerId: assigned ? "assigned" : null });
   const activeStatus = {
     label: meta.label,
     description: STATUS_NEXT[currentStatus || ""] || "สถานะปัจจุบันของคลิป",

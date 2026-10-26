@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { AssignOwnerCard } from "@/components/clips/assign-owner-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { createPortal } from "react-dom";
 import VideoEmbed from "@/components/clips/video-embed";
@@ -37,6 +38,8 @@ export default function ClipViewClient({
     null,
   );
   const [optimisticStatus, setOptimisticStatus] = useState(clip.status);
+  // Set right after an admin assigns the clip from this page.
+  const [assignedOwner, setAssignedOwner] = useState<string | null>(clip.ownerId || clip.owner?.id || null);
   const [reviewFeedback, setReviewFeedback] = useState<string | null>(null);
   const [isReviewLoading, setIsReviewLoading] = useState(false);
 
@@ -105,8 +108,12 @@ export default function ClipViewClient({
 
       {/* Stepper Status Bar */}
       <div className="mb-5 sm:mb-6">
-        <ClipStepper status={optimisticStatus} assigned={Boolean(clip.ownerId || clip.owner?.id)} />
+        <ClipStepper status={optimisticStatus} assigned={Boolean(assignedOwner)} />
       </div>
+
+      {currentUser?.role === "ADMIN" && !assignedOwner && optimisticStatus === "DRAFT" && clip.project?.id && (
+        <AssignOwnerCard clipId={clip.id} projectId={clip.project.id} onAssigned={(owner) => setAssignedOwner(owner.id)} />
+      )}
 
       {reviewFeedback && (
         <div className="mb-5 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800 shadow-xs animate-in fade-in slide-in-from-top-2 duration-300">
@@ -159,7 +166,7 @@ export default function ClipViewClient({
               </h2>
 
               <div className="flex items-center gap-2">
-                <StatusBadge status={optimisticStatus} assigned={Boolean(clip.ownerId || clip.owner?.id)} />
+                <StatusBadge status={optimisticStatus} assigned={Boolean(assignedOwner)} />
               </div>
             </div>
 
@@ -263,6 +270,7 @@ export default function ClipViewClient({
                   className="shadow-xs"
                   onSeekTime={handleSeek}
                   currentStatus={optimisticStatus}
+                  assigned={Boolean(assignedOwner)}
                   showStatus={!isUser}
                 />
               )}
@@ -288,6 +296,7 @@ export default function ClipViewClient({
             revisions={allRevisions}
             onSeekTime={handleSeek}
             currentStatus={optimisticStatus}
+                  assigned={Boolean(assignedOwner)}
             showStatus={!isUser}
           />
           </div>

@@ -82,3 +82,15 @@ export function clipStatusLabel(status?: string | null, postedCount?: number) {
   if (meta.stage === "published" && postedCount !== undefined && postedCount > 0 && postedCount < 4) return `${meta.label} ${postedCount}/4`;
   return meta.label;
 }
+
+/**
+ * What the assignment sheet may still change (mirrors the batch-save rule on
+ * the server): drafts are free; once submitted the editor is fixed; passed,
+ * published and cancelled clips are read-only.
+ */
+export function clipEditLock(status?: string | null): "none" | "owner" | "all" {
+  const stage = clipStage(status);
+  if (stage === "ready" || stage === "published" || stage === "cancelled") return "all";
+  if (stage === "review" || stage === "fix") return "owner";
+  return "none";
+}

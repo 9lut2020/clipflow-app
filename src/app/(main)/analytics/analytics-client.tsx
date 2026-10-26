@@ -31,7 +31,7 @@ type Overview = {
   };
   statusCounts: Record<string, number>;
   trend: { date: string; submitted: number; approved: number }[];
-  projects: { id: string; name: string; total: number; done: number; inReview: number; needsRevision: number; notStarted: number }[];
+  projects: { id: string; name: string; total: number; done: number; published: number; ready: number; inReview: number; needsRevision: number; notStarted: number; unassigned: number }[];
   editors: { id: string; name: string; pictureUrl: string | null; assigned: number; submissions: number; approved: number; firstPassRate: number | null; avgRevisions: number | null }[];
   reviewers: { id: string; name: string; pictureUrl: string | null; reviews: number; approved: number; sentBack: number; avgReviewHours: number | null }[];
   projectOptions: { id: string; name: string }[];
@@ -44,7 +44,8 @@ const RANGES = [
   { value: "all", label: "ทั้งหมด" },
 ];
 
-const STATUS_ORDER = ["DRAFT", "PENDING_REVIEW", "IN_REVIEW", "RESUBMITTED", "NEEDS_REVISION", "APPROVED", "PUBLISHED", "CANCELLED"];
+// UNASSIGNED = a draft nobody has been given yet; listed on its own.
+const STATUS_ORDER = ["UNASSIGNED", "DRAFT", "PENDING_REVIEW", "IN_REVIEW", "RESUBMITTED", "NEEDS_REVISION", "APPROVED", "PUBLISHED", "CANCELLED"];
 
 const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
 
@@ -369,7 +370,7 @@ function StatusBreakdown({ counts }: { counts: Record<string, number> }) {
       {entries.map(([status, n]) => (
         <li key={status}>
           <div className="flex items-center justify-between gap-2">
-            <StatusBadge status={status} />
+            <StatusBadge status={status === "UNASSIGNED" ? "DRAFT" : status} assigned={status !== "UNASSIGNED"} />
             <span className="text-[13px] font-bold tabular-nums text-slate-900">
               {n} <span className="font-normal text-slate-400">({Math.round((n / total) * 100)}%)</span>
             </span>
@@ -387,10 +388,12 @@ function StatusBreakdown({ counts }: { counts: Record<string, number> }) {
 /* ─── Project progress: stacked bars with per-segment hover ─────────────── */
 
 const SEGMENTS = [
-  { key: "done", label: "เสร็จแล้ว", color: SERIES.approved },
+  { key: "published", label: "เผยแพร่แล้ว", color: "#4f46e5" },
+  { key: "ready", label: "ผ่านแล้ว รอโพสต์", color: SERIES.approved },
   { key: "inReview", label: "รอตรวจ", color: SERIES.submitted },
   { key: "needsRevision", label: "ต้องแก้ไข", color: SERIES.revision },
-  { key: "notStarted", label: "ยังไม่ส่ง", color: SERIES.remaining },
+  { key: "notStarted", label: "รอส่งงาน", color: "#a1a1aa" },
+  { key: "unassigned", label: "รอมอบหมาย", color: SERIES.remaining },
 ] as const;
 
 function ProjectProgress({ projects }: { projects: Overview["projects"] }) {

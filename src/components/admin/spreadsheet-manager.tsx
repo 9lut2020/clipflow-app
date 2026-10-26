@@ -20,7 +20,12 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Ban,
+  RotateCcw,
+  Lock,
 } from "lucide-react";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { clipEditLock } from "@/lib/clip-status";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -49,11 +54,13 @@ const AssigneeDropdown = ({
   value,
   onChange,
   onApplyToAllBelow,
+  disabled = false,
 }: {
   users: any[];
   value: string;
   onChange: (val: string) => void;
   onApplyToAllBelow?: () => void;
+  disabled?: boolean;
 }) => {
   const [open, setOpen] = useState(false);
   const selectedUser = users.find((u) => u.id === value);
@@ -96,8 +103,10 @@ const AssigneeDropdown = ({
       <button
         ref={buttonRef}
         type="button"
+        disabled={disabled}
+        title={disabled ? "ส่งงานแล้ว เปลี่ยนผู้รับผิดชอบไม่ได้" : undefined}
         onClick={() => setOpen(!open)}
-        className="w-full h-full min-h-[38px] px-3 py-1.5 text-left flex items-center justify-between hover:bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-indigo-500 transition-colors"
+        className="w-full h-full min-h-[38px] px-3 py-1.5 text-left flex items-center justify-between hover:bg-slate-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:opacity-70 outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-indigo-500 transition-colors"
       >
         <div className="flex items-center gap-2 overflow-hidden">
           {selectedUser ? (
@@ -213,14 +222,19 @@ const ClipRow = ({
   onChange,
   onApplyToAllBelow,
   onRemove,
+  onToggleCancel,
   episodes,
   users,
   videoSizes,
 }: any) => {
   const isEven = index % 2 === 0;
+  const isSaved = Boolean(clip.id && !String(clip.id).startsWith("new-"));
+  const lock = isSaved ? clipEditLock(clip.status) : "none";
+  const frozen = lock === "all";
+  const lockedCell = frozen ? "cursor-not-allowed text-slate-400" : "";
   return (
     <tr
-      className={`${isEven ? "bg-white" : "bg-slate-50"} hover:bg-blue-50/50 transition-colors group focus-within:relative focus-within:z-50 hover:relative hover:z-40 ${isSelected ? "bg-blue-50/80" : ""}`}
+      className={`${clip.status === "CANCELLED" ? "opacity-60" : ""} ${isEven ? "bg-white" : "bg-slate-50"} hover:bg-blue-50/50 transition-colors group focus-within:relative focus-within:z-50 hover:relative hover:z-40 ${isSelected ? "bg-blue-50/80" : ""}`}
     >
       <td className="px-3 py-1.5 border-r border-b border-slate-200 text-center">
         <input
@@ -242,23 +256,26 @@ const ClipRow = ({
         <input
           type="text"
           value={clip.name}
+          readOnly={frozen}
           onChange={(e) => onChange(index, "name", e.target.value)}
           placeholder="ชื่อคลิป..."
-          className="w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all font-medium text-slate-800"
+          className={`w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all font-medium text-slate-800 ${lockedCell}`}
         />
       </td>
       <td className="hidden md:table-cell border-r border-b border-slate-200 p-0">
         <input
           type="text"
           value={clip.description || ""}
+          readOnly={frozen}
           onChange={(e) => onChange(index, "description", e.target.value)}
           placeholder="รายละเอียด (เช่น เวลาเริ่ม-จบ)..."
-          className="w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all text-slate-600 text-sm"
+          className={`w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all text-slate-600 text-sm ${lockedCell}`}
         />
       </td>
       <td className="border-r border-b border-slate-200 p-0 relative">
         <select
           value={clip.episodeNo || ""}
+          disabled={frozen}
           onChange={(e) => onChange(index, "episodeNo", e.target.value)}
           className="w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all font-bold text-blue-600 cursor-pointer appearance-none"
         >
@@ -282,11 +299,23 @@ const ClipRow = ({
           value={clip.ownerId || ""}
           onChange={(val: any) => onChange(index, "ownerId", val)}
           onApplyToAllBelow={() => onApplyToAllBelow(index, clip.ownerId)}
+          disabled={lock !== "none"}
         />
+      </td>
+      <td className="border-r border-b border-slate-200 px-2 py-1.5">
+        {isSaved ? (
+          <span className="flex items-center gap-1" title={lock === "all" ? "ล็อกแล้ว แก้ไขไม่ได้" : lock === "owner" ? "ส่งงานแล้ว เปลี่ยนผู้รับผิดชอบไม่ได้" : undefined}>
+            <StatusBadge status={clip.status || "DRAFT"} assigned={Boolean(clip.ownerId)} className="!px-2 !py-0 text-[10px]" />
+            {lock !== "none" && <Lock size={11} className="shrink-0 text-slate-400" />}
+          </span>
+        ) : (
+          <span className="text-[10px] font-semibold text-slate-400">ใหม่ (ยังไม่บันทึก)</span>
+        )}
       </td>
       <td className="border-r border-b border-slate-200 p-0">
         <select
           value={clip.videoSizeId || ""}
+          disabled={frozen}
           onChange={(e) => onChange(index, "videoSizeId", e.target.value)}
           className="w-full h-full px-2 py-2 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-inset focus:ring-purple-500 transition-all text-xs font-bold cursor-pointer"
         >
@@ -301,13 +330,23 @@ const ClipRow = ({
         </select>
       </td>
       <td className="border-b border-slate-200 p-0 text-center">
-        <button
-          onClick={() => onRemove(index)}
-          className="w-full h-full py-2 flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors"
-          title="ลบแถว"
-        >
-          <Trash2 size={16} />
-        </button>
+        {clip.status === "CANCELLED" ? (
+          <button onClick={() => onToggleCancel(index)} className="flex h-full w-full items-center justify-center py-2 text-slate-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600" title="กู้คืนคลิปนี้">
+            <RotateCcw size={16} />
+          </button>
+        ) : isSaved && (clip.status || "DRAFT") !== "DRAFT" ? (
+          <button onClick={() => onToggleCancel(index)} className="flex h-full w-full items-center justify-center py-2 text-slate-300 transition-colors hover:bg-rose-50 hover:text-rose-500" title="ยกเลิกคลิปนี้ (เก็บประวัติไว้)">
+            <Ban size={16} />
+          </button>
+        ) : (
+          <button
+            onClick={() => onRemove(index)}
+            className="w-full h-full py-2 flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+            title="ลบแถว"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
       </td>
     </tr>
   );
@@ -470,7 +509,7 @@ export default function SpreadsheetManager({
   const applyBalancedAssignments = (assignments: Map<number, string>) => {
     setClips((prev) =>
       prev.map((clip, index) =>
-        assignments.has(index) ? { ...clip, ownerId: assignments.get(index) || "" } : clip,
+        assignments.has(index) && clipEditLock(clip.status) === "none" ? { ...clip, ownerId: assignments.get(index) || "" } : clip,
       ),
     );
     toast.success(`จัดสรร ${assignments.size} คลิปแล้ว กด “บันทึกทั้งหมด” เพื่อยืนยันและแจ้งเตือนผู้รับงาน`);
@@ -573,6 +612,23 @@ export default function SpreadsheetManager({
         status: "DRAFT",
       },
     ]);
+  };
+
+  // Cancel keeps the clip (and its history) but takes it out of every work
+  // list; restore puts it back with the status its history implies.
+  const handleToggleCancel = async (index: number) => {
+    const clip = clips[index];
+    const restoring = clip.status === "CANCELLED";
+    if (!restoring && !window.confirm(`ยกเลิกคลิป "${clip.name}"?\nคลิปจะถูกซ่อนจากรายการงานและคิวโพสต์ แต่ยังเก็บประวัติไว้ กู้คืนได้ภายหลัง`)) return;
+    try {
+      const res = await api.post<any>(`/clips/${clip.id}/${restoring ? "restore" : "cancel"}`, {});
+      if (res.status !== "success") throw new Error(res.message);
+      setClips((prev) => prev.map((row) => (row.id === clip.id ? { ...row, status: res.data?.status || (restoring ? "DRAFT" : "CANCELLED") } : row)));
+      toast.success(restoring ? "กู้คืนคลิปแล้ว" : "ยกเลิกคลิปแล้ว");
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err?.message || "ทำรายการไม่สำเร็จ");
+    }
   };
 
   const handleRemoveRow = (index: number) => {
@@ -687,7 +743,7 @@ export default function SpreadsheetManager({
     // Copy rows instead of mutating them: the originals are shared with the
     // saved snapshot used for change detection.
     setClips((prevClips) =>
-      prevClips.map((clip, i) => (i >= index ? { ...clip, ownerId: userId } : clip)),
+      prevClips.map((clip, i) => (i >= index && clipEditLock(clip.status) === "none" ? { ...clip, ownerId: userId } : clip)),
     );
     setApplyAllConfig(null);
   };
@@ -764,6 +820,26 @@ export default function SpreadsheetManager({
       toast.error("เกิดข้อผิดพลาดในการเพิ่มตอน");
     } finally {
       setIsCreatingEpisode(false);
+    }
+  };
+
+  const [editingEpisodeId, setEditingEpisodeId] = useState<string | null>(null);
+  const [editingEpisodeName, setEditingEpisodeName] = useState("");
+  const [isRenamingEpisode, setIsRenamingEpisode] = useState(false);
+
+  const handleRenameEpisode = async (ep: any) => {
+    setIsRenamingEpisode(true);
+    try {
+      const res = await api.patch<any>(`/episodes/${ep.id}`, { name: editingEpisodeName.trim() || null });
+      if (res.status !== "success") throw new Error(res.message);
+      setEpisodes((prev) => prev.map((item) => (item.id === ep.id ? { ...item, name: res.data.name } : item)));
+      setEditingEpisodeId(null);
+      toast.success(`แก้ชื่อ EP. ${ep.episodeNo} แล้ว`);
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err?.message || "แก้ไขชื่อตอนไม่สำเร็จ");
+    } finally {
+      setIsRenamingEpisode(false);
     }
   };
 
@@ -1073,6 +1149,9 @@ export default function SpreadsheetManager({
               >
                 ผู้รับผิดชอบ <SortIcon field="ownerId" />
               </th>
+              <th className="px-3 py-2 border-r border-blue-200 font-bold text-left w-[150px]">
+                สถานะ
+              </th>
               <th className="px-3 py-2 border-r border-blue-200 font-bold text-left w-[130px]">
                 Video Size
               </th>
@@ -1083,7 +1162,7 @@ export default function SpreadsheetManager({
             {clips.length === 0 ? (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={9}
                   className="p-8 text-center text-slate-400 bg-white"
                 >
                   ยังไม่มีข้อมูลคลิป กดปุ่ม "เพิ่มแถว" เพื่อเริ่มสร้าง
@@ -1112,6 +1191,7 @@ export default function SpreadsheetManager({
                     onChange={handleChange}
                     onApplyToAllBelow={handleApplyToAllBelow}
                     onRemove={handleRemoveRow}
+                    onToggleCancel={handleToggleCancel}
                     episodes={episodes}
                     users={users}
                     videoSizes={videoSizes}
@@ -1244,7 +1324,7 @@ export default function SpreadsheetManager({
           <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <DialogTitle>จัดการตอน (Episodes)</DialogTitle>
-              <DialogDescription>เพิ่มหรือลบตอนในโปรเจกต์นี้</DialogDescription>
+              <DialogDescription>เพิ่ม แก้ไขชื่อ หรือลบตอนในโปรเจกต์นี้</DialogDescription>
             </DialogHeader>
             <div className="flex-1 overflow-y-auto py-2 space-y-6 px-1">
               {episodes.length > 0 && (
@@ -1258,7 +1338,27 @@ export default function SpreadsheetManager({
                         key={ep.id}
                         className="flex items-center justify-between bg-white p-2.5 rounded-md border border-slate-100 shadow-sm"
                       >
-                        <span className="text-sm font-bold text-slate-700">
+                        {editingEpisodeId === ep.id ? (
+                          <form
+                            className="flex min-w-0 flex-1 items-center gap-1.5"
+                            onSubmit={(e) => { e.preventDefault(); handleRenameEpisode(ep); }}
+                          >
+                            <span className="shrink-0 text-sm font-bold text-slate-700">EP. {ep.episodeNo}</span>
+                            <Input
+                              autoFocus
+                              value={editingEpisodeName}
+                              onChange={(e) => setEditingEpisodeName(e.target.value)}
+                              onKeyDown={(e) => e.key === "Escape" && setEditingEpisodeId(null)}
+                              placeholder="ชื่อตอน"
+                              className="h-8 min-w-0 flex-1 text-sm"
+                            />
+                            <Button type="submit" size="sm" disabled={isRenamingEpisode} className="h-8 shrink-0 bg-blue-600 px-2.5 text-xs text-white hover:bg-blue-700">
+                              {isRenamingEpisode ? <Loader2 size={14} className="animate-spin" /> : "บันทึก"}
+                            </Button>
+                            <Button type="button" variant="ghost" size="sm" onClick={() => setEditingEpisodeId(null)} className="h-8 shrink-0 px-2 text-xs">ยกเลิก</Button>
+                          </form>
+                        ) : (
+                        <span className="min-w-0 flex-1 truncate text-sm font-bold text-slate-700">
                           EP. {ep.episodeNo}{" "}
                           {ep.name ? (
                             <span className="text-slate-500 font-medium ml-1">
@@ -1266,9 +1366,22 @@ export default function SpreadsheetManager({
                               - {ep.name}
                             </span>
                           ) : (
-                            ""
+                            <span className="ml-1 font-medium text-slate-400">(ยังไม่มีชื่อ)</span>
                           )}
                         </span>
+                        )}
+                        {editingEpisodeId !== ep.id && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0 text-slate-500 hover:bg-blue-50 hover:text-blue-600"
+                          onClick={() => { setEditingEpisodeId(ep.id); setEditingEpisodeName(ep.name || ""); }}
+                          title="แก้ไขชื่อตอน"
+                        >
+                          <Pencil size={14} />
+                        </Button>
+                        )}
+                        {editingEpisodeId !== ep.id && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -1278,6 +1391,7 @@ export default function SpreadsheetManager({
                         >
                           <Trash2 size={14} />
                         </Button>
+                        )}
                       </div>
                     ))}
                   </div>

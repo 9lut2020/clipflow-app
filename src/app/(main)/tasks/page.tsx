@@ -1,5 +1,6 @@
 import { apiServer, getSession } from "@/lib/api-server";
-import { clipStage, isPassed } from "@/lib/clip-status";
+import { clipStage, clipStageOf, isPassed, type ClipStage } from "@/lib/clip-status";
+import { StageStatCards } from "@/components/dashboard/stage-stat-cards";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clip, PaginatedData } from "@/types/api";
@@ -46,6 +47,11 @@ export default async function TasksPage() {
   const inProgressClips = clips.filter((c) => clipStage(c.status) === "review");
   const revisionClips = clips.filter((c) => clipStage(c.status) === "fix");
   const approvedClips = clips.filter((c) => isPassed(c.status));
+  const stageCounts: Partial<Record<ClipStage, number>> = {};
+  for (const clip of clips) {
+    const stage = clipStageOf(clip as any);
+    stageCounts[stage] = (stageCounts[stage] || 0) + 1;
+  }
 
   // Metrics
   const totalClips = clips.length;
@@ -152,71 +158,11 @@ export default async function TasksPage() {
       </div>
 
       {/* Overview Stat Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <Card className="bg-gradient-to-br from-blue-50/80 to-indigo-50/40 border-blue-100/80 shadow-xs">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <span className="text-2xl md:text-3xl font-black text-blue-700 tracking-tight">
-                {totalClips}
-              </span>
-              <div className="text-xs font-bold text-blue-800 uppercase tracking-wide mt-0.5">
-                คลิปทั้งหมด
-              </div>
-            </div>
-            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600">
-              <FileVideo size={20} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-rose-50/80 to-red-50/40 border-rose-100/80 shadow-xs">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <span className="text-2xl md:text-3xl font-black text-rose-700 tracking-tight">
-                {revisionClips.length}
-              </span>
-              <div className="text-xs font-bold text-rose-800 uppercase tracking-wide mt-0.5">
-                ต้องแก้ไขด่วน
-              </div>
-            </div>
-            <div className="w-10 h-10 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-600">
-              <AlertTriangle size={20} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-amber-50/80 to-yellow-50/40 border-amber-100/80 shadow-xs">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <span className="text-2xl md:text-3xl font-black text-amber-700 tracking-tight">
-                {inProgressClips.length}
-              </span>
-              <div className="text-xs font-bold text-amber-800 uppercase tracking-wide mt-0.5">
-                รอตรวจ / ดำเนินการ
-              </div>
-            </div>
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600">
-              <Clock size={20} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-emerald-50/80 to-teal-50/40 border-emerald-100/80 shadow-xs">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <span className="text-2xl md:text-3xl font-black text-emerald-700 tracking-tight">
-                {approvedClips.length}
-              </span>
-              <div className="text-xs font-bold text-emerald-800 uppercase tracking-wide mt-0.5">
-                ผ่านแล้ว / เผยแพร่
-              </div>
-            </div>
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-              <CheckCircle2 size={20} />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* One card per stage, never merged. */}
+      <StageStatCards
+        counts={stageCounts}
+        stages={isUser ? ["todo", "review", "fix", "ready", "published"] : currentUser.role === "ADMIN" ? ["unassigned", "todo", "review", "fix", "ready", "published"] : ["review", "fix", "ready", "published"]}
+      />
 
       {/* Progress Bar Overview */}
       <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">

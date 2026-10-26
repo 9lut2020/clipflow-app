@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { StageStatCards } from "@/components/dashboard/stage-stat-cards";
 import { isPassed, clipStageOf, hasOwner } from "@/lib/clip-status";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
@@ -143,6 +144,16 @@ export function MainDashboard({
   const publishedCount = countStatus("PUBLISHED");
   const approvedCount = countStatus("APPROVED") + publishedCount;
 
+  // Every stage counted separately — never merged.
+  const stageCounts = {
+    unassigned: unassignedCount,
+    todo: notSubmittedCount,
+    review: pendingCount + inReviewCount,
+    fix: needsRevisionCount,
+    ready: countStatus("APPROVED"),
+    published: publishedCount,
+    cancelled: countStatus("CANCELLED"),
+  };
   const totalCount = stats ? stats.total : filteredClips.length;
   const approvalRate =
     totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 0;
@@ -298,110 +309,13 @@ export function MainDashboard({
         </div>
       </div>
 
-      {/* ─── 2. 4 MOBILE-FRIENDLY KPI STAT CARDS (2x2 GRID ON MOBILE) ───────── */}
-      <div className={`grid grid-cols-2 gap-2.5 md:gap-4 ${showNotSubmitted ? "sm:grid-cols-3 lg:grid-cols-5" : "lg:grid-cols-4"}`}>
-        {/* Not Submitted Yet (assigned, waiting for the editor) */}
-        {showNotSubmitted && (
-          <Card className="bg-white border-slate-200/80 shadow-xs">
-            <CardContent className="p-3 md:p-4">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wide truncate">
-                  รอส่งงาน
-                </span>
-                <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-                  <Send size={16} />
-                </div>
-              </div>
-              <div className="text-xl md:text-3xl font-black text-slate-700 tracking-tight">
-                {notSubmittedCount}{" "}
-                <span className="text-[10px] md:text-xs font-normal text-slate-500">
-                  รายการ{unassignedCount > 0 ? ` · รอมอบหมาย ${unassignedCount}` : ""}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Pending Review Card */}
-        <Card className="bg-white border-slate-200/80 shadow-xs">
-          <CardContent className="p-3 md:p-4">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wide truncate">
-                รอตรวจ (Pending)
-              </span>
-              <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                <Clock size={16} />
-              </div>
-            </div>
-            <div className="text-xl md:text-3xl font-black text-amber-600 tracking-tight">
-              {pendingCount}{" "}
-              <span className="text-[10px] md:text-xs font-normal text-slate-500">
-                รายการ
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* In Review Card */}
-        <Card className="bg-white border-slate-200/80 shadow-xs">
-          <CardContent className="p-3 md:p-4">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wide truncate">
-                กำลังตรวจ (In Review)
-              </span>
-              <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
-                <Video size={16} />
-              </div>
-            </div>
-            <div className="text-xl md:text-3xl font-black text-sky-600 tracking-tight">
-              {inReviewCount}{" "}
-              <span className="text-[10px] md:text-xs font-normal text-slate-500">
-                รายการ
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Needs Revision Card */}
-        <Card className="bg-white border-slate-200/80 shadow-xs">
-          <CardContent className="p-3 md:p-4">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wide truncate">
-                สั่งแก้ไข (Needs Rev)
-              </span>
-              <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-                <AlertCircle size={16} />
-              </div>
-            </div>
-            <div className="text-xl md:text-3xl font-black text-rose-600 tracking-tight">
-              {needsRevisionCount}{" "}
-              <span className="text-[10px] md:text-xs font-normal text-slate-500">
-                รายการ
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Approved Card */}
-        <Card className="bg-white border-slate-200/80 shadow-xs">
-          <CardContent className="p-3 md:p-4">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wide truncate">
-                ผ่านแล้ว / เผยแพร่
-              </span>
-              <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                <CheckCircle2 size={16} />
-              </div>
-            </div>
-            <div className="text-xl md:text-3xl font-black text-emerald-600 tracking-tight">
-              {approvedCount}{" "}
-              <span className="text-[10px] md:text-xs font-normal text-slate-500">
-                ({approvalRate}%) · เผยแพร่ {publishedCount}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* ─── 2. ONE CARD PER STAGE (tap to filter the list) ─────────────────── */}
+      <StageStatCards
+        counts={stageCounts}
+        stages={showNotSubmitted ? ["unassigned", "todo", "review", "fix", "ready", "published"] : ["review", "fix", "ready", "published"]}
+        active={statusFilter}
+        onSelect={(stage) => setStatusFilter(stage)}
+      />
 
       {/* ─── 3. DUAL ANALYTICS GRID (TREND LINE CHART & TEAM LEADERBOARD) ────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
@@ -613,6 +527,7 @@ export function MainDashboard({
                 { id: "fix", label: "ต้องแก้ไข" },
                 { id: "ready", label: "ผ่านแล้ว รอโพสต์" },
                 { id: "published", label: "เผยแพร่แล้ว" },
+                { id: "cancelled", label: "ยกเลิก" },
               ].map((tab) => (
                 <button
                   key={tab.id}

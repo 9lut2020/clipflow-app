@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { ChevronDown, Filter, X, FolderX } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { clipStageOf, clipStatusMeta, hasOwner, type ClipStage } from "@/lib/clip-status";
+import { CLIP_STAGES, clipStageOf, hasOwner, type ClipStage } from "@/lib/clip-status";
 
 interface ProjectClipsListProps {
   project: { id: string; name: string; description?: string };
@@ -15,15 +15,12 @@ interface ProjectClipsListProps {
   isUser: boolean;
 }
 
-type ListView = "working" | "ready" | "published" | "all";
+type ListView = ClipStage | "all";
 
-// Tabs follow the pipeline: still in production → passed, waiting to be
-// posted → published. Cancelled clips only appear under "ทั้งหมด".
+// One tab per stage (never merged) plus ทั้งหมด. Empty stages are hidden.
 const VIEWS: { id: ListView; label: string; stages: ClipStage[] }[] = [
-  { id: "working", label: "กำลังทำ / รอตรวจ", stages: ["unassigned", "todo", "review", "fix"] },
-  { id: "ready", label: "ผ่านแล้ว รอโพสต์", stages: ["ready"] },
-  { id: "published", label: "เผยแพร่แล้ว", stages: ["published"] },
-  { id: "all", label: "ทั้งหมด", stages: ["unassigned", "todo", "review", "fix", "ready", "published", "cancelled"] },
+  ...CLIP_STAGES.map((stage) => ({ id: stage.id as ListView, label: stage.label, stages: [stage.id] })),
+  { id: "all", label: "ทั้งหมด", stages: CLIP_STAGES.map((stage) => stage.id) },
 ];
 
 export default function ProjectClipsList({
@@ -33,7 +30,7 @@ export default function ProjectClipsList({
   currentUser,
   isUser,
 }: ProjectClipsListProps) {
-  const [view, setView] = useState<ListView>("working");
+  const [view, setView] = useState<ListView>("all");
   const [selectedEps, setSelectedEps] = useState<string[]>([]);
   const [selectedOwners, setSelectedOwners] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
@@ -56,7 +53,8 @@ export default function ProjectClipsList({
 
   const uniqueStatuses = useMemo(() => {
     const set = new Set<string>();
-    baseClips.forEach((c) => set.add(c.status));
+    // Filter by stage (so drafts split into รอมอบหมาย / รอส่งงาน).
+    baseClips.forEach((c) => set.add(clipStageOf(c)));
     return Array.from(set);
   }, [baseClips]);
 
@@ -94,7 +92,7 @@ export default function ProjectClipsList({
           );
         }
         if (selectedStatuses.length > 0) {
-          epClips = epClips.filter((c) => selectedStatuses.includes(c.status));
+          epClips = epClips.filter((c) => selectedStatuses.includes(clipStageOf(c)));
         }
 
         return { episode: ep, clips: epClips };
@@ -122,6 +120,7 @@ export default function ProjectClipsList({
           <div className="flex shrink-0 rounded-xl bg-slate-100 p-1">
             {VIEWS.map((v) => {
               const count = baseClips.filter((c) => v.stages.includes(clipStageOf(c))).length;
+              if (count === 0 && v.id !== "all" && view !== v.id) return null;
               return (
                 <button
                   key={v.id}
@@ -307,7 +306,7 @@ export default function ProjectClipsList({
                       }
                       className="text-sm text-slate-700 select-none"
                     >
-                      {clipStatusMeta(status).label}
+                      {CLIP_STAGES.find((stage) => stage.id === status)?.label || status}
                     </span>
                   </label>
                 ))}
