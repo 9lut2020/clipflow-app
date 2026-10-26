@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { isPassed } from "@/lib/clip-status";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -66,7 +67,7 @@ export default function MenuPage() {
   );
 
   const clips = clipsData?.data || [];
-  const approvedClips = clips.filter((c) => c.status === "APPROVED");
+  const approvedClips = clips.filter((c) => isPassed(c.status));
   const totalClips = clips.length;
   const completionPercentage =
     totalClips > 0 ? Math.round((approvedClips.length / totalClips) * 100) : 0;

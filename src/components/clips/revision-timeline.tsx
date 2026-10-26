@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { clipStatusMeta } from "@/lib/clip-status";
 import { format } from "date-fns";
 import {
   MessageSquare,
@@ -54,41 +55,24 @@ export default function RevisionTimeline({
 }: RevisionTimelineProps) {
   const [selectedRevUrl, setSelectedRevUrl] = useState<string | null>(null);
 
-  const statusMeta = {
-    PENDING_REVIEW: {
-      label: "PENDING_REVIEW",
-      description: "พร้อมให้ผู้ตรวจทาน",
-      styles: "border-amber-200 bg-amber-50 text-amber-800",
-      dot: "bg-amber-500",
-    },
-    IN_REVIEW: {
-      label: "IN_REVIEW",
-      description: "กำลังอยู่ระหว่างการตรวจทาน",
-      styles: "border-blue-200 bg-blue-50 text-blue-800",
-      dot: "bg-blue-500",
-    },
-    NEEDS_REVISION: {
-      label: "NEEDS_REVISION",
-      description: "รอสมาชิกส่งงานแก้ไขใหม่",
-      styles: "border-rose-200 bg-rose-50 text-rose-800",
-      dot: "bg-rose-500",
-    },
-    APPROVED: {
-      label: "APPROVED",
-      description: "ผ่านการอนุมัติแล้ว",
-      styles: "border-emerald-200 bg-emerald-50 text-emerald-800",
-      dot: "bg-emerald-500",
-    },
-  } as const;
-
-  const activeStatus = currentStatus && currentStatus in statusMeta
-    ? statusMeta[currentStatus as keyof typeof statusMeta]
-    : {
-        label: currentStatus || "ยังไม่ระบุสถานะ",
-        description: "สถานะปัจจุบันของคลิป",
-        styles: "border-slate-200 bg-slate-50 text-slate-700",
-        dot: "bg-slate-400",
-      };
+  // Label and colours from lib/clip-status; the description says what happens next.
+  const STATUS_NEXT: Record<string, string> = {
+    DRAFT: "รอคนตัดต่อส่งคลิป",
+    PENDING_REVIEW: "พร้อมให้ผู้ตรวจทาน",
+    IN_REVIEW: "กำลังอยู่ระหว่างการตรวจทาน",
+    RESUBMITTED: "ส่งงานแก้ไขแล้ว รอตรวจอีกครั้ง",
+    NEEDS_REVISION: "รอคนตัดต่อส่งงานแก้ไขใหม่",
+    APPROVED: "ผ่านการตรวจแล้ว รอโพสต์",
+    PUBLISHED: "โพสต์ลงแพลตฟอร์มแล้ว",
+    CANCELLED: "คลิปนี้ถูกยกเลิก",
+  };
+  const meta = clipStatusMeta(currentStatus);
+  const activeStatus = {
+    label: meta.label,
+    description: STATUS_NEXT[currentStatus || ""] || "สถานะปัจจุบันของคลิป",
+    styles: meta.badge,
+    dot: meta.dot,
+  };
 
   // Helper to parse timecodes inside comment strings (e.g. "[01:15] fix music volume")
   const renderCommentWithTimecodePills = (text: string) => {

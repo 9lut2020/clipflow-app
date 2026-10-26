@@ -59,44 +59,58 @@ const STATUS_CONFIGS: Record<
 > = {
   DRAFT: {
     bg: "bg-slate-50/70",
-    text: "text-slate-655",
+    text: "text-slate-600",
     dot: "bg-slate-400",
     label: "รอส่งงาน",
     border: "border-slate-200/60",
   },
   PENDING_REVIEW: {
     bg: "bg-amber-50/70",
-    text: "text-amber-755",
+    text: "text-amber-700",
     dot: "bg-amber-500",
     label: "รอตรวจ",
     border: "border-amber-200/60",
   },
   IN_REVIEW: {
     bg: "bg-indigo-50/70",
-    text: "text-indigo-755",
+    text: "text-indigo-700",
     dot: "bg-indigo-500",
     label: "กำลังตรวจ",
     border: "border-indigo-200/60",
   },
+  RESUBMITTED: {
+    bg: "bg-orange-50/70",
+    text: "text-orange-700",
+    dot: "bg-orange-500",
+    label: "ส่งแก้แล้ว รอตรวจ",
+    border: "border-orange-200/60",
+  },
+  CANCELLED: {
+    bg: "bg-gray-50/70",
+    text: "text-gray-500",
+    dot: "bg-gray-400",
+    label: "ยกเลิก",
+    border: "border-gray-200/60",
+  },
   NEEDS_REVISION: {
     bg: "bg-rose-50/70",
-    text: "text-rose-755",
+    text: "text-rose-700",
     dot: "bg-rose-500",
-    label: "สั่งแก้",
+    label: "ต้องแก้ไข",
     border: "border-rose-200/60",
   },
   APPROVED: {
     bg: "bg-emerald-50/75",
-    text: "text-emerald-755",
+    text: "text-emerald-700",
     dot: "bg-emerald-500",
-    label: "อนุมัติ",
+    label: "ผ่านแล้ว รอโพสต์",
     border: "border-emerald-200/60",
   },
   PUBLISHED: {
     bg: "bg-blue-50/75",
-    text: "text-blue-755",
+    text: "text-blue-700",
     dot: "bg-blue-500",
-    label: "เผยแพร่",
+    label: "เผยแพร่แล้ว",
     border: "border-blue-200/60",
   },
 };
@@ -574,7 +588,7 @@ export function CalendarClient() {
               {/* Filters */}
               <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full md:w-auto">
                 <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200/80 w-full sm:w-auto justify-between sm:justify-start">
-                  <span className="flex items-center gap-1.5 text-xs font-bold text-slate-655 shrink-0">
+                  <span className="flex items-center gap-1.5 text-xs font-bold text-slate-600 shrink-0">
                     <SlidersHorizontal className="w-3.5 h-3.5 text-slate-550" />{" "}
                     โครงการ:
                   </span>
@@ -1036,7 +1050,7 @@ export function CalendarClient() {
                                         ? "text-rose-500"
                                         : date.getDay() === 6
                                           ? "text-blue-500"
-                                          : "text-slate-655"
+                                          : "text-slate-600"
                                       : "text-slate-300"
                                 }`}
                               >
@@ -1119,7 +1133,7 @@ export function CalendarClient() {
                                 e.stopPropagation();
                                 setOpenPopoverId(null);
                               }}
-                              className="text-slate-400 hover:text-slate-655 cursor-pointer"
+                              className="text-slate-400 hover:text-slate-600 cursor-pointer"
                             >
                               <X size={12} />
                             </button>

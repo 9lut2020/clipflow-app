@@ -1,4 +1,5 @@
 import { apiServer, getSession } from "@/lib/api-server";
+import { clipStage, isPassed } from "@/lib/clip-status";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clip, PaginatedData } from "@/types/api";
@@ -41,12 +42,10 @@ export default async function TasksPage() {
   }
 
   // Every workflow status belongs to exactly one group (CANCELLED is hidden).
-  const draftClips = clips.filter((c) => c.status === "DRAFT");
-  const inProgressClips = clips.filter((c) =>
-    ["PENDING_REVIEW", "IN_REVIEW", "RESUBMITTED"].includes(c.status),
-  );
-  const revisionClips = clips.filter((c) => c.status === "NEEDS_REVISION");
-  const approvedClips = clips.filter((c) => ["APPROVED", "PUBLISHED"].includes(c.status));
+  const draftClips = clips.filter((c) => clipStage(c.status) === "todo");
+  const inProgressClips = clips.filter((c) => clipStage(c.status) === "review");
+  const revisionClips = clips.filter((c) => clipStage(c.status) === "fix");
+  const approvedClips = clips.filter((c) => isPassed(c.status));
 
   // Metrics
   const totalClips = clips.length;
@@ -84,7 +83,7 @@ export default async function TasksPage() {
 
     const item = assigneeWorkloadMap.get(ownerId)!;
     item.total += 1;
-    if (clip.status === "APPROVED") item.approved += 1;
+    if (isPassed(clip.status)) item.approved += 1;
     if (clip.status === "NEEDS_REVISION") item.needsRevision += 1;
   });
 
@@ -209,7 +208,7 @@ export default async function TasksPage() {
                 {approvedClips.length}
               </span>
               <div className="text-xs font-bold text-emerald-800 uppercase tracking-wide mt-0.5">
-                อนุมัติแล้ว
+                ผ่านแล้ว / เผยแพร่
               </div>
             </div>
             <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">

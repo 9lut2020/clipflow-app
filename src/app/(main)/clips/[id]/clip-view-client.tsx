@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { createPortal } from "react-dom";
 import VideoEmbed from "@/components/clips/video-embed";
 import ReviewActionCard from "@/components/clips/review-action-card";
@@ -158,26 +159,7 @@ export default function ClipViewClient({
               </h2>
 
               <div className="flex items-center gap-2">
-                {optimisticStatus === "APPROVED" && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    ✓ ผ่านอนุมัติ
-                  </span>
-                )}
-                {optimisticStatus === "NEEDS_REVISION" && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                    ✕ ต้องแก้ไข
-                  </span>
-                )}
-                {optimisticStatus === "PENDING_REVIEW" && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                    ⏳ รอตรวจ
-                  </span>
-                )}
-                {optimisticStatus === "IN_REVIEW" && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-bold bg-sky-100 text-sky-800 border border-sky-200">
-                    🔵 กำลังตรวจ
-                  </span>
-                )}
+                <StatusBadge status={optimisticStatus} />
               </div>
             </div>
 

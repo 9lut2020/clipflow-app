@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { clipStage, isPassed } from "@/lib/clip-status";
 import { Clip, Project, User } from "@/types/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -67,9 +68,9 @@ export function DashboardCharts({ clips, projects, users = [] }: DashboardCharts
   });
 
   const total = filteredClips.length;
-  const approvedCount = filteredClips.filter((c) => c.status === "APPROVED").length;
+  const approvedCount = filteredClips.filter((c) => isPassed(c.status)).length;
   const revisionCount = filteredClips.filter((c) => c.status === "NEEDS_REVISION").length;
-  const pendingCount = filteredClips.filter((c) => c.status === "PENDING_REVIEW").length;
+  const pendingCount = filteredClips.filter((c) => clipStage(c.status) === "review").length;
   const inReviewCount = filteredClips.filter((c) => c.status === "IN_REVIEW").length;
 
   const approvedPct = total > 0 ? Math.round((approvedCount / total) * 100) : 0;
@@ -94,7 +95,7 @@ export function DashboardCharts({ clips, projects, users = [] }: DashboardCharts
     const approved = filteredClips.filter((c) => {
       const cd = new Date(c.updatedAt || c.createdAt);
       return (
-        c.status === "APPROVED" &&
+        isPassed(c.status) &&
         cd.getDate() === d.getDate() &&
         cd.getMonth() === d.getMonth()
       );
@@ -160,9 +161,9 @@ export function DashboardCharts({ clips, projects, users = [] }: DashboardCharts
 
     const stat = creatorStatsMap.get(ownerId)!;
     stat.total += 1;
-    if (c.status === "APPROVED") stat.approved += 1;
+    if (isPassed(c.status)) stat.approved += 1;
     if (c.status === "NEEDS_REVISION") stat.revision += 1;
-    if (c.status === "PENDING_REVIEW" || c.status === "IN_REVIEW") stat.pending += 1;
+    if (clipStage(c.status) === "review") stat.pending += 1;
   });
 
   const creatorList = Array.from(creatorStatsMap.values()).sort(

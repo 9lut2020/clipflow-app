@@ -16,6 +16,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Clip } from "@/types/api";
+import { StatusBadge } from "@/components/ui/status-badge";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import PlatformBadge from "@/components/ui/platform-badge";
@@ -298,11 +299,12 @@ export function TaskAccordionSection({
 
                 {/* Content (Middle) */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
+                  <div className="flex items-center gap-2 mb-0.5 min-w-0">
                     <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">
                       {clip.project?.name || "Project"} • EP.
                       {clip.episode?.episodeNo || "?"}
                     </span>
+                    <StatusBadge status={clip.status} postedCount={(clip as any).publishedPosts?.length} className="!px-2 !py-0 text-[10px]" />
                   </div>
                   <Link href={`/clips/${clip.id}`}>
                     <h3 className="font-bold text-xs sm:text-sm text-slate-800 hover:text-blue-600 transition-colors truncate">

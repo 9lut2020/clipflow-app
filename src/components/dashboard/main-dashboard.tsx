@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { clipStage, isPassed } from "@/lib/clip-status";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
 type ClipStats = {
@@ -102,7 +103,7 @@ export function MainDashboard({
     }
 
     // Status filter
-    if (statusFilter !== "ALL" && c.status !== statusFilter) {
+    if (statusFilter !== "ALL" && clipStage(c.status) !== statusFilter) {
       return false;
     }
 
@@ -130,12 +131,14 @@ export function MainDashboard({
   const countStatus = (status: string) =>
     stats ? stats.byStatus[status] || 0 : filteredClips.filter((c) => c.status === status).length;
   const notSubmittedCount = countStatus("DRAFT");
-  const pendingCount = countStatus("PENDING_REVIEW");
+  const pendingCount = countStatus("PENDING_REVIEW") + countStatus("RESUBMITTED");
   // Reviewers never see clips before submission, so the card is hidden for them.
   const showNotSubmitted = role !== "REVIEWER";
   const inReviewCount = countStatus("IN_REVIEW");
   const needsRevisionCount = countStatus("NEEDS_REVISION");
-  const approvedCount = countStatus("APPROVED");
+  // "Passed" covers approved clips waiting to be posted and published ones.
+  const publishedCount = countStatus("PUBLISHED");
+  const approvedCount = countStatus("APPROVED") + publishedCount;
 
   const totalCount = stats ? stats.total : filteredClips.length;
   const approvalRate =
@@ -171,7 +174,7 @@ export function MainDashboard({
     const approved = filteredClips.filter((c) => {
       const cd = new Date(c.updatedAt || c.createdAt);
       return (
-        c.status === "APPROVED" &&
+        isPassed(c.status) &&
         cd.getDate() === d.getDate() &&
         cd.getMonth() === d.getMonth()
       );
@@ -233,7 +236,7 @@ export function MainDashboard({
 
     const stat = creatorStatsMap.get(ownerId)!;
     stat.total += 1;
-    if (c.status === "APPROVED") stat.approved += 1;
+    if (isPassed(c.status)) stat.approved += 1;
   });
 
   const creatorLeaderboard = stats?.creators?.length
@@ -381,7 +384,7 @@ export function MainDashboard({
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wide truncate">
-                ผ่านอนุมัติ (Approved)
+                ผ่านแล้ว / เผยแพร่
               </span>
               <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                 <CheckCircle2 size={16} />
@@ -390,7 +393,7 @@ export function MainDashboard({
             <div className="text-xl md:text-3xl font-black text-emerald-600 tracking-tight">
               {approvedCount}{" "}
               <span className="text-[10px] md:text-xs font-normal text-slate-500">
-                ({approvalRate}%)
+                ({approvalRate}%) · เผยแพร่ {publishedCount}
               </span>
             </div>
           </CardContent>
@@ -602,10 +605,11 @@ export function MainDashboard({
             <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
               {[
                 { id: "ALL", label: "ทั้งหมด" },
-                ...(showNotSubmitted ? [{ id: "DRAFT", label: "รอส่งงาน" }] : []),
-                { id: "PENDING_REVIEW", label: "รอตรวจ" },
-                { id: "NEEDS_REVISION", label: "สั่งแก้" },
-                { id: "APPROVED", label: "อนุมัติ" },
+                ...(showNotSubmitted ? [{ id: "todo", label: "รอส่งงาน" }] : []),
+                { id: "review", label: "รอตรวจ" },
+                { id: "fix", label: "ต้องแก้ไข" },
+                { id: "ready", label: "ผ่านแล้ว รอโพสต์" },
+                { id: "published", label: "เผยแพร่แล้ว" },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -723,7 +727,7 @@ export function MainDashboard({
                           </td>
 
                           <td className="px-5 py-3.5 text-center">
-                            <StatusBadge status={clip.status} />
+                            <StatusBadge status={clip.status} postedCount={(clip as any).publishedPosts?.length} />
                           </td>
 
                           <td className="px-5 py-3.5 text-right pr-6">
@@ -769,7 +773,7 @@ export function MainDashboard({
                             {clip.name || episode?.name || "คลิปไม่มีชื่อ"}
                           </h3>
                         </div>
-                        <StatusBadge status={clip.status} />
+                        <StatusBadge status={clip.status} postedCount={(clip as any).publishedPosts?.length} />
                       </div>
 
                       <div className="flex items-center justify-between text-xs text-slate-600 pt-1 border-t border-slate-100">

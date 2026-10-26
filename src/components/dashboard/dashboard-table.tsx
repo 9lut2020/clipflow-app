@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { CLIP_STAGES, clipStage } from "@/lib/clip-status";
 import { format } from "date-fns";
 import Link from "next/link";
 import {
@@ -40,7 +42,7 @@ export default function DashboardTable({ clips, isUser, role }: DashboardTablePr
       ownerName.toLowerCase().includes(searchLower);
 
     const matchesStatus =
-      statusFilter === "ALL" ? true : clip.status === statusFilter;
+      statusFilter === "ALL" ? true : clipStage(clip.status) === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -117,62 +119,6 @@ export default function DashboardTable({ clips, isUser, role }: DashboardTablePr
     );
   };
 
-  const StatusBadge = ({ status }: { status: string }) => {
-    if (status === "APPROVED") {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          ผ่านอนุมัติ
-        </span>
-      );
-    }
-    if (status === "NEEDS_REVISION") {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/80 shadow-2xs">
-          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-          สั่งแก้ไข
-        </span>
-      );
-    }
-    if (status === "IN_REVIEW") {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200/80 shadow-2xs">
-          <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
-          กำลังตรวจ
-        </span>
-      );
-    }
-    if (status === "DRAFT") {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-50 text-slate-700 border border-slate-200/80 shadow-2xs">
-          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-          รอส่งงาน
-        </span>
-      );
-    }
-    if (status === "PUBLISHED") {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs">
-          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-          เผยแพร่แล้ว
-        </span>
-      );
-    }
-    if (status === "CANCELLED") {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-500 border border-gray-200/80 shadow-2xs">
-          <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-          ยกเลิก
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/80 shadow-2xs">
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-        รอตรวจทาน
-      </span>
-    );
-  };
 
   return (
     <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
@@ -193,12 +139,7 @@ export default function DashboardTable({ clips, isUser, role }: DashboardTablePr
           <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
             {[
               { id: "ALL", label: "ทั้งหมด" },
-              { id: "DRAFT", label: "รอส่งงาน" },
-              { id: "PENDING_REVIEW", label: "รอตรวจ" },
-              { id: "NEEDS_REVISION", label: "สั่งแก้" },
-              { id: "APPROVED", label: "ผ่านอนุมัติ" },
-              { id: "PUBLISHED", label: "เผยแพร่แล้ว" },
-              { id: "CANCELLED", label: "ยกเลิก" },
+              ...CLIP_STAGES.map((stage) => ({ id: stage.id, label: stage.label })),
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -335,7 +276,7 @@ export default function DashboardTable({ clips, isUser, role }: DashboardTablePr
 
                     {/* Status Badge */}
                     <td className="px-6 py-4 text-center">
-                      <StatusBadge status={clip.status} />
+                      <StatusBadge status={clip.status} postedCount={(clip as any).publishedPosts?.length} />
                     </td>
 
                     {/* Actions */}
@@ -389,7 +330,7 @@ export default function DashboardTable({ clips, isUser, role }: DashboardTablePr
                       {clip.name || episode?.name || "คลิปไม่มีชื่อ"}
                     </h3>
                   </div>
-                  <StatusBadge status={clip.status} />
+                  <StatusBadge status={clip.status} postedCount={(clip as any).publishedPosts?.length} />
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-slate-600 pt-1">

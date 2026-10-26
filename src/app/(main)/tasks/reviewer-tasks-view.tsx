@@ -1,118 +1,108 @@
 "use client";
 
+import Link from "next/link";
 import { Clip } from "@/types/api";
 import { TaskAccordionSection } from "./task-accordion";
 import { Card, CardContent } from "@/components/ui/card";
-import { FolderKanban, Clock } from "lucide-react";
+import { Share2 } from "lucide-react";
+import { clipStage, type ClipStage } from "@/lib/clip-status";
 
 interface ReviewerTasksViewProps {
   clips: Clip[];
   isAdmin?: boolean;
 }
 
-const REVIEW_QUEUE = ["PENDING_REVIEW", "IN_REVIEW", "RESUBMITTED"];
-
+/**
+ * Reviewer / admin work list, one section per pipeline stage in the order the
+ * work happens. Every clip lands in exactly one section; cancelled clips are
+ * hidden. Finished stages start collapsed so the open work stays on top.
+ */
 export function ReviewerTasksView({ clips, isAdmin = false }: ReviewerTasksViewProps) {
-  // Inbox: everything waiting on a reviewer, including resubmissions.
-  const pendingClips = clips.filter((c) => REVIEW_QUEUE.includes(c.status));
-  // Admins also track assigned work that has not been submitted yet.
-  const notSubmittedClips = isAdmin ? clips.filter((c) => c.status === "DRAFT") : [];
-
-  // Group remaining clips (or all clips except draft/approved) by project
-  const projectMap = new Map<
-    string,
-    { id: string; name: string; clips: Clip[] }
-  >();
-
-  clips.forEach((clip) => {
-    // Drafts are listed separately (admins) and cancelled clips are hidden.
-    if (clip.status === "DRAFT" || clip.status === "CANCELLED") return;
-
-    const projectId = clip.project?.id || "unassigned";
-    const projectName = clip.project?.name || "ไม่ได้ระบุโปรเจกต์";
-
-    if (!projectMap.has(projectId)) {
-      projectMap.set(projectId, {
-        id: projectId,
-        name: projectName,
-        clips: [],
-      });
-    }
-    projectMap.get(projectId)!.clips.push(clip);
-  });
-
-  const projects = Array.from(projectMap.values());
+  const byStage = (stage: ClipStage) => clips.filter((c) => clipStage(c.status) === stage);
+  const review = byStage("review");
+  const fix = byStage("fix");
+  const todo = byStage("todo");
+  const ready = byStage("ready");
+  const published = byStage("published");
+  const nothing = review.length + fix.length + todo.length + ready.length + published.length === 0;
 
   return (
-    <div className="space-y-6">
-      {/* INBOX SECTION */}
-      {pendingClips.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-sm font-black text-amber-800 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Clock size={16} />
-            คลิปที่รอตรวจด่วน
-          </h2>
-          <TaskAccordionSection
-            title="รอการตรวจ"
-            iconType="clock"
-            clips={pendingClips}
-            colorClass="text-amber-500"
-            badgeBg="bg-amber-100 text-amber-700"
-            emptyText="ไม่มีงานรอตรวจ"
-            defaultOpen={true}
-            isUser={false}
-          />
-        </div>
+    <div className="space-y-1">
+      <TaskAccordionSection
+        title="รอตรวจ"
+        iconType="clock"
+        clips={review}
+        colorClass="text-amber-500"
+        badgeBg="bg-amber-100 text-amber-700"
+        emptyText="ไม่มีงานรอตรวจ"
+        defaultOpen={true}
+        isUser={false}
+      />
+
+      <TaskAccordionSection
+        title="ต้องแก้ไข (รอคนตัดต่อส่งใหม่)"
+        iconType="alert"
+        clips={fix}
+        colorClass="text-rose-500"
+        badgeBg="bg-rose-100 text-rose-700"
+        emptyText="ไม่มีงานที่ต้องแก้ไข"
+        defaultOpen={true}
+        isUser={false}
+      />
+
+      {isAdmin && (
+        <TaskAccordionSection
+          title="รอส่งงาน"
+          iconType="play"
+          clips={todo}
+          colorClass="text-slate-600"
+          badgeBg="bg-slate-200 text-slate-700"
+          emptyText="ไม่มีงานรอส่ง"
+          defaultOpen={false}
+          isUser={false}
+        />
       )}
 
-      {isAdmin && notSubmittedClips.length > 0 && (
-        <div className="mb-6">
+      {ready.length > 0 && (
+        <div>
+          {isAdmin && (
+            <div className="mb-2 flex justify-end">
+              <Link href="/admin/publish" className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100">
+                <Share2 size={14} /> ไปหน้าเผยแพร่
+              </Link>
+            </div>
+          )}
           <TaskAccordionSection
-            title="รอส่งงาน"
-            iconType="play"
-            clips={notSubmittedClips}
-            colorClass="text-slate-600"
-            badgeBg="bg-slate-200 text-slate-700"
-            emptyText="ไม่มีงานรอส่ง"
+            title="ผ่านแล้ว รอโพสต์"
+            iconType="check"
+            clips={ready}
+            colorClass="text-emerald-500"
+            badgeBg="bg-emerald-100 text-emerald-700"
+            emptyText=""
             defaultOpen={false}
             isUser={false}
           />
         </div>
       )}
 
-      {/* PROJECT GROUPS */}
-      <div>
-        <h2 className="text-sm font-black text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-          <FolderKanban size={16} />
-          ภาพรวมแยกตามโปรเจกต์
-        </h2>
+      <TaskAccordionSection
+        title="เผยแพร่แล้ว"
+        iconType="check"
+        clips={published}
+        colorClass="text-indigo-500"
+        badgeBg="bg-indigo-100 text-indigo-700"
+        emptyText=""
+        defaultOpen={false}
+        isUser={false}
+      />
 
-        {projects.length === 0 ? (
-          <Card className="border-dashed border-slate-200 bg-slate-50/50 shadow-none">
-            <CardContent className="p-8 text-center">
-              <p className="text-slate-500 font-medium">
-                ยังไม่มีคลิปที่ดำเนินการอยู่ในระบบ
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {projects.map((project) => (
-              <TaskAccordionSection
-                key={project.id}
-                title={project.name}
-                iconType="play"
-                clips={project.clips}
-                colorClass="text-slate-700"
-                badgeBg="bg-slate-200 text-slate-800"
-                emptyText="ไม่มีคลิป"
-                defaultOpen={true}
-                isUser={false}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      {nothing && (
+        <Card className="border-dashed border-slate-200 bg-slate-50/50 shadow-none">
+          <CardContent className="p-8 text-center">
+            <p className="font-medium text-slate-500">ยังไม่มีคลิปในระบบ</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

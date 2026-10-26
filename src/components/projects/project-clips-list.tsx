@@ -2,9 +2,10 @@
 
 import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ChevronDown, Filter, X, FolderX } from "lucide-react";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { clipStage, clipStatusMeta, type ClipStage } from "@/lib/clip-status";
 
 interface ProjectClipsListProps {
   project: { id: string; name: string; description?: string };
@@ -14,32 +15,16 @@ interface ProjectClipsListProps {
   isUser: boolean;
 }
 
-const STATUS_MAP: Record<string, { label: string; className: string }> = {
-  APPROVED: {
-    label: "ผ่าน",
-    className: "bg-green-50 text-green-700 border-green-200",
-  },
-  NEEDS_REVISION: {
-    label: "ต้องแก้",
-    className: "bg-red-50 text-red-700 border-red-200",
-  },
-  PENDING_REVIEW: {
-    label: "รอตรวจ",
-    className: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  },
-  IN_REVIEW: {
-    label: "กำลังตรวจ",
-    className: "bg-sky-50 text-sky-700 border-sky-200",
-  },
-  DRAFT: {
-    label: "รอส่งงาน",
-    className: "bg-slate-50 text-slate-600 border-slate-200",
-  },
-  CANCELLED: {
-    label: "ยกเลิก",
-    className: "bg-gray-100 text-gray-500 border-gray-200",
-  },
-};
+type ListView = "working" | "ready" | "published" | "all";
+
+// Tabs follow the pipeline: still in production → passed, waiting to be
+// posted → published. Cancelled clips only appear under "ทั้งหมด".
+const VIEWS: { id: ListView; label: string; stages: ClipStage[] }[] = [
+  { id: "working", label: "กำลังทำ / รอตรวจ", stages: ["todo", "review", "fix"] },
+  { id: "ready", label: "ผ่านแล้ว รอโพสต์", stages: ["ready"] },
+  { id: "published", label: "เผยแพร่แล้ว", stages: ["published"] },
+  { id: "all", label: "ทั้งหมด", stages: ["todo", "review", "fix", "ready", "published", "cancelled"] },
+];
 
 export default function ProjectClipsList({
   project,
@@ -48,7 +33,7 @@ export default function ProjectClipsList({
   currentUser,
   isUser,
 }: ProjectClipsListProps) {
-  const [view, setView] = useState<"active" | "history">("active");
+  const [view, setView] = useState<ListView>("working");
   const [selectedEps, setSelectedEps] = useState<string[]>([]);
   const [selectedOwners, setSelectedOwners] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
@@ -99,15 +84,8 @@ export default function ProjectClipsList({
         );
 
         // View tab
-        if (view === "active") {
-          epClips = epClips.filter(
-            (c) => c.status !== "APPROVED" && c.status !== "CANCELLED",
-          );
-        } else {
-          epClips = epClips.filter(
-            (c) => c.status === "APPROVED" || c.status === "CANCELLED",
-          );
-        }
+        const stages = VIEWS.find((v) => v.id === view)!.stages;
+        epClips = epClips.filter((c) => stages.includes(clipStage(c.status)));
 
         // Filters
         if (selectedOwners.length > 0) {
@@ -140,19 +118,22 @@ export default function ProjectClipsList({
     <div className="space-y-4">
       {/* Tab + Filter Controls */}
       <div className="flex flex-col gap-3 max-w-full">
-        <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
-          <button
-            onClick={() => setView("active")}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${view === "active" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-          >
-            รอตรวจ / กำลังทำ
-          </button>
-          <button
-            onClick={() => setView("history")}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${view === "history" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-          >
-            ประวัติ (ผ่านแล้ว)
-          </button>
+        <div className="-mx-1 flex gap-1 overflow-x-auto px-1 hide-scrollbar">
+          <div className="flex shrink-0 rounded-xl bg-slate-100 p-1">
+            {VIEWS.map((v) => {
+              const count = baseClips.filter((c) => v.stages.includes(clipStage(c.status))).length;
+              return (
+                <button
+                  key={v.id}
+                  onClick={() => setView(v.id)}
+                  className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-bold transition-all ${view === v.id ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                >
+                  {v.label}
+                  <span className={`rounded-md px-1.5 text-[11px] ${view === v.id ? "bg-slate-100 text-slate-700" : "bg-slate-200/70 text-slate-500"}`}>{count}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <button
@@ -326,7 +307,7 @@ export default function ProjectClipsList({
                       }
                       className="text-sm text-slate-700 select-none"
                     >
-                      {STATUS_MAP[status]?.label || status}
+                      {clipStatusMeta(status).label}
                     </span>
                   </label>
                 ))}
@@ -371,10 +352,6 @@ export default function ProjectClipsList({
 
               <div className="p-3 sm:p-4 grid gap-3 bg-slate-50/50 rounded-b-2xl">
                 {epClips.map((clip) => {
-                  const statusInfo = STATUS_MAP[clip.status] || {
-                    label: clip.status,
-                    className: "bg-slate-50 text-slate-600 border-slate-200",
-                  };
                   return (
                     <Link
                       href={`/clips/${clip.id}`}
@@ -422,12 +399,7 @@ export default function ProjectClipsList({
                           </div>
 
                           <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                            <Badge
-                              variant="outline"
-                              className={`px-2.5 py-1 text-[10px] sm:px-3 sm:py-1 sm:text-xs font-bold whitespace-nowrap shadow-2xs ${statusInfo.className}`}
-                            >
-                              {statusInfo.label}
-                            </Badge>
+                            <StatusBadge status={clip.status} postedCount={clip.publishedPosts?.length} className="text-[10px] sm:text-xs" />
                           </div>
                         </CardContent>
                       </Card>
