@@ -192,53 +192,52 @@ export default async function TasksPage() {
         <div className="lg:col-span-8 space-y-4">
           {isUser ? (
             <>
-              {/* Drawer 1: Needs Revision */}
+              {/* Work that needs the editor first; sections with nothing are hidden. */}
+              {revisionClips.length + draftClips.length === 0 && (
+                <div className="mb-4 rounded-2xl bg-emerald-50 p-4 text-sm font-bold text-emerald-800">
+                  ไม่มีงานค้าง ส่งครบทุกงานแล้ว 🎉
+                </div>
+              )}
               <TaskAccordionSection
                 title="ต้องแก้ไข"
                 iconType="alert"
                 clips={revisionClips}
                 colorClass="text-rose-500"
                 badgeBg="bg-rose-100 text-rose-700"
-                emptyText="ไม่มีงานที่ต้องแก้ไข"
+                emptyText=""
                 defaultOpen={true}
                 isUser={isUser}
                 userId={currentUser.id}
               />
-
-              {/* Drawer 2: In Progress / Pending Review */}
-              <TaskAccordionSection
-                title="ส่งแล้ว / รอตรวจ"
-                iconType="clock"
-                clips={inProgressClips}
-                colorClass="text-amber-500"
-                badgeBg="bg-amber-100 text-amber-700"
-                emptyText="ไม่มีงานที่รอตรวจอยู่ในขณะนี้"
-                defaultOpen={true}
-                isUser={isUser}
-                userId={currentUser.id}
-              />
-
-              {/* Drawer 3: Draft / To Do */}
               <TaskAccordionSection
                 title="รอส่งงาน"
                 iconType="play"
                 clips={draftClips}
                 colorClass="text-blue-500"
                 badgeBg="bg-blue-100 text-blue-700"
-                emptyText="ไม่มีงานใหม่ในระบบ"
+                emptyText=""
                 defaultOpen={true}
                 isUser={isUser}
                 userId={currentUser.id}
               />
-
-              {/* Drawer 4: Approved */}
               <TaskAccordionSection
-                title="ผ่านอนุมัติ / เผยแพร่แล้ว"
+                title="ส่งแล้ว รอผลตรวจ"
+                iconType="clock"
+                clips={inProgressClips}
+                colorClass="text-amber-500"
+                badgeBg="bg-amber-100 text-amber-700"
+                emptyText=""
+                defaultOpen={true}
+                isUser={isUser}
+                userId={currentUser.id}
+              />
+              <TaskAccordionSection
+                title="ผ่านแล้ว / เผยแพร่แล้ว"
                 iconType="check"
                 clips={approvedClips}
                 colorClass="text-emerald-500"
                 badgeBg="bg-emerald-100 text-emerald-700"
-                emptyText="ยังไม่มีงานที่ได้รับการอนุมัติ"
+                emptyText=""
                 defaultOpen={false}
                 isUser={isUser}
                 userId={currentUser.id}
@@ -285,7 +284,8 @@ export default async function TasksPage() {
             </Card>
           )}
 
-          {/* Workload by Assignee Card */}
+          {/* Workload by Assignee — a team view, not shown to a single editor */}
+          {!isUser && (
           <Card className="bg-white border-slate-200/80 shadow-xs overflow-hidden">
             <CardHeader className="p-4 border-b border-slate-100">
               <CardTitle className="text-sm font-bold text-slate-800 flex items-center justify-between">
@@ -357,6 +357,7 @@ export default async function TasksPage() {
               )}
             </CardContent>
           </Card>
+          )}
         </div>
       </div>
     </div>

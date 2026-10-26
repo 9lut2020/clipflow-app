@@ -14,6 +14,7 @@ import {
   Send,
   RefreshCcw,
   ExternalLink,
+  FolderOpen,
 } from "lucide-react";
 import { Clip } from "@/types/api";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -37,7 +38,7 @@ interface InlineSubmitModalProps {
   mode: "submit" | "resubmit";
 }
 
-function InlineSubmitModal({ clip, userId, onClose, mode }: InlineSubmitModalProps) {
+export function InlineSubmitModal({ clip, userId, onClose, mode }: InlineSubmitModalProps) {
   const [driveUrl, setDriveUrl] = useState(clip.driveUrl || "");
   const [note, setNote] = useState("");
   const router = useRouter();
@@ -178,7 +179,7 @@ export function TaskAccordionSection({
   const Icon = ICON_MAP[iconType] || PlayCircle;
 
   if (!clips || clips.length === 0) {
-    if (!isUser) return null;
+    if (!isUser || !emptyText) return null;
     return (
       <div className="mb-4 border border-slate-200/60 rounded-2xl overflow-hidden bg-slate-50/50">
         <div className="flex items-center gap-2 p-4 font-bold text-slate-700">
@@ -367,6 +368,19 @@ export function TaskAccordionSection({
                     <ExternalLink size={15} />
                   </Link>
 
+                  {isUser && canSubmit(clip.status) && ((clip as any).sourceUrl || (clip as any).episode?.sourceUrl) && (
+                    <a
+                      href={(clip as any).sourceUrl || (clip as any).episode?.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                      title="เปิดไฟล์ต้นฉบับ"
+                    >
+                      <FolderOpen size={13} />
+                      <span>ต้นฉบับ</span>
+                    </a>
+                  )}
+
                   {/* Submit / Resubmit button (only for USER and eligible statuses) */}
                   {isUser && canSubmit(clip.status) && (
                     <button
@@ -386,12 +400,12 @@ export function TaskAccordionSection({
                       {isResubmit(clip.status) ? (
                         <>
                           <RefreshCcw size={13} />
-                          <span className="hidden sm:inline">ส่งกลับ</span>
+                          <span>ส่งแก้</span>
                         </>
                       ) : (
                         <>
                           <UploadCloud size={13} />
-                          <span className="hidden sm:inline">ส่งงาน</span>
+                          <span>ส่งงาน</span>
                         </>
                       )}
                     </button>

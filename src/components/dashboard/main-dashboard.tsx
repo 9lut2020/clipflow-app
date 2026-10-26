@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { StageStatCards } from "@/components/dashboard/stage-stat-cards";
+import { ActionCenter } from "@/components/dashboard/action-center";
 import { isPassed, clipStageOf, hasOwner } from "@/lib/clip-status";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
@@ -309,10 +310,13 @@ export function MainDashboard({
         </div>
       </div>
 
+      {/* ─── 1b. WHAT NEEDS ME NOW — first thing on the page ───────────────── */}
+      <ActionCenter role={role} userId={currentUser?.id} />
+
       {/* ─── 2. ONE CARD PER STAGE (tap to filter the list) ─────────────────── */}
       <StageStatCards
         counts={stageCounts}
-        stages={showNotSubmitted ? ["unassigned", "todo", "review", "fix", "ready", "published"] : ["review", "fix", "ready", "published"]}
+        stages={role === "ADMIN" ? ["unassigned", "todo", "review", "fix", "ready", "published"] : role === "USER" ? ["todo", "review", "fix", "ready", "published"] : ["review", "fix", "ready", "published"]}
         active={statusFilter}
         onSelect={(stage) => setStatusFilter(stage)}
       />
@@ -320,7 +324,7 @@ export function MainDashboard({
       {/* ─── 3. DUAL ANALYTICS GRID (TREND LINE CHART & TEAM LEADERBOARD) ────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
         {/* Trend Line Chart (lg:col-span-7) */}
-        <Card className="lg:col-span-7 bg-white border-slate-200/80 shadow-xs overflow-hidden">
+        <Card className={`${isUser ? "lg:col-span-12" : "lg:col-span-7"} bg-white border-slate-200/80 shadow-xs overflow-hidden`}>
           <CardHeader className="p-3.5 md:p-5 border-b border-slate-100 flex flex-row items-center justify-between gap-2">
             <CardTitle className="text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
               <TrendingUp size={16} className="text-blue-600" />
@@ -446,7 +450,8 @@ export function MainDashboard({
           </CardContent>
         </Card>
 
-        {/* Team Leaderboard (lg:col-span-5) */}
+        {/* Team Leaderboard (lg:col-span-5) — not shown to editors */}
+        {!isUser && (
         <Card className="lg:col-span-5 bg-white border-slate-200/80 shadow-xs overflow-hidden">
           <CardHeader className="p-3.5 md:p-5 border-b border-slate-100 flex flex-row items-center justify-between">
             <CardTitle className="text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
@@ -500,6 +505,7 @@ export function MainDashboard({
             )}
           </CardContent>
         </Card>
+        )}
       </div>
 
       {/* ─── 4. HIGH-END CLIPS LIST & TABLE (TABLE ON DESKTOP, LIST ON MOBILE) ─── */}
@@ -522,7 +528,8 @@ export function MainDashboard({
             <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
               {[
                 { id: "ALL", label: "ทั้งหมด" },
-                ...(showNotSubmitted ? [{ id: "unassigned", label: "รอมอบหมาย" }, { id: "todo", label: "รอส่งงาน" }] : []),
+                ...(role === "ADMIN" ? [{ id: "unassigned", label: "รอมอบหมาย" }] : []),
+                ...(showNotSubmitted ? [{ id: "todo", label: "รอส่งงาน" }] : []),
                 { id: "review", label: "รอตรวจ" },
                 { id: "fix", label: "ต้องแก้ไข" },
                 { id: "ready", label: "ผ่านแล้ว รอโพสต์" },

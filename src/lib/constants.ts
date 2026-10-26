@@ -2,7 +2,6 @@ import {
   LucideIcon,
   LayoutDashboard,
   FileVideo,
-  Menu,
   Settings,
   ClipboardList,
   BarChart3,
@@ -10,6 +9,7 @@ import {
   Plus,
   FolderOpen,
   BookOpen,
+  Share2,
 } from "lucide-react";
 
 export interface SidebarMenuItem {
@@ -37,7 +37,7 @@ export function getSidebarMenu(
     menus.push({
       section: "Main",
       items: [
-        { title: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard },
+        { title: "หน้าแรก", href: "/dashboard", icon: LayoutDashboard },
         { title: "งานของฉัน", href: "/tasks", icon: ClipboardList },
         { title: "ส่งงานด่วน", href: "/submit", icon: Plus },
         { title: "โปรเจกต์ทั้งหมด", href: "/projects", icon: FileVideo },
@@ -52,7 +52,7 @@ export function getSidebarMenu(
       {
         section: "Main",
         items: [
-          { title: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard },
+          { title: "หน้าแรก", href: "/dashboard", icon: LayoutDashboard },
           { title: "งานของฉัน", href: "/tasks", icon: ClipboardList },
           { title: "ส่งงานด่วน", href: "/submit", icon: Plus },
           { title: "โปรเจกต์ทั้งหมด", href: "/projects", icon: FileVideo },
@@ -74,18 +74,9 @@ export function getSidebarMenu(
       {
         section: "หลัก",
         items: [
-          { title: "หน้าเมนู", href: "/menu", icon: Menu },
-          { title: "แดชบอร์ด", href: "/dashboard", icon: LayoutDashboard },
-          { title: "ส่งงานด่วน", href: "/submit", icon: Plus },
-          {
-            title: "พื้นที่ทำงาน",
-            href: "/tasks",
-            icon: ClipboardList,
-            children: [
-              { title: "ตารางงานทั้งหมด", href: "/tasks" },
-              { title: "คิวและปฏิทินเผยแพร่", href: "/admin/publish" },
-            ],
-          },
+          { title: "หน้าแรก", href: "/dashboard", icon: LayoutDashboard },
+          { title: "งานทั้งหมด", href: "/tasks", icon: ClipboardList },
+          { title: "เผยแพร่คลิป", href: "/admin/publish", icon: Share2 },
           {
             title: "การจัดการโปรเจกต์",
             href: "/projects",
@@ -97,6 +88,7 @@ export function getSidebarMenu(
           },
           { title: "รายงานวิเคราะห์", href: "/analytics", icon: BarChart3 },
           { title: "คลังทรัพยากรส่วนกลาง", href: "/assets", icon: FolderOpen },
+          { title: "ส่งงานแทนคนตัดต่อ", href: "/submit", icon: Plus },
         ],
       },
       {

@@ -8,6 +8,7 @@ import {
   FileVideo,
   Menu,
   ClipboardCheck,
+  Share2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 
@@ -25,34 +26,27 @@ export default function BottomNav() {
   const isAdmin = role === "ADMIN";
   const isReviewer = role === "REVIEWER";
 
-  const leftNavItems: NavItem[] = [
-    { href: "/dashboard", label: "แดชบอร์ด", icon: LayoutDashboard },
-    { 
-      href: isAdmin ? "/projects" : "/menu", 
-      label: isAdmin ? "โปรเจกต์" : "เมนู", 
-      icon: isAdmin ? FileVideo : Menu 
-    },
-  ];
+  // One entry per destination, per role (the old reviewer bar listed
+  // "งานตรวจ" and "เมนู" twice). The centre button is each role's main job.
+  const home: NavItem = { href: "/dashboard", label: "หน้าแรก", icon: LayoutDashboard };
+  const menu: NavItem = { href: "/menu", label: "เมนู", icon: Menu };
+  const leftNavItems: NavItem[] = isAdmin
+    ? [home, { href: "/tasks", label: "งานทั้งหมด", icon: ClipboardCheck }]
+    : isReviewer
+    ? [home, { href: "/projects", label: "โปรเจกต์", icon: FileVideo }]
+    : [home, { href: "/tasks", label: "งานของฉัน", icon: FileVideo }];
 
   const centerFloatingItem: NavItem | null = isUser
-    ? { href: "/submit", label: "ส่งงานใหม่", icon: PlusCircle }
+    ? { href: "/submit", label: "ส่งงาน", icon: PlusCircle }
     : isReviewer
     ? { href: "/tasks", label: "งานตรวจ", icon: ClipboardCheck }
     : isAdmin
-    ? { href: "/admin/projects/create", label: "สร้างโปรเจกต์", icon: PlusCircle }
+    ? { href: "/admin/publish", label: "เผยแพร่", icon: Share2 }
     : null;
 
-  const rightNavItems: NavItem[] = [
-    {
-      href: isUser ? "/tasks" : "/tasks",
-      label: isUser ? "งานของฉัน" : "งานตรวจ",
-      icon: isUser ? FileVideo : ClipboardCheck,
-    },
-  ];
-
-  if (isAdmin || isReviewer) {
-    rightNavItems.push({ href: "/menu", label: "เมนู", icon: Menu });
-  }
+  const rightNavItems: NavItem[] = isAdmin
+    ? [{ href: "/projects", label: "โปรเจกต์", icon: FileVideo }, menu]
+    : [menu];
 
   const visibleNavItems = [...leftNavItems];
   if (centerFloatingItem) visibleNavItems.push(centerFloatingItem);
